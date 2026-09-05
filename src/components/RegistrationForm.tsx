@@ -12,8 +12,9 @@ interface RegistrationFormProps {
 declare global {
   interface Window {
     grecaptcha: {
-      render: (container: string | HTMLElement, options: Record<string, unknown>) => number;
-      reset: (widgetId?: number) => void;
+      render?: (container: string | HTMLElement, options: Record<string, unknown>) => number;
+      reset?: (widgetId?: number) => void;
+      ready?: (callback: () => void) => void;
     };
   }
 }
@@ -28,6 +29,7 @@ export function RegistrationForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [recaptchaReady, setRecaptchaReady] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const recaptchaRef = useRef<HTMLDivElement>(null);
   const recaptchaWidgetId = useRef<number | null>(null);
@@ -35,18 +37,42 @@ export function RegistrationForm({
   useEffect(() => {
     if (isOpen && recaptchaRef.current && !recaptchaWidgetId.current) {
       // Load reCAPTCHA script
-      const script = document.createElement('script');
-      script.src = `https://www.google.com/recaptcha/api.js?render=explicit`;
+      const existingScript = document.querySelector<HTMLScriptElement>('script[data-recaptcha-v2]');
+      const script = existingScript || document.createElement('script');
+      script.src = 'https://www.google.com/recaptcha/api.js?render=explicit';
+      script.setAttribute('data-recaptcha-v2', 'true');
       script.async = true;
-      script.onload = () => {
-        if (window.grecaptcha && recaptchaRef.current) {
-          recaptchaWidgetId.current = window.grecaptcha.render(recaptchaRef.current, {
-            sitekey: process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY,
-            theme: 'light',
-          });
+      const initialize = () => {
+        const grecaptcha = window.grecaptcha;
+        const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+        if (!grecaptcha || !siteKey) return;
+
+        if (typeof grecaptcha.render !== 'function' || !recaptchaRef.current) {
+          setErrors({ general: 'reCAPTCHA v2 gagal dimuat. Silakan refresh halaman.' });
+          return;
         }
+        recaptchaWidgetId.current = grecaptcha.render(recaptchaRef.current, {
+          sitekey: siteKey,
+          theme: 'light',
+          callback: () => setRecaptchaReady(true),
+          'expired-callback': () => setRecaptchaReady(false),
+          'error-callback': () => {
+            setRecaptchaReady(false);
+            setErrors({ general: 'reCAPTCHA gagal dimuat. Silakan coba lagi.' });
+          },
+        });
       };
-      document.head.appendChild(script);
+
+      if (existingScript && window.grecaptcha) {
+        if (window.grecaptcha.ready) window.grecaptcha.ready(initialize);
+        else initialize();
+      } else {
+        script.onload = () => {
+          if (window.grecaptcha?.ready) window.grecaptcha.ready(initialize);
+          else initialize();
+        };
+        if (!existingScript) document.head.appendChild(script);
+      }
     }
   }, [isOpen]);
 
@@ -58,6 +84,13 @@ export function RegistrationForm({
     const formData = new FormData(e.currentTarget);
 
     try {
+      const captchaResponse = formData.get('g-recaptcha-response');
+      if (!recaptchaReady || typeof captchaResponse !== 'string' || !captchaResponse) {
+        setErrors({ general: 'Centang reCAPTCHA terlebih dahulu.' });
+        setIsSubmitting(false);
+        return;
+      }
+
       const response = await fetch(`/api/register/${registrableType}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -66,7 +99,7 @@ export function RegistrationForm({
           phone: formData.get('phone'),
           email: formData.get('email'),
           jumlah_hadir: formData.get('jumlah_hadir'),
-          'g-recaptcha-response': formData.get('g-recaptcha-response'),
+          'g-recaptcha-response': captchaResponse,
           honeypot: formData.get('honeypot'),
           id: registrableId,
         }),

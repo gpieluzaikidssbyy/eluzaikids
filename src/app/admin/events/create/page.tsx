@@ -18,19 +18,7 @@ export default function CreateEventPage() {
     try {
       const response = await fetch('/api/admin/events', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: form.get('title'),
-          description: form.get('description'),
-          event_date: form.get('event_date'),
-          open_gate: form.get('open_gate') || null,
-          start_time: form.get('start_time') || null,
-          location: form.get('location') || null,
-          quota: form.get('quota') ? Number(form.get('quota')) : null,
-          map_embed_url: form.get('map_embed_url') || null,
-          drive_link: form.get('drive_link') || null,
-          registration_deadline: form.get('registration_deadline') || null,
-        }),
+        body: form,
       });
 
       if (!response.ok) {
@@ -59,52 +47,38 @@ export default function CreateEventPage() {
           <input type="text" name="title" required className="input-field mt-1" />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Deskripsi</label>
-          <textarea name="description" rows={3} className="input-field mt-1" />
-        </div>
-
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Tanggal Event *</label>
-            <input type="datetime-local" name="event_date" required className="input-field mt-1" />
+            <input type="date" name="event_date" required className="input-field mt-1" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Open Gate</label>
-            <input type="time" name="open_gate" className="input-field mt-1" />
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Open Gate *</label>
+            <input type="time" name="open_gate" required className="input-field mt-1" />
           </div>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Jam Mulai</label>
-            <input type="time" name="start_time" className="input-field mt-1" />
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Jam Mulai *</label>
+            <input type="time" name="start_time" required className="input-field mt-1" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Kuota</label>
-            <input type="number" name="quota" min="1" className="input-field mt-1" placeholder="Kosong = tanpa batas" />
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Kuota *</label>
+            <input type="number" name="quota" min="1" max="500" required className="input-field mt-1" />
+            <p className="mt-1 text-xs text-slate-500">Maksimal 500 pendaftar.</p>
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Lokasi</label>
-          <input type="text" name="location" className="input-field mt-1" />
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Lokasi *</label>
+          <input type="text" name="location" required className="input-field mt-1" />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Google Maps Embed URL</label>
-          <input type="url" name="map_embed_url" className="input-field mt-1" />
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Drive Link</label>
-            <input type="url" name="drive_link" className="input-field mt-1" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Batas Pendaftaran</label>
-            <input type="datetime-local" name="registration_deadline" className="input-field mt-1" />
-          </div>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Poster Event *</label>
+          <input type="file" name="poster" required accept=".jpg,.png,.webp,image/jpeg,image/png,image/webp" className="input-field mt-1" />
+          <p className="mt-1 text-xs text-slate-500">Rasio 4:5, maksimal 2 MB. Format JPG, PNG, atau WEBP.</p>
         </div>
 
         <div className="flex gap-3 pt-4">

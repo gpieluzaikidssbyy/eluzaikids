@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const supabase = createServiceClient();
-  const { data } = await supabase.from('members').select('*').order('class').order('name');
+  const { data } = await supabase.from('members').select('id, name, class, created_at').order('class').order('name');
   return NextResponse.json(data || []);
 }
 

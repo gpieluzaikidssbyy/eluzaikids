@@ -9,7 +9,11 @@
 
 # Build output
 /.next
+/.next-build
 /public/build
+
+# TypeScript
+*.tsbuildinfo
 
 # OS files
 .DS_Store

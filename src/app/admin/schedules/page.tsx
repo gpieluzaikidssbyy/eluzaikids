@@ -30,24 +30,40 @@ export default function AdminSchedulesPage() {
         </div>
         <Link href="/admin/schedules/create" className="btn-primary">+ Tambah Jadwal</Link>
       </div>
-      <div className="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800">
-        <table className="w-full text-left text-sm">
+      <div className="mt-6 overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <table className="min-w-[980px] w-full text-left text-sm">
           <thead className="border-b border-slate-200 bg-slate-50 dark:border-slate-700">
             <tr>
-              <th className="px-4 py-3 font-semibold text-slate-600">Hari</th>
-              <th className="px-4 py-3 font-semibold text-slate-600">Jam</th>
-              <th className="px-4 py-3 font-semibold text-slate-600">Tipe</th>
-              <th className="px-4 py-3 font-semibold text-slate-600">Deskripsi</th>
+              <th className="px-4 py-3 font-semibold text-slate-600">No</th>
+              <th className="px-4 py-3 font-semibold text-slate-600">Tanggal</th>
+              <th className="px-4 py-3 font-semibold text-slate-600">Kategori</th>
+              <th className="px-4 py-3 font-semibold text-slate-600">Pukul</th>
+              <th className="px-4 py-3 text-center font-semibold text-slate-600">Centang jika ada</th>
+              <th className="px-4 py-3 text-center font-semibold text-slate-600">Silang jika tidak ada</th>
               <th className="px-4 py-3 font-semibold text-slate-600">Aksi</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-            {schedules.map((s) => (
+            {schedules.map((s, index) => (
               <tr key={s.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                <td className="px-4 py-3 text-slate-600">{index + 1}</td>
                 <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">{s.day}</td>
-                <td className="px-4 py-3 text-slate-600">{s.time?.slice(0, 5)}</td>
                 <td className="px-4 py-3 text-slate-600">{s.type}</td>
-                <td className="px-4 py-3 text-slate-600">{s.description || '-'}</td>
+                <td className="px-4 py-3 text-slate-600">{s.time?.slice(0, 5)} WIB</td>
+                <td className="px-4 py-3 text-center">
+                  {s.show_schedule !== false ? (
+                    <span className="text-lg font-bold text-green-600" aria-label="Ada">✓</span>
+                  ) : (
+                    <span className="text-slate-300">—</span>
+                  )}
+                </td>
+                <td className="px-4 py-3 text-center">
+                  {s.show_schedule === false ? (
+                    <span className="text-lg font-bold text-red-600" aria-label="Tidak ada">✕</span>
+                  ) : (
+                    <span className="text-slate-300">—</span>
+                  )}
+                </td>
                 <td className="px-4 py-3">
                   <div className="flex gap-2">
                     <Link href={`/admin/schedules/${s.id}/edit`} className="rounded-lg bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-600 hover:bg-brand-100">Edit</Link>

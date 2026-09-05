@@ -17,9 +17,10 @@ export default function EventsPage() {
   const [page, setPage] = useState(1);
 
   useEffect(() => {
-    fetch(`/api/events?page=${page}`)
-      .then((r) => r.json())
-      .then(setData);
+    const load = () => fetch(`/api/events?page=${page}`).then((r) => r.json()).then(setData);
+    void load();
+    const interval = window.setInterval(load, 5000);
+    return () => window.clearInterval(interval);
   }, [page]);
 
   if (!data) {

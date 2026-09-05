@@ -5,26 +5,28 @@ import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 
 const navLinks = [
-  { href: '/', label: 'Beranda' },
-  { href: '/schedule', label: 'Jadwal' },
+  { href: '/', label: 'Home' },
+  { href: '/schedule', label: 'Schedule' },
   { href: '/events', label: 'Event' },
-  { href: '/activities', label: 'Kegiatan' },
-  { href: '/location', label: 'Lokasi' },
-  { href: '/contact', label: 'Kontak' },
+  { href: '/activities', label: 'Activity' },
+  { href: '/location', label: 'Location' },
+  { href: '/contact', label: 'Contact' },
 ];
 
 export function Navbar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
 
+  if (pathname.startsWith('/admin') || pathname.startsWith('/scan-qr')) {
+    return null;
+  }
+
   return (
     <nav className="sticky top-0 z-50 border-b border-slate-200 bg-white/80 backdrop-blur-md dark:border-slate-700 dark:bg-slate-900/80">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl gradient-primary text-white font-display font-bold text-sm">
-            EK
-          </div>
+          <img src="/images/logo-placeholder.webp" alt="GPI Eluzai Kids" className="h-10 w-10 object-contain" />
           <span className="font-display text-lg font-bold text-slate-900 dark:text-white">
             Eluzai Kids
           </span>
@@ -45,12 +47,6 @@ export function Navbar() {
               {link.label}
             </Link>
           ))}
-          <Link
-            href="/admin"
-            className="ml-2 rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-          >
-            Admin
-          </Link>
         </div>
 
         {/* Mobile menu button */}
@@ -88,13 +84,6 @@ export function Navbar() {
               {link.label}
             </Link>
           ))}
-          <Link
-            href="/admin"
-            onClick={() => setIsOpen(false)}
-            className="mt-2 block rounded-lg bg-slate-100 px-3 py-2 text-center text-sm font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300"
-          >
-            Admin
-          </Link>
         </div>
       )}
     </nav>

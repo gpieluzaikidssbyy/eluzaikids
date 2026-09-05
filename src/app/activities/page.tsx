@@ -16,9 +16,10 @@ export default function ActivitiesPage() {
   const [page, setPage] = useState(1);
 
   useEffect(() => {
-    fetch(`/api/activities?page=${page}`)
-      .then((r) => r.json())
-      .then(setData);
+    const load = () => fetch(`/api/activities?page=${page}`).then((r) => r.json()).then(setData);
+    void load();
+    const interval = window.setInterval(load, 5000);
+    return () => window.clearInterval(interval);
   }, [page]);
 
   if (!data) {

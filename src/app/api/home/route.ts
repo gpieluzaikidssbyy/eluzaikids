@@ -14,15 +14,12 @@ export async function GET() {
       .order('time');
 
     const visibleSchedules = schedulesData || [];
-    const isVisible = visibleSchedules.length > 0 ? visibleSchedules[0]?.show_schedule !== false : true;
 
     // Group schedules by type for home display
     const scheduleTypes = ['Ibadah', 'Latihan'];
     const schedules = scheduleTypes.map((type) => {
-      if (!isVisible) return { type, schedule: null };
-
       const matching = visibleSchedules
-        .filter((s) => s.type === type)
+        .filter((s) => s.type === type && s.show_schedule !== false)
         .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
 
       const latest = matching[0] || null;

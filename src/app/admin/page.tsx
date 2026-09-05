@@ -29,59 +29,38 @@ export default function AdminDashboard() {
   }
 
   const statCards = [
-    { label: 'Event', value: stats.events, href: '/admin/events', color: 'from-blue-500 to-blue-600' },
-    { label: 'Kegiatan', value: stats.activities, href: '/admin/activities', color: 'from-amber-500 to-orange-500' },
-    { label: 'Pendaftar Event', value: stats.eventRegistrations, href: '/admin/registrants/events', color: 'from-green-500 to-green-600' },
-    { label: 'Pendaftar Kegiatan', value: stats.activityRegistrations, href: '/admin/registrants/activities', color: 'from-purple-500 to-purple-600' },
-    { label: 'Anggota', value: stats.members, href: '/admin/members', color: 'from-pink-500 to-rose-500' },
+    { label: 'Event', value: stats.events, href: '/admin/events', tone: 'bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-300', accent: 'bg-blue-500' },
+    { label: 'Kegiatan', value: stats.activities, href: '/admin/activities', tone: 'bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300', accent: 'bg-amber-500' },
+    { label: 'Pendaftar Event', value: stats.eventRegistrations, href: '/admin/registrants/events', tone: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300', accent: 'bg-emerald-500' },
+    { label: 'Pendaftar Kegiatan', value: stats.activityRegistrations, href: '/admin/registrants/activities', tone: 'bg-violet-50 text-violet-700 dark:bg-violet-950/30 dark:text-violet-300', accent: 'bg-violet-500' },
+    { label: 'Anggota', value: stats.members, href: '/admin/members', tone: 'bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300', accent: 'bg-rose-500' },
   ];
 
   return (
     <div>
-      <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white">Dashboard</h1>
-      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Ringkasan data GPI Eluzai Kids</p>
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+        <div><p className="text-sm font-medium text-brand-600 dark:text-brand-400">Selamat datang kembali</p><h1 className="mt-1 font-display text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Ringkasan kegiatan</h1><p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Pantau pendaftaran, kegiatan, dan kehadiran dari satu tempat.</p></div>
+        <Link href="/admin/events/create" className="btn-primary self-start sm:self-auto">Tambah event <span aria-hidden="true">+</span></Link>
+      </div>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-9 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         {statCards.map((card) => (
           <Link
             key={card.label}
             href={card.href}
-            className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md dark:border-slate-700 dark:bg-slate-800"
+            className="group relative min-h-[190px] overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_8px_30px_rgba(15,23,42,0.05)] transition duration-200 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_16px_36px_rgba(15,23,42,0.1)] dark:border-slate-800 dark:bg-slate-900"
           >
-            <div className={`inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${card.color} text-white text-lg`}>
-              📊
-            </div>
-            <p className="mt-4 font-display text-3xl font-bold text-slate-900 dark:text-white">
+            <div className={`absolute inset-x-0 top-0 h-1 ${card.accent}`} />
+            <div className={`inline-flex rounded-full px-3 py-1.5 text-xs font-semibold ${card.tone}`}>Total</div>
+            <p className="mt-7 font-display text-5xl font-bold tracking-tight text-slate-900 dark:text-white">
               {card.value}
             </p>
-            <p className="mt-1 text-sm font-medium text-slate-500 dark:text-slate-400">
+            <p className="mt-2 text-sm font-medium text-slate-500 dark:text-slate-400">
               {card.label}
             </p>
+            <span className="absolute bottom-6 right-6 text-xl text-slate-300 transition group-hover:translate-x-1 group-hover:text-slate-500 dark:text-slate-600 dark:group-hover:text-slate-300" aria-hidden="true">→</span>
           </Link>
         ))}
-      </div>
-
-      <div className="mt-8">
-        <h2 className="font-display text-lg font-bold text-slate-900 dark:text-white">Akses Cepat</h2>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {[
-            { href: '/admin/events/create', label: 'Tambah Event', icon: '➕' },
-            { href: '/admin/activities/create', label: 'Tambah Kegiatan', icon: '➕' },
-            { href: '/admin/schedules/create', label: 'Tambah Jadwal', icon: '➕' },
-            { href: '/admin/members/create', label: 'Tambah Anggota', icon: '➕' },
-            { href: '/admin/presensi/events', label: 'Presensi Event', icon: '✅' },
-            { href: '/admin/presensi/activities', label: 'Presensi Kegiatan', icon: '✅' },
-          ].map((action) => (
-            <Link
-              key={action.href}
-              href={action.href}
-              className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-            >
-              <span>{action.icon}</span>
-              {action.label}
-            </Link>
-          ))}
-        </div>
       </div>
     </div>
   );

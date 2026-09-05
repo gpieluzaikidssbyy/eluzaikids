@@ -8,12 +8,38 @@
   html {
     scroll-behavior: smooth;
   }
+
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-25%);
+    }
+  }
+
+  .animate-marquee {
+    animation: marquee 7s linear infinite;
+    will-change: transform;
+  }
   body {
     @apply font-sans text-slate-900 antialiased;
   }
 }
 
 @layer components {
+  .field-label {
+    @apply text-sm font-medium text-slate-700 dark:text-slate-300;
+  }
+
+  .table-heading {
+    @apply whitespace-nowrap px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400;
+  }
+
+  .table-cell {
+    @apply whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300;
+  }
+
   .gradient-hero {
     @apply bg-gradient-to-br from-navy-800 via-navy-900 to-brand-800;
   }

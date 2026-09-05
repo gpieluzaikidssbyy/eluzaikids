@@ -205,7 +205,7 @@ export default function ScanQrPage() {
               type="text"
               value={manualCode}
               onChange={(e) => setManualCode(e.target.value)}
-              placeholder="Nomor registrasi"
+              placeholder="0001"
               className="flex-1 rounded-lg border border-slate-600 bg-slate-700 px-4 py-3 text-sm text-white placeholder:text-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none"
             />
             <button type="submit" className="rounded-lg bg-brand-500 px-6 py-3 text-sm font-semibold text-white transition hover:bg-brand-600">
@@ -213,6 +213,7 @@ export default function ScanQrPage() {
             </button>
           </form>
         </div>
+        <p className="mt-2 text-xs text-slate-400">Masukkan 4 angka terakhir nomor registrasi, misalnya 0001 atau 0120.</p>
       </div>
     </div>
   );

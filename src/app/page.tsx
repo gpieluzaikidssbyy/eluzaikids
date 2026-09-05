@@ -37,7 +37,10 @@ export default function HomePage() {
   const slides = ['/img/home-1.svg', '/img/home-2.svg', '/img/home-3.svg'];
 
   useEffect(() => {
-    fetch('/api/home').then(r => r.json()).then(setData);
+    const load = () => fetch('/api/home').then(r => r.json()).then(setData);
+    void load();
+    const interval = window.setInterval(load, 5000);
+    return () => window.clearInterval(interval);
   }, []);
 
   useEffect(() => {

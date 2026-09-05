@@ -22,7 +22,11 @@ export default function AdminPresensiActivityDetailPage() {
     fetch(`/api/admin/activities/${params.id}`).then((r) => r.json()).then(setActivity);
   };
 
-  useEffect(() => { fetchData(); }, [params.id]);
+  useEffect(() => {
+    void fetchData();
+    const interval = window.setInterval(() => fetchData(), 5000);
+    return () => window.clearInterval(interval);
+  }, [params.id]);
 
   const toggleHadir = async (rid: number) => {
     const res = await fetch('/api/admin/presensi', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'toggle-hadir', type: 'activity', id: params.id, registrationId: rid }) });
@@ -76,6 +80,13 @@ export default function AdminPresensiActivityDetailPage() {
             </button>
             {activity.scan_active && <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700">Aktif</span>}
           </div>
+          <Link
+            href={`/scan-qr/activity/${params.id}`}
+            target="_blank"
+            className="mt-4 block rounded-lg bg-brand-600 px-4 py-3 text-center text-sm font-bold text-white transition hover:bg-brand-700"
+          >
+            Buka Website Scan QR
+          </Link>
           <div className="mt-3 flex gap-2">
             <input type="text" value={scanPin} onChange={(e) => setScanPin(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="PIN 6 digit" maxLength={6} className="input-field flex-1" />
             <button onClick={updateScanPin} className="btn-primary">Set PIN</button>
@@ -89,7 +100,6 @@ export default function AdminPresensiActivityDetailPage() {
             <button onClick={quickMark} className="btn-primary">Mark</button>
           </div>
           {quickResult && <p className={`mt-2 text-sm font-medium ${quickResult.success ? 'text-green-600' : 'text-red-600'}`}>{quickResult.message} {quickResult.name ? `(${quickResult.name})` : ''}</p>}
-          <p className="mt-2 text-xs text-slate-500">Scanner: <Link href={`/scan-qr/activity/${params.id}`} className="text-brand-600 hover:underline" target="_blank">Buka Scanner</Link></p>
         </div>
       </div>
 
@@ -104,27 +114,26 @@ export default function AdminPresensiActivityDetailPage() {
         <input type="text" value={search} onChange={(e) => { setSearch(e.target.value); fetchData(tab, e.target.value); }} placeholder="Cari no. registrasi..." className="input-field max-w-xs" />
       </div>
 
-      <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800">
-        <table className="w-full text-left text-sm">
-          <thead className="border-b border-slate-200 bg-slate-50 dark:border-slate-700">
+      <div className="mt-4 overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <table className="min-w-[980px] w-full text-left text-sm">
+          <thead className="border-b border-slate-200 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-800/50">
             <tr>
-              <th className="px-4 py-3 font-semibold text-slate-600">No. Registrasi</th>
-              <th className="px-4 py-3 font-semibold text-slate-600">Nama</th>
-              <th className="px-4 py-3 font-semibold text-slate-600">Jumlah Hadir</th>
-              <th className="px-4 py-3 font-semibold text-slate-600">Status</th>
-              <th className="px-4 py-3 font-semibold text-slate-600">Aksi</th>
+              <th className="table-heading">No</th>
+              <th className="table-heading">No. registrasi</th>
+              <th className="table-heading">Nama lengkap</th>
+              <th className="table-heading">Jumlah yang hadir</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-            {registrations.map((r: any) => (
+            {registrations.map((r: any, index: number) => (
               <tr key={r.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                <td className="px-4 py-3 font-mono text-xs">{r.nomor_registrasi}</td>
-                <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">{r.name}</td>
-                <td className="px-4 py-3 text-slate-600">{r.jumlah_hadir}</td>
-                <td className="px-4 py-3"><span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${r.hadir ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>{r.hadir ? 'Hadir' : 'Belum'}</span></td>
-                <td className="px-4 py-3"><button onClick={() => toggleHadir(r.id)} className={`rounded-lg px-3 py-1.5 text-xs font-medium ${r.hadir ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-green-50 text-green-600 hover:bg-green-100'}`}>{r.hadir ? 'Batal Hadir' : 'Tandai Hadir'}</button></td>
+                <td className="table-cell text-slate-500">{index + 1}</td>
+                <td className="table-cell font-mono text-xs">{r.nomor_registrasi}</td>
+                <td className="table-cell font-medium text-slate-900 dark:text-white">{r.name}</td>
+                <td className="table-cell font-semibold">{r.jumlah_hadir}</td>
               </tr>
             ))}
+            {!registrations.length && <tr><td colSpan={4} className="px-4 py-10 text-center text-sm text-slate-500">Belum ada pendaftar.</td></tr>}
           </tbody>
         </table>
       </div>

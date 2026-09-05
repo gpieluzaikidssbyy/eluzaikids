@@ -154,6 +154,8 @@ export async function POST(request: NextRequest) {
 
     await sendConfirmationEmail(name, normalizedPhone, email, {
       type: 'Event',
+      phone: normalizedPhone,
+      email,
       nomor_registrasi: nomorRegistrasi,
       jumlah_hadir,
       qr_data: qrData,
@@ -164,6 +166,7 @@ export async function POST(request: NextRequest) {
       time: event.start_time,
       location: event.location,
       maps_link: mapsLink,
+      registered_at: registration.registered_at,
     });
 
     return NextResponse.json({ message: 'Pendaftaran berhasil!' });

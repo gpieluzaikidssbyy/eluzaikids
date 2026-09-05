@@ -130,7 +130,9 @@ export async function POST(request: NextRequest) {
     const mapsLink = getMapsLink(activity.location);
 
     await sendConfirmationEmail(name, normalizedPhone, email, {
-      type: 'Kegiatan',
+      type: 'Activity',
+      phone: normalizedPhone,
+      email,
       nomor_registrasi: nomorRegistrasi,
       jumlah_hadir,
       qr_data: qrData,
@@ -141,6 +143,7 @@ export async function POST(request: NextRequest) {
       time: activity.start_time,
       location: activity.location,
       maps_link: mapsLink,
+      registered_at: registration.registered_at,
     });
 
     return NextResponse.json({ message: 'Pendaftaran berhasil!' });

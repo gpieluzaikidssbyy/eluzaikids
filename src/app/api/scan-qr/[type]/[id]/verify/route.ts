@@ -36,7 +36,7 @@ export async function POST(
     }
 
     let registration = null;
-    const parts = qr_data.split('.');
+    const parts = String(qr_data).trim().split('.');
 
     if (parts.length === 2) {
       // QR Code format: nomor_registrasi.qr_token
@@ -51,13 +51,14 @@ export async function POST(
       registration = data;
     } else {
       // Manual input: just registration number
-      const { data } = await supabase
+      const suffix = String(qr_data).replace(/\D/g, '').slice(-4).padStart(4, '0');
+      const { data: matches } = await supabase
         .from(table)
         .select('*')
         .eq(foreignKey, id)
-        .like('nomor_registrasi', `%${qr_data}%`)
-        .single();
-      registration = data;
+        .ilike('nomor_registrasi', `%-${suffix}`)
+        .limit(2);
+      registration = matches?.length === 1 ? matches[0] : null;
     }
 
     if (!registration) {
@@ -80,7 +81,8 @@ export async function POST(
     const { error } = await supabase
       .from(table)
       .update({ hadir: true, scanned_at: new Date().toISOString() })
-      .eq('id', registration.id);
+      .eq('id', registration.id)
+      .eq('hadir', false);
 
     if (error) {
       console.error('Update error:', error);

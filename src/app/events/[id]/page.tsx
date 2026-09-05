@@ -12,9 +12,10 @@ export default function EventDetailPage() {
   const [event, setEvent] = useState<(Event & { registrations_count: number }) | null>(null);
 
   useEffect(() => {
-    fetch(`/api/events/${params.id}`)
-      .then((r) => r.json())
-      .then(setEvent);
+    const load = () => fetch(`/api/events/${params.id}`).then((r) => r.json()).then(setEvent);
+    void load();
+    const interval = window.setInterval(load, 5000);
+    return () => window.clearInterval(interval);
   }, [params.id]);
 
   if (!event) {

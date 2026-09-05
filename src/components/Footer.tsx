@@ -1,39 +1,19 @@
-import Link from 'next/link';
-
 export function Footer() {
+  const copyrightText = '© 2026 GPI ELUZAI KIDS. ALL RIGHTS RESERVED';
+
   return (
-    <footer className="border-t border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-        <div className="flex flex-col items-center gap-4 text-center">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg gradient-primary text-white font-display font-bold text-xs">
-              EK
-            </div>
-            <span className="font-display text-lg font-bold text-slate-900 dark:text-white">
-              GPI Eluzai Kids
-            </span>
-          </Link>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Tempat anak-anak bertumbuh dalam iman, sukacita, dan kasih Kristus.
-          </p>
-          <div className="flex gap-4">
-            <Link href="/schedule" className="text-sm text-slate-500 hover:text-brand-500 dark:text-slate-400">
-              Jadwal
-            </Link>
-            <Link href="/events" className="text-sm text-slate-500 hover:text-brand-500 dark:text-slate-400">
-              Event
-            </Link>
-            <Link href="/activities" className="text-sm text-slate-500 hover:text-brand-500 dark:text-slate-400">
-              Kegiatan
-            </Link>
-            <Link href="/contact" className="text-sm text-slate-500 hover:text-brand-500 dark:text-slate-400">
-              Kontak
-            </Link>
-          </div>
-          <p className="text-xs text-slate-400 dark:text-slate-500">
-            &copy; {new Date().getFullYear()} GPI Eluzai Kids. All rights reserved.
-          </p>
-        </div>
+    <footer className="mt-auto overflow-hidden bg-navy-900 py-4 text-white">
+      <div className="animate-marquee flex w-max whitespace-nowrap text-xs font-semibold uppercase tracking-[0.18em] text-white/80">
+        {Array.from({ length: 4 }, (_, index) => (
+          <span
+            key={index}
+            aria-hidden={index > 0}
+            className="flex shrink-0 items-center gap-8 px-8"
+          >
+            {copyrightText}
+            <span aria-hidden="true">•</span>
+          </span>
+        ))}
       </div>
     </footer>
   );

@@ -79,7 +79,7 @@ export default function EditEventPage() {
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Tanggal Event *</label>
-            <input type="datetime-local" name="event_date" required defaultValue={event.event_date?.slice(0, 16)} className="input-field mt-1" />
+            <input type="date" name="event_date" required defaultValue={event.event_date?.slice(0, 10)} className="input-field mt-1" />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Open Gate</label>
@@ -94,7 +94,8 @@ export default function EditEventPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Kuota</label>
-            <input type="number" name="quota" min="1" defaultValue={event.quota || ''} className="input-field mt-1" />
+            <input type="number" name="quota" min="1" max="500" defaultValue={event.quota || ''} className="input-field mt-1" />
+            <p className="mt-1 text-xs text-slate-500">Maksimal 500 pendaftar.</p>
           </div>
         </div>
 

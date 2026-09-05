@@ -12,9 +12,10 @@ export default function ActivityDetailPage() {
   const [activity, setActivity] = useState<(Activity & { registrations_count: number }) | null>(null);
 
   useEffect(() => {
-    fetch(`/api/activities/${params.id}`)
-      .then((r) => r.json())
-      .then(setActivity);
+    const load = () => fetch(`/api/activities/${params.id}`).then((r) => r.json()).then(setActivity);
+    void load();
+    const interval = window.setInterval(load, 5000);
+    return () => window.clearInterval(interval);
   }, [params.id]);
 
   if (!activity) {
