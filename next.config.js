@@ -3,7 +3,9 @@ const nextConfig = {
   poweredByHeader: false,
   // Keep production artifacts separate from the development cache. This
   // prevents `next build` from deleting chunks currently used by `next dev`.
-  distDir: process.env.NODE_ENV === 'production' ? '.next-build' : '.next',
+  // On Vercel, builds must output to .next (default). Locally we keep
+  // production artifacts separate from the development cache.
+  distDir: process.env.VERCEL ? '.next' : process.env.NODE_ENV === 'production' ? '.next-build' : '.next',
   images: {
     remotePatterns: [
       {
