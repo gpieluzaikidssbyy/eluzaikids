@@ -63,14 +63,25 @@ export default function AdminPresensiActivityDetailPage() {
     <div>
       <Link href="/admin/presensi/activities" className="text-sm text-brand-600 hover:underline">&larr; Kembali</Link>
       <h1 className="mt-2 font-display text-2xl font-bold text-slate-900 dark:text-white">Presensi: {activity.title}</h1>
+      <p className="mt-1 text-sm text-slate-500">{activity.location || ''}</p>
 
-      <div className="mt-4 grid gap-4 sm:grid-cols-4">
-        <div className="card text-center"><p className="text-2xl font-bold text-slate-900 dark:text-white">{totals.totalRegistrations}</p><p className="text-sm text-slate-500">Total Pendaftar</p></div>
-        <div className="card text-center"><p className="text-2xl font-bold text-green-600">{totals.totalHadir}</p><p className="text-sm text-slate-500">Total Hadir (Orang)</p></div>
-        <div className="card text-center"><p className="text-2xl font-bold text-blue-600">{totals.totalHadirCount}</p><p className="text-sm text-slate-500">Hadir (Data)</p></div>
-        <div className="card text-center"><p className="text-2xl font-bold text-red-600">{totals.totalBelumHadir}</p><p className="text-sm text-slate-500">Belum Hadir</p></div>
+      {/* Stats */}
+      <div className="mt-4 grid gap-4 sm:grid-cols-3">
+        <div className="card text-center">
+          <p className="text-3xl font-bold text-slate-900 dark:text-white">{totals.totalRegistrations}</p>
+          <p className="mt-1 text-sm text-slate-500">Total Pendaftar</p>
+        </div>
+        <div className="card text-center">
+          <p className="text-3xl font-bold text-green-600">{totals.totalHadir}</p>
+          <p className="mt-1 text-sm text-slate-500">Hadir</p>
+        </div>
+        <div className="card text-center">
+          <p className="text-3xl font-bold text-red-600">{totals.totalBelumHadir}</p>
+          <p className="mt-1 text-sm text-slate-500">Belum Hadir</p>
+        </div>
       </div>
 
+      {/* Scan Controls */}
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <div className="card">
           <h3 className="font-display font-bold text-slate-900 dark:text-white">Kontrol Scan QR</h3>
@@ -103,6 +114,7 @@ export default function AdminPresensiActivityDetailPage() {
         </div>
       </div>
 
+      {/* Search & Tabs */}
       <div className="mt-6 flex flex-wrap items-center gap-3">
         <div className="flex rounded-lg border border-slate-200 dark:border-slate-700">
           {['all', 'hadir', 'belum_hadir'].map((t) => (
@@ -114,14 +126,16 @@ export default function AdminPresensiActivityDetailPage() {
         <input type="text" value={search} onChange={(e) => { setSearch(e.target.value); fetchData(tab, e.target.value); }} placeholder="Cari no. registrasi..." className="input-field max-w-xs" />
       </div>
 
+      {/* Registrations Table */}
       <div className="mt-4 overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <table className="min-w-[980px] w-full text-left text-sm">
+        <table className="w-full min-w-[620px] text-left text-sm">
           <thead className="border-b border-slate-200 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-800/50">
             <tr>
               <th className="table-heading">No</th>
               <th className="table-heading">No. registrasi</th>
               <th className="table-heading">Nama lengkap</th>
-              <th className="table-heading">Jumlah yang hadir</th>
+              <th className="table-heading">Status</th>
+              <th className="table-heading text-center">Aksi</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
@@ -130,10 +144,22 @@ export default function AdminPresensiActivityDetailPage() {
                 <td className="table-cell text-slate-500">{index + 1}</td>
                 <td className="table-cell font-mono text-xs">{r.nomor_registrasi}</td>
                 <td className="table-cell font-medium text-slate-900 dark:text-white">{r.name}</td>
-                <td className="table-cell font-semibold">{r.jumlah_hadir}</td>
+                <td className="table-cell">
+                  <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${r.hadir ? 'bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>
+                    {r.hadir ? '✓ Hadir' : 'Belum hadir'}
+                  </span>
+                </td>
+                <td className="table-cell text-center">
+                  <button
+                    onClick={() => void toggleHadir(r.id)}
+                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${r.hadir ? 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300'}`}
+                  >
+                    {r.hadir ? 'Batalkan' : 'Hadir'}
+                  </button>
+                </td>
               </tr>
             ))}
-            {!registrations.length && <tr><td colSpan={4} className="px-4 py-10 text-center text-sm text-slate-500">Belum ada pendaftar.</td></tr>}
+            {!registrations.length && <tr><td colSpan={5} className="px-4 py-10 text-center text-sm text-slate-500">Belum ada pendaftar.</td></tr>}
           </tbody>
         </table>
       </div>

@@ -39,6 +39,8 @@ export default function AdminActivitiesPage() {
           start_time: form.get('start_time') || null,
           location: form.get('location') || null,
           quota: form.get('quota') ? Number(form.get('quota')) : null,
+          map_embed_url: form.get('map_embed_url') || null,
+          drive_link: form.get('drive_link') || null,
         }),
       });
       if (!response.ok) {
@@ -78,12 +80,14 @@ export default function AdminActivitiesPage() {
           </div>
           {error && <p className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</p>}
           <div className="mt-5 grid gap-4 md:grid-cols-2">
-            <label className="md:col-span-2"><span className="field-label">Nama activity</span><input name="title" required className="input-field mt-1" /></label>
-            <label><span className="field-label">Tanggal</span><input name="activity_date" type="datetime-local" className="input-field mt-1" /></label>
-            <label><span className="field-label">Mulai pukul</span><input name="start_time" type="time" className="input-field mt-1" /></label>
-            <label><span className="field-label">Kuota</span><input name="quota" type="number" min="1" className="input-field mt-1" /></label>
-            <label><span className="field-label">Lokasi</span><input name="location" className="input-field mt-1" /></label>
-            <label className="md:col-span-2"><span className="field-label">Deskripsi</span><textarea name="description" rows={3} className="input-field mt-1" /></label>
+            <label className="md:col-span-2"><span className="field-label">Judul <span className="text-red-500">*</span></span><input name="title" required className="input-field mt-1" /></label>
+            <label className="md:col-span-2"><span className="field-label">Deskripsi <span className="text-red-500">*</span></span><textarea name="description" rows={3} required className="input-field mt-1" /></label>
+            <label><span className="field-label">Tanggal <span className="text-red-500">*</span></span><input name="activity_date" type="date" required className="input-field mt-1" /></label>
+            <label><span className="field-label">Jam Mulai <span className="text-red-500">*</span></span><input name="start_time" type="time" required className="input-field mt-1" /></label>
+            <label><span className="field-label">Kuota <span className="text-red-500">*</span></span><input name="quota" type="number" min="1" required className="input-field mt-1" /></label>
+            <label><span className="field-label">Lokasi <span className="text-red-500">*</span></span><input name="location" required className="input-field mt-1" /></label>
+            <label><span className="field-label">Google Maps Embed URL <span className="text-red-500">*</span></span><input name="map_embed_url" type="url" required className="input-field mt-1" /></label>
+            <label><span className="field-label">Drive Link <span className="text-red-500">*</span></span><input name="drive_link" type="url" required className="input-field mt-1" /></label>
           </div>
           <div className="mt-5 flex justify-end"><button type="submit" disabled={saving} className="btn-primary disabled:opacity-50">{saving ? 'Saving...' : 'Save activity'}</button></div>
         </form>
@@ -105,12 +109,12 @@ export default function AdminActivitiesPage() {
               <tr key={a.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
                 <td className="table-cell text-slate-500">{index + 1}</td>
                 <td className="table-cell"><div className="font-semibold text-slate-900 dark:text-white">{a.title}</div><div className="mt-1 text-xs text-slate-500">{a.activity_date ? formatDateIndo(a.activity_date) : '-'}</div></td>
-                <td className="table-cell">{a.start_time || '-'}</td>
+                <td className="table-cell">{a.start_time?.slice(0, 5) || '-'}</td>
                 <td className="table-cell">{a.location || '-'}</td>
                 <td className="table-cell">
                   <div className="flex gap-2">
                     <Link href={`/admin/activities/${a.id}/edit`} className="rounded-lg bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-600 hover:bg-brand-100">Edit</Link>
-                    <Link href={`/activities/${a.id}`} target="_blank" className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-200">Details</Link>
+                    <Link href={`/admin/activities/${a.id}`} className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-200">Details</Link>
                     <button onClick={() => handleDelete(a.id)} className="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100">Hapus</button>
                   </div>
                 </td>

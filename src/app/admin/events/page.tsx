@@ -65,7 +65,7 @@ export default function AdminEventsPage() {
         method: 'POST',
         body: (() => {
           const payload = new FormData();
-          ['title', 'event_date', 'open_gate', 'start_time', 'location', 'quota'].forEach((name) => payload.append(name, String(form.get(name) || '')));
+          ['title', 'description', 'event_date', 'open_gate', 'start_time', 'location', 'quota', 'map_embed_url', 'drive_link', 'registration_deadline'].forEach((name) => payload.append(name, String(form.get(name) || '')));
           if (poster instanceof File) payload.append('poster', poster);
           return payload;
         })(),
@@ -109,13 +109,17 @@ export default function AdminEventsPage() {
           </div>
           {error && <p className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</p>}
           <div className="mt-5 grid gap-4 md:grid-cols-2">
-            <label className="md:col-span-2"><span className="field-label">Nama event</span><input name="title" required className="input-field mt-1" /></label>
-            <label><span className="field-label">Tanggal</span><input name="event_date" type="date" required className="input-field mt-1" /></label>
-            <label><span className="field-label">Open gate</span><input name="open_gate" type="time" required className="input-field mt-1" /></label>
-            <label><span className="field-label">Mulai pukul</span><input name="start_time" type="time" required className="input-field mt-1" /></label>
-            <label><span className="field-label">Kuota</span><input name="quota" type="number" min="1" max="500" required className="input-field mt-1" /><span className="mt-1 block text-xs text-slate-500">Maksimal 500 pendaftar.</span></label>
-            <label className="md:col-span-2"><span className="field-label">Lokasi</span><input name="location" required className="input-field mt-1" /></label>
-            <label className="md:col-span-2"><span className="field-label">Poster event</span><input name="poster" type="file" required accept=".jpg,.png,.webp,image/jpeg,image/png,image/webp" className="input-field mt-1" /><span className="mt-1 block text-xs text-slate-500">Rasio 4:5, maksimal 2 MB. Format JPG, PNG, atau WEBP.</span></label>
+            <label className="md:col-span-2"><span className="field-label">Judul <span className="text-red-500">*</span></span><input name="title" required className="input-field mt-1" /></label>
+            <label className="md:col-span-2"><span className="field-label">Deskripsi <span className="text-red-500">*</span></span><textarea name="description" rows={3} required className="input-field mt-1" /></label>
+            <label><span className="field-label">Tanggal Event <span className="text-red-500">*</span></span><input name="event_date" type="date" required className="input-field mt-1" /></label>
+            <label><span className="field-label">Batas Pendaftaran <span className="text-red-500">*</span></span><input name="registration_deadline" type="datetime-local" required className="input-field mt-1" /></label>
+            <label><span className="field-label">Open Gate <span className="text-red-500">*</span></span><input name="open_gate" type="time" required className="input-field mt-1" /></label>
+            <label><span className="field-label">Jam Mulai <span className="text-red-500">*</span></span><input name="start_time" type="time" required className="input-field mt-1" /></label>
+            <label><span className="field-label">Kuota <span className="text-red-500">*</span></span><input name="quota" type="number" min="1" max="500" required className="input-field mt-1" /><span className="mt-1 block text-xs text-slate-500">Maksimal 500 pendaftar.</span></label>
+            <label><span className="field-label">Lokasi <span className="text-red-500">*</span></span><input name="location" required className="input-field mt-1" /></label>
+            <label><span className="field-label">Google Maps Embed URL <span className="text-red-500">*</span></span><input name="map_embed_url" type="url" required className="input-field mt-1" /></label>
+            <label><span className="field-label">Drive Link <span className="text-red-500">*</span></span><input name="drive_link" type="url" required className="input-field mt-1" /></label>
+            <label className="md:col-span-2"><span className="field-label">Poster Event <span className="text-red-500">*</span></span><input name="poster" type="file" required accept=".jpg,.png,.webp,image/jpeg,image/png,image/webp" className="input-field mt-1" /><span className="mt-1 block text-xs text-slate-500">Rasio 4:5, maksimal 2 MB. Format JPG, PNG, atau WEBP.</span></label>
           </div>
           <div className="mt-5 flex justify-end"><button type="submit" disabled={saving} className="btn-primary disabled:opacity-50">{saving ? 'Saving...' : 'Save event'}</button></div>
         </form>
@@ -139,8 +143,8 @@ export default function AdminEventsPage() {
               <tr key={event.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
                 <td className="table-cell text-slate-500">{index + 1}</td>
                 <td className="table-cell"><div className="font-semibold text-slate-900 dark:text-white">{event.title}</div><div className="mt-1 text-xs text-slate-500">{formatDateIndo(event.event_date)}</div></td>
-                <td className="table-cell">{event.open_gate || '-'}</td>
-                <td className="table-cell">{event.start_time || '-'}</td>
+                <td className="table-cell">{event.open_gate?.slice(0, 5) || '-'}</td>
+                <td className="table-cell">{event.start_time?.slice(0, 5) || '-'}</td>
                 <td className="table-cell">{event.location || '-'}</td>
                 <td className="table-cell">
                   <div className="inline-flex items-center gap-2 rounded-lg border border-slate-200 p-1 dark:border-slate-700">

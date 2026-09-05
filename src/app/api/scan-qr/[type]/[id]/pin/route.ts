@@ -8,13 +8,13 @@ export async function POST(
   const { pin } = await request.json();
   const table = params.type === 'event' ? 'events' : params.type === 'activity' ? 'activities' : null;
 
-  if (!table || !/^\d{6}$/.test(String(pin || ''))) {
+  if (!table || (String(pin || '') && !/^\d{6}$/.test(String(pin)))) {
     return NextResponse.json({ success: false, message: 'PIN harus terdiri dari 6 angka.' }, { status: 400 });
   }
 
   const { data, error } = await createServiceClient()
     .from(table)
-    .select('scan_pin, scan_active')
+    .select('scan_pin, scan_active, title')
     .eq('id', params.id)
     .single();
 
@@ -27,8 +27,8 @@ export async function POST(
   }
 
   if (data.scan_pin !== pin) {
-    return NextResponse.json({ success: false, message: 'PIN salah.' }, { status: 401 });
+    return NextResponse.json({ success: false, message: 'PIN salah.', title: data.title }, { status: 401 });
   }
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ success: true, title: data.title });
 }

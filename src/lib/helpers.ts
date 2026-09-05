@@ -1,6 +1,14 @@
 import { createServiceClient } from './supabase';
 
 /**
+ * Base URL of the app without any trailing slash.
+ * Guards against double slashes when env value ends with '/'.
+ */
+export function appBaseUrl(): string {
+  return (process.env.NEXT_PUBLIC_APP_URL || '').replace(/\/+$/, '');
+}
+
+/**
  * Normalize Indonesian phone number to consistent 62... format.
  * Matches RegistrationController::normalizePhone from Laravel.
  */

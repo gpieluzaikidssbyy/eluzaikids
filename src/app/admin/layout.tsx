@@ -97,7 +97,7 @@ export default function AdminLayout({
         aria-label="Navigasi admin"
       >
         <div className="flex h-16 items-center justify-between border-b border-slate-200 px-4 dark:border-slate-700 lg:hidden">
-          <div className="flex items-center gap-2 font-display font-bold text-slate-900 dark:text-white"><img src="/images/logo-placeholder.webp" alt="GPI Eluzai Kids" className="h-9 w-9 object-contain" />Admin</div>
+          <div className="flex items-center gap-2 font-display font-bold text-slate-900 dark:text-white"><img src="/images/logo-placeholder.webp" alt="GPI Eluzai Kids" className="h-9 w-9 object-contain" />{sessionUsername}</div>
           <button
             onClick={() => setSidebarOpen(false)}
             aria-label="Tutup menu"
@@ -200,7 +200,17 @@ export default function AdminLayout({
               className="flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium text-slate-500 transition hover:bg-slate-50 hover:text-brand-600 dark:text-slate-400 dark:hover:bg-slate-800/70 dark:hover:text-brand-400"
             >
               <span>View site</span>
-              <span aria-hidden="true">↗</span>
+              <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10" /></svg>
+            </Link>
+          </div>
+          <div className="mt-2 border-t border-slate-200 pt-3 dark:border-slate-700">
+            <Link
+              href="/admin/settings"
+              onClick={() => setSidebarOpen(false)}
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-500 transition hover:bg-slate-50 hover:text-brand-600 dark:text-slate-400 dark:hover:bg-slate-800/70 dark:hover:text-brand-400"
+            >
+              <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
+              Settings
             </Link>
           </div>
         </nav>
@@ -233,7 +243,7 @@ export default function AdminLayout({
                 <img src="/images/logo-placeholder.webp" alt="GPI Eluzai Kids" className="h-9 w-9 object-contain" />
                 <div>
                   <p className="text-xs font-medium uppercase tracking-wider text-slate-400">GPI Eluzai Kids</p>
-                  <p className="mt-0.5 text-sm font-medium text-slate-700 dark:text-slate-200">Selamat datang kembali, {sessionUsername} 👋</p>
+                  <p className="mt-0.5 text-sm font-medium text-slate-700 dark:text-slate-200">Admin Panel</p>
                 </div>
               </div>
             </div>

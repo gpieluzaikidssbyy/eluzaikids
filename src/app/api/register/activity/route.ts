@@ -9,6 +9,7 @@ import {
   duplicateExists,
   verifyRecaptcha,
   getMapsLink,
+  appBaseUrl,
 } from '@/lib/helpers';
 import { sendConfirmationEmail } from '@/lib/email';
 
@@ -126,7 +127,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Gagal menyimpan pendaftaran.' }, { status: 500 });
     }
 
-    const qrUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/scan-qr/activity/${activityId}/qr/${registration.id}`;
+    const qrUrl = `${appBaseUrl()}/api/scan-qr/activity/${activityId}/qr/${registration.id}`;
     const mapsLink = getMapsLink(activity.location);
 
     await sendConfirmationEmail(name, normalizedPhone, email, {

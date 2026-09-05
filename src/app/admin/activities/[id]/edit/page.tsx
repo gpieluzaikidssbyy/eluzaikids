@@ -47,40 +47,42 @@ export default function EditActivityPage() {
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         {error && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div>}
         <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Judul *</label>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Judul Kegiatan <span className="text-red-500">*</span></label>
           <input type="text" name="title" required defaultValue={activity.title} className="input-field mt-1" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Deskripsi</label>
-          <textarea name="description" rows={3} defaultValue={activity.description || ''} className="input-field mt-1" />
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Deskripsi <span className="text-red-500">*</span></label>
+          <textarea name="description" rows={4} required defaultValue={activity.description || ''} className="input-field mt-1" />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Tanggal</label>
-            <input type="date" name="activity_date" defaultValue={activity.activity_date || ''} className="input-field mt-1" />
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Tanggal <span className="text-red-500">*</span></label>
+            <input type="date" name="activity_date" required defaultValue={activity.activity_date || ''} className="input-field mt-1" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Jam Mulai</label>
-            <input type="time" name="start_time" defaultValue={activity.start_time || ''} className="input-field mt-1" />
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Jam Mulai <span className="text-red-500">*</span></label>
+            <input type="time" name="start_time" required defaultValue={activity.start_time || ''} className="input-field mt-1" />
           </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Lokasi</label>
-            <input type="text" name="location" defaultValue={activity.location || ''} className="input-field mt-1" />
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Lokasi <span className="text-red-500">*</span></label>
+            <input type="text" name="location" required defaultValue={activity.location || ''} className="input-field mt-1" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Kuota</label>
-            <input type="number" name="quota" min="1" defaultValue={activity.quota || ''} className="input-field mt-1" />
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Kuota <span className="text-red-500">*</span></label>
+            <input type="number" name="quota" min="1" required defaultValue={activity.quota || ''} className="input-field mt-1" />
           </div>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Google Maps Embed URL</label>
-          <input type="url" name="map_embed_url" defaultValue={activity.map_embed_url || ''} className="input-field mt-1" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Drive Link</label>
-          <input type="url" name="drive_link" defaultValue={activity.drive_link || ''} className="input-field mt-1" />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Google Maps Embed URL <span className="text-red-500">*</span></label>
+            <input type="url" name="map_embed_url" required defaultValue={activity.map_embed_url || ''} className="input-field mt-1" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Drive Link <span className="text-red-500">*</span></label>
+            <input type="url" name="drive_link" required defaultValue={activity.drive_link || ''} className="input-field mt-1" />
+          </div>
         </div>
         <div className="flex gap-3 pt-4">
           <button type="submit" disabled={saving} className="btn-primary disabled:opacity-50">{saving ? 'Menyimpan...' : 'Simpan Perubahan'}</button>

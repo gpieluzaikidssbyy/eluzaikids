@@ -38,8 +38,7 @@ export default function AdminSchedulesPage() {
               <th className="px-4 py-3 font-semibold text-slate-600">Tanggal</th>
               <th className="px-4 py-3 font-semibold text-slate-600">Kategori</th>
               <th className="px-4 py-3 font-semibold text-slate-600">Pukul</th>
-              <th className="px-4 py-3 text-center font-semibold text-slate-600">Centang jika ada</th>
-              <th className="px-4 py-3 text-center font-semibold text-slate-600">Silang jika tidak ada</th>
+              <th className="px-4 py-3 text-center font-semibold text-slate-600">Status</th>
               <th className="px-4 py-3 font-semibold text-slate-600">Aksi</th>
             </tr>
           </thead>
@@ -52,16 +51,9 @@ export default function AdminSchedulesPage() {
                 <td className="px-4 py-3 text-slate-600">{s.time?.slice(0, 5)} WIB</td>
                 <td className="px-4 py-3 text-center">
                   {s.show_schedule !== false ? (
-                    <span className="text-lg font-bold text-green-600" aria-label="Ada">✓</span>
+                    <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-green-100 text-sm font-bold text-green-600" aria-label="Ada">✓</span>
                   ) : (
-                    <span className="text-slate-300">—</span>
-                  )}
-                </td>
-                <td className="px-4 py-3 text-center">
-                  {s.show_schedule === false ? (
-                    <span className="text-lg font-bold text-red-600" aria-label="Tidak ada">✕</span>
-                  ) : (
-                    <span className="text-slate-300">—</span>
+                    <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-red-100 text-sm font-bold text-red-600" aria-label="Tidak ada">✕</span>
                   )}
                 </td>
                 <td className="px-4 py-3">

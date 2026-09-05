@@ -67,56 +67,57 @@ export default function EditEventPage() {
         {error && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div>}
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Judul *</label>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Judul Event <span className="text-red-500">*</span></label>
           <input type="text" name="title" required defaultValue={event.title} className="input-field mt-1" />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Deskripsi</label>
-          <textarea name="description" rows={3} defaultValue={event.description || ''} className="input-field mt-1" />
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Deskripsi <span className="text-red-500">*</span></label>
+          <textarea name="description" rows={4} required defaultValue={event.description || ''} className="input-field mt-1" />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Tanggal Event *</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Tanggal Event <span className="text-red-500">*</span></label>
             <input type="date" name="event_date" required defaultValue={event.event_date?.slice(0, 10)} className="input-field mt-1" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Open Gate</label>
-            <input type="time" name="open_gate" defaultValue={event.open_gate || ''} className="input-field mt-1" />
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Batas Pendaftaran <span className="text-red-500">*</span></label>
+            <input type="datetime-local" name="registration_deadline" required defaultValue={event.registration_deadline?.slice(0, 16) || ''} className="input-field mt-1" />
           </div>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Jam Mulai</label>
-            <input type="time" name="start_time" defaultValue={event.start_time || ''} className="input-field mt-1" />
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Open Gate <span className="text-red-500">*</span></label>
+            <input type="time" name="open_gate" required defaultValue={event.open_gate || ''} className="input-field mt-1" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Kuota</label>
-            <input type="number" name="quota" min="1" max="500" defaultValue={event.quota || ''} className="input-field mt-1" />
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Jam Mulai <span className="text-red-500">*</span></label>
+            <input type="time" name="start_time" required defaultValue={event.start_time || ''} className="input-field mt-1" />
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Kuota <span className="text-red-500">*</span></label>
+            <input type="number" name="quota" min="1" max="500" required defaultValue={event.quota || ''} className="input-field mt-1" />
             <p className="mt-1 text-xs text-slate-500">Maksimal 500 pendaftar.</p>
           </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Lokasi</label>
-          <input type="text" name="location" defaultValue={event.location || ''} className="input-field mt-1" />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Google Maps Embed URL</label>
-          <input type="url" name="map_embed_url" defaultValue={event.map_embed_url || ''} className="input-field mt-1" />
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Lokasi <span className="text-red-500">*</span></label>
+            <input type="text" name="location" required defaultValue={event.location || ''} className="input-field mt-1" />
+          </div>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Drive Link</label>
-            <input type="url" name="drive_link" defaultValue={event.drive_link || ''} className="input-field mt-1" />
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Google Maps Embed URL <span className="text-red-500">*</span></label>
+            <input type="url" name="map_embed_url" required defaultValue={event.map_embed_url || ''} className="input-field mt-1" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Batas Pendaftaran</label>
-            <input type="datetime-local" name="registration_deadline" defaultValue={event.registration_deadline?.slice(0, 16) || ''} className="input-field mt-1" />
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Drive Link <span className="text-red-500">*</span></label>
+            <input type="url" name="drive_link" required defaultValue={event.drive_link || ''} className="input-field mt-1" />
           </div>
         </div>
 

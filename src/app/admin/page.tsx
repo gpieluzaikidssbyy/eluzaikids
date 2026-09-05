@@ -13,8 +13,12 @@ interface DashboardStats {
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [username, setUsername] = useState('');
 
   useEffect(() => {
+    fetch('/api/auth/session')
+      .then((r) => r.json())
+      .then((d) => setUsername(d.user?.username || d.user?.name || 'Admin'));
     fetch('/api/admin/stats')
       .then((r) => r.json())
       .then(setStats);
@@ -39,7 +43,7 @@ export default function AdminDashboard() {
   return (
     <div>
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
-        <div><p className="text-sm font-medium text-brand-600 dark:text-brand-400">Selamat datang kembali</p><h1 className="mt-1 font-display text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Ringkasan kegiatan</h1><p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Pantau pendaftaran, kegiatan, dan kehadiran dari satu tempat.</p></div>
+        <div><p className="text-sm font-medium text-brand-600 dark:text-brand-400">Selamat datang kembali, {username} 👋</p><h1 className="mt-1 font-display text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Ringkasan kegiatan</h1><p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Pantau pendaftaran, kegiatan, dan kehadiran dari satu tempat.</p></div>
         <Link href="/admin/events/create" className="btn-primary self-start sm:self-auto">Tambah event <span aria-hidden="true">+</span></Link>
       </div>
 

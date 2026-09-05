@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createHash, randomBytes } from 'node:crypto';
 import { createServiceClient } from '@/lib/supabase';
 import { sendPasswordResetEmail } from '@/lib/email';
+import { appBaseUrl } from '@/lib/helpers';
 
 export async function POST(request: NextRequest) {
   const { email } = await request.json();
@@ -20,7 +21,7 @@ export async function POST(request: NextRequest) {
       .eq('id', user.id);
     if (error) throw error;
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    const appUrl = appBaseUrl();
     if (!appUrl) throw new Error('NEXT_PUBLIC_APP_URL must be configured.');
     const parsedUrl = new URL(appUrl);
     if (process.env.NODE_ENV === 'production' && parsedUrl.protocol !== 'https:') {

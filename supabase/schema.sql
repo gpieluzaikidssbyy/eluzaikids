@@ -15,6 +15,8 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users(username) WHERE username IS NOT NULL;
+
 -- Schedules table
 CREATE TABLE IF NOT EXISTS schedules (
   id BIGSERIAL PRIMARY KEY,

@@ -10,6 +10,7 @@ import {
   verifyRecaptcha,
   getMapsLink,
   formatDateIndo,
+  appBaseUrl,
 } from '@/lib/helpers';
 import { sendConfirmationEmail } from '@/lib/email';
 
@@ -149,7 +150,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Send confirmation email
-    const qrUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/scan-qr/event/${eventId}/qr/${registration.id}`;
+    const qrUrl = `${appBaseUrl()}/api/scan-qr/event/${eventId}/qr/${registration.id}`;
     const mapsLink = getMapsLink(event.location);
 
     await sendConfirmationEmail(name, normalizedPhone, email, {

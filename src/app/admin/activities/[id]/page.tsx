@@ -3,25 +3,25 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import type { Event, EventRegistration } from '@/lib/types';
+import type { Activity, ActivityRegistration } from '@/lib/types';
 import { formatDateIndo } from '@/lib/helpers';
 
-type AdminEvent = Event & { registrations_count: number };
+type AdminActivity = Activity & { registrations_count: number };
 
-export default function AdminEventDetailsPage() {
+export default function AdminActivityDetailsPage() {
   const params = useParams();
-  const [event, setEvent] = useState<AdminEvent | null>(null);
-  const [registrations, setRegistrations] = useState<EventRegistration[]>([]);
+  const [activity, setActivity] = useState<AdminActivity | null>(null);
+  const [registrations, setRegistrations] = useState<ActivityRegistration[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadData = async () => {
-    const [eventResponse, registrationsResponse] = await Promise.all([
-      fetch(`/api/admin/events/${params.id}`),
-      fetch(`/api/admin/registrants?type=event&id=${params.id}`),
+    const [activityResponse, registrationsResponse] = await Promise.all([
+      fetch(`/api/admin/activities/${params.id}`),
+      fetch(`/api/admin/registrants?type=activity&id=${params.id}`),
     ]);
-    const eventData = await eventResponse.json();
+    const activityData = await activityResponse.json();
     const registrationData = await registrationsResponse.json();
-    setEvent(eventData);
+    setActivity(activityData);
     setRegistrations(registrationData.registrations || []);
     setLoading(false);
   };
@@ -32,7 +32,7 @@ export default function AdminEventDetailsPage() {
     return () => window.clearInterval(interval);
   }, [params.id]);
 
-  if (loading || !event) {
+  if (loading || !activity) {
     return <div className="flex min-h-[40vh] items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-500 border-t-transparent" /></div>;
   }
 
@@ -40,27 +40,27 @@ export default function AdminEventDetailsPage() {
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <Link href="/admin/events" className="text-sm font-medium text-brand-600 hover:underline">&larr; Back to Manage Event</Link>
-          <p className="mt-5 text-xs font-semibold uppercase tracking-[0.16em] text-brand-600">Event details</p>
-          <h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-slate-900 dark:text-white">{event.title}</h1>
-          <p className="mt-2 text-sm text-slate-500">{formatDateIndo(event.event_date)} · {event.location || 'Lokasi belum diisi'}</p>
+          <Link href="/admin/activities" className="text-sm font-medium text-brand-600 hover:underline">&larr; Back to Manage Activity</Link>
+          <p className="mt-5 text-xs font-semibold uppercase tracking-[0.16em] text-brand-600">Activity details</p>
+          <h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-slate-900 dark:text-white">{activity.title}</h1>
+          <p className="mt-2 text-sm text-slate-500">{activity.activity_date ? formatDateIndo(activity.activity_date) : 'Tanggal belum diatur'} · {activity.location || 'Lokasi belum diisi'}</p>
         </div>
         <div className="flex gap-2">
-          <Link href={`/admin/events/${event.id}/edit`} className="btn-secondary">Edit event</Link>
-          <Link href={`/admin/registrants/events/${event.id}`} className="btn-primary">Manage registrants</Link>
+          <Link href={`/admin/activities/${activity.id}/edit`} className="btn-secondary">Edit activity</Link>
+          <Link href={`/admin/registrants/activities/${activity.id}`} className="btn-primary">Manage registrants</Link>
         </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="card"><p className="text-xs uppercase tracking-wider text-slate-400">Open gate</p><p className="mt-2 text-lg font-bold text-slate-900 dark:text-white">{event.open_gate?.slice(0, 5) || '-'}</p></div>
-        <div className="card"><p className="text-xs uppercase tracking-wider text-slate-400">Mulai pukul</p><p className="mt-2 text-lg font-bold text-slate-900 dark:text-white">{event.start_time?.slice(0, 5) || '-'}</p></div>
-        <div className="card"><p className="text-xs uppercase tracking-wider text-slate-400">Kuota</p><p className="mt-2 text-lg font-bold text-slate-900 dark:text-white">{event.quota ?? 'Tanpa batas'}</p></div>
+        <div className="card"><p className="text-xs uppercase tracking-wider text-slate-400">Jam Mulai</p><p className="mt-2 text-lg font-bold text-slate-900 dark:text-white">{activity.start_time?.slice(0, 5) || '-'}</p></div>
+        <div className="card"><p className="text-xs uppercase tracking-wider text-slate-400">Kuota</p><p className="mt-2 text-lg font-bold text-slate-900 dark:text-white">{activity.quota ?? 'Tanpa batas'}</p></div>
         <div className="card"><p className="text-xs uppercase tracking-wider text-slate-400">Total pendaftar</p><p className="mt-2 text-lg font-bold text-brand-600">{registrations.length}</p></div>
+        <div className="card"><p className="text-xs uppercase tracking-wider text-slate-400">Drive Link</p>{activity.drive_link ? <a href={activity.drive_link} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 text-lg font-bold text-brand-600 hover:underline">Buka &rarr;</a> : <p className="mt-2 text-lg font-bold text-slate-900 dark:text-white">-</p>}</div>
       </div>
 
       <div className="card">
-        <h2 className="font-display text-lg font-bold text-slate-900 dark:text-white">Informasi event</h2>
-        <p className="mt-3 whitespace-pre-line text-sm leading-7 text-slate-600 dark:text-slate-400">{event.description || 'Deskripsi event belum diisi.'}</p>
+        <h2 className="font-display text-lg font-bold text-slate-900 dark:text-white">Informasi activity</h2>
+        <p className="mt-3 whitespace-pre-line text-sm leading-7 text-slate-600 dark:text-slate-400">{activity.description || 'Deskripsi activity belum diisi.'}</p>
       </div>
 
       <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -68,7 +68,7 @@ export default function AdminEventDetailsPage() {
           <h2 className="font-display text-lg font-bold text-slate-900 dark:text-white">Hasil form pendaftaran</h2>
           <p className="mt-1 text-sm text-slate-500">Data diperbarui otomatis setiap 5 detik.</p>
         </div>
-        <table className="min-w-[980px] w-full text-left text-sm">
+        <table className="min-w-[900px] w-full text-left text-sm">
           <thead className="border-b border-slate-200 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-800/50">
             <tr>
               <th className="table-heading">No</th>

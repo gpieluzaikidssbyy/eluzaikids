@@ -22,18 +22,38 @@ export async function POST(request: NextRequest) {
   const supabase = createServiceClient();
   const body = await request.json();
 
+  const title = String(body.title || '').trim();
+  const description = String(body.description || '').trim();
+  const activityDate = String(body.activity_date || '');
+  const startTime = String(body.start_time || '');
+  const location = String(body.location || '').trim();
+  const mapEmbedUrl = String(body.map_embed_url || '').trim();
+  const driveLink = String(body.drive_link || '').trim();
+  const quotaValue = body.quota;
+
+  if (!title || !description || !activityDate || !startTime || !location || !mapEmbedUrl || !driveLink || quotaValue === null || quotaValue === undefined || quotaValue === '') {
+    return NextResponse.json({ message: 'Semua field wajib diisi.' }, { status: 422 });
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(activityDate)) {
+    return NextResponse.json({ message: 'Tanggal activity tidak valid.' }, { status: 422 });
+  }
+  const quota = Number(quotaValue);
+  if (!Number.isInteger(quota) || quota < 1) {
+    return NextResponse.json({ message: 'Kuota harus berupa angka bulat minimal 1.' }, { status: 422 });
+  }
+
   const { data, error } = await supabase
     .from('activities')
     .insert({
-      title: body.title,
-      description: body.description || null,
+      title,
+      description,
       image: body.image || null,
-      drive_link: body.drive_link || null,
-      activity_date: body.activity_date || null,
-      start_time: body.start_time || null,
-      location: body.location || null,
-      map_embed_url: body.map_embed_url || null,
-      quota: body.quota || null,
+      drive_link: driveLink,
+      activity_date: activityDate,
+      start_time: startTime,
+      location,
+      map_embed_url: mapEmbedUrl,
+      quota,
     })
     .select()
     .single();

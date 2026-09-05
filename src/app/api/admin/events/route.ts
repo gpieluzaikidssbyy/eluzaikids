@@ -23,18 +23,25 @@ export async function POST(request: NextRequest) {
   const supabase = createServiceClient();
   const form = await request.formData();
   const title = String(form.get('title') || '').trim();
+  const description = String(form.get('description') || '').trim();
   const eventDate = String(form.get('event_date') || '');
   const openGate = String(form.get('open_gate') || '');
   const startTime = String(form.get('start_time') || '');
   const location = String(form.get('location') || '').trim();
   const quotaValue = String(form.get('quota') || '');
+  const mapEmbedUrl = String(form.get('map_embed_url') || '').trim();
+  const driveLink = String(form.get('drive_link') || '').trim();
+  const registrationDeadline = String(form.get('registration_deadline') || '');
   const poster = form.get('poster');
 
-  if (!title || !eventDate || !openGate || !startTime || !location || !quotaValue || !(poster instanceof File) || poster.size === 0) {
+  if (!title || !description || !eventDate || !openGate || !startTime || !location || !quotaValue || !mapEmbedUrl || !driveLink || !registrationDeadline || !(poster instanceof File) || poster.size === 0) {
     return NextResponse.json({ message: 'Semua field wajib diisi, termasuk poster event.' }, { status: 422 });
   }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(eventDate)) {
     return NextResponse.json({ message: 'Tanggal event tidak valid.' }, { status: 422 });
+  }
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(registrationDeadline)) {
+    return NextResponse.json({ message: 'Batas pendaftaran tidak valid.' }, { status: 422 });
   }
 
   const quota = Number(quotaValue);
@@ -67,13 +74,16 @@ export async function POST(request: NextRequest) {
     .from('events')
     .insert({
       title,
-      description: null,
+      description,
       event_date: `${eventDate}T00:00:00+07:00`,
       open_gate: openGate,
       start_time: startTime,
       location,
       quota,
       image: publicUrl.publicUrl,
+      map_embed_url: mapEmbedUrl,
+      drive_link: driveLink,
+      registration_deadline: `${registrationDeadline}:00+07:00`,
     })
     .select()
     .single();

@@ -1,6 +1,6 @@
 import * as QRCode from 'qrcode';
 import { Resend } from 'resend';
-import { formatDateIndo, formatTimeWib } from './helpers';
+import { appBaseUrl, formatDateIndo, formatTimeWib } from './helpers';
 
 interface EmailInfo {
   type: 'Event' | 'Activity';
@@ -206,7 +206,7 @@ function buildEmailHtml(
 <body>
   <div class="receipt">
     <div class="header">
-      <img class="logo" src="${escapeHtml(`${process.env.NEXT_PUBLIC_APP_URL}/images/logo-placeholder.webp`)}" alt="GPI Eluzai Kids">
+      <img class="logo" src="${escapeHtml(`${appBaseUrl()}/images/logo-placeholder.webp`)}" alt="GPI Eluzai Kids">
       <span class="brand"><span class="brand-name">GPI Eluzai Kids</span><span class="brand-caption">Bukti Pendaftaran ${kindLabel}</span></span>
     </div>
     <div class="content">
