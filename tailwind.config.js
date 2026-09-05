@@ -47,7 +47,7 @@ export default {
       },
       backgroundImage: {
         'gradient-hero': 'linear-gradient(135deg, var(--tw-gradient-from), var(--tw-gradient-to))',
-        'gradient-primary': 'linear-gradient(135deg, #3a86ff, #1a4fd0)',
+        'gradient-primary': 'linear-gradient(135deg, #2166ea, #1a4fd0)',
       },
     },
   },

@@ -49,7 +49,7 @@ export function ActivityCard({ activity, registrationsCount = 0 }: ActivityCardP
         <div className="mt-auto flex gap-3 pt-3">
           <Link
             href={`/activities/${activity.id}`}
-            className="flex-1 inline-flex items-center justify-center rounded-lg bg-brand-50 px-4 py-2.5 text-sm font-semibold text-brand-600 transition hover:bg-brand-100"
+            className="flex-1 inline-flex items-center justify-center rounded-lg bg-brand-50 px-4 py-2.5 text-sm font-semibold text-brand-700 transition hover:bg-brand-100"
           >
             Detail
           </Link>

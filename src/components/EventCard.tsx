@@ -49,7 +49,7 @@ export function EventCard({ event, registrationsCount = 0 }: EventCardProps) {
             </p>
           )}
           {event.quota && (
-            <p className={`flex items-center gap-2 font-medium ${isFull ? 'text-red-600 dark:text-red-400' : isLow ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+            <p className={`flex items-center gap-2 font-medium ${isFull ? 'text-red-600 dark:text-red-400' : isLow ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-700 dark:text-emerald-400'}`}>
               {isFull ? 'Kuota penuh' : `Sisa kuota: ${remaining} dari ${event.quota}`}
             </p>
           )}
@@ -57,7 +57,7 @@ export function EventCard({ event, registrationsCount = 0 }: EventCardProps) {
         <div className="mt-auto flex gap-3 pt-3">
           <Link
             href={`/events/${event.id}`}
-            className="flex-1 inline-flex items-center justify-center rounded-lg bg-brand-50 px-4 py-2.5 text-sm font-semibold text-brand-600 transition hover:bg-brand-100"
+            className="flex-1 inline-flex items-center justify-center rounded-lg bg-brand-50 px-4 py-2.5 text-sm font-semibold text-brand-700 transition hover:bg-brand-100"
           >
             Detail
           </Link>

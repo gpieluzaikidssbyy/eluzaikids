@@ -48,15 +48,15 @@
   }
 
   .gradient-primary {
-    background: linear-gradient(135deg, #3a86ff, #1a4fd0);
+    background: linear-gradient(135deg, #2166ea, #1a4fd0);
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-brand-500 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-600;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-brand-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700;
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-brand-50 px-6 py-3 font-semibold text-brand-600 transition hover:bg-brand-100;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-brand-50 px-6 py-3 font-semibold text-brand-700 transition hover:bg-brand-100;
   }
 
   .card {

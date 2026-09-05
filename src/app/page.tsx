@@ -1,28 +1,10 @@
-'use client';
-
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import type { Event, Activity, ChurchInfo } from '@/lib/types';
 import { EventCard } from '@/components/EventCard';
 import { ActivityCard } from '@/components/ActivityCard';
+import { HeroSlider } from '@/components/HeroSlider';
+import { fetchHomeData } from '@/lib/home-data';
 
-interface ScheduleSlot {
-  type: string;
-  schedule: {
-    day: string;
-    time: string;
-    type: string;
-    description: string | null;
-    nextDate: string;
-  } | null;
-}
-
-interface HomeData {
-  schedules: ScheduleSlot[];
-  events: (Event & { registrations_count: number })[];
-  activities: (Activity & { registrations_count: number })[];
-  churchInfo: ChurchInfo | null;
-}
+export const dynamic = 'force-dynamic';
 
 const MONTHS: Record<string, string> = {
   '01': 'Januari', '02': 'Februari', '03': 'Maret', '04': 'April',
@@ -30,41 +12,16 @@ const MONTHS: Record<string, string> = {
   '09': 'September', '10': 'Oktober', '11': 'November', '12': 'Desember',
 };
 
-export default function HomePage() {
-  const [data, setData] = useState<HomeData | null>(null);
-  const [currentSlide, setCurrentSlide] = useState(0);
+function formatDate(dateStr: string) {
+  const d = new Date(dateStr);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = MONTHS[String(d.getMonth() + 1).padStart(2, '0')];
+  const year = d.getFullYear();
+  return `${day} ${month} ${year}`;
+}
 
-  const slides = ['/img/home-1.svg', '/img/home-2.svg', '/img/home-3.svg'];
-
-  useEffect(() => {
-    const load = () => fetch('/api/home').then(r => r.json()).then(setData);
-    void load();
-    const interval = window.setInterval(load, 5000);
-    return () => window.clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, [slides.length]);
-
-  const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr);
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = MONTHS[String(d.getMonth() + 1).padStart(2, '0')];
-    const year = d.getFullYear();
-    return `${day} ${month} ${year}`;
-  };
-
-  if (!data) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-500 border-t-transparent" />
-      </div>
-    );
-  }
+export default async function HomePage() {
+  const data = await fetchHomeData();
 
   return (
     <>
@@ -81,7 +38,7 @@ export default function HomePage() {
               untuk masa depan gereja.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <a href="#jadwal" className="rounded-full bg-brand-500 px-6 py-2.5 text-sm font-medium text-white transition hover:bg-brand-400">
+              <a href="#jadwal" className="rounded-full bg-brand-600 px-6 py-2.5 text-sm font-medium text-white transition hover:bg-brand-700">
                 Lihat Jadwal
               </a>
               <a href="#event" className="rounded-full border border-white/30 bg-transparent px-6 py-2.5 text-sm font-medium text-white transition hover:bg-white/10">
@@ -90,47 +47,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Image slider */}
-          <div className="relative overflow-hidden rounded-2xl shadow-lg">
-            <div className="relative aspect-[4/3] overflow-hidden">
-              {slides.map((slide, i) => (
-                <div
-                  key={i}
-                  className={`absolute inset-0 transition-opacity duration-1000 ${i === currentSlide ? 'opacity-100' : 'opacity-0'}`}
-                >
-                  <img src={slide} alt="Gedung GPI Eluzai Kids" className="h-full w-full object-cover" />
-                </div>
-              ))}
-            </div>
-            <button
-              onClick={() => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length)}
-              className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 text-slate-700 shadow transition hover:bg-white"
-              aria-label="Sebelumnya"
-            >
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <button
-              onClick={() => setCurrentSlide((prev) => (prev + 1) % slides.length)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 text-slate-700 shadow transition hover:bg-white"
-              aria-label="Berikutnya"
-            >
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-            <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-2">
-              {slides.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCurrentSlide(i)}
-                  aria-label={`Slide ${i + 1}`}
-                  className={`h-2 rounded-full transition-all ${i === currentSlide ? 'w-5 bg-white' : 'w-2 bg-white/60'}`}
-                />
-              ))}
-            </div>
-          </div>
+          <HeroSlider />
         </div>
       </section>
 
@@ -145,7 +62,7 @@ export default function HomePage() {
           </div>
 
           {data.schedules.length === 0 || data.schedules.every((s) => !s.schedule) ? (
-            <div className="mt-8 rounded-2xl bg-slate-50 p-8 text-center text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+            <div className="mt-8 rounded-2xl bg-slate-50 p-8 text-center text-slate-600 dark:bg-slate-800 dark:text-slate-400">
               Belum ada jadwal ibadah yang tersedia.
             </div>
           ) : (
@@ -240,7 +157,7 @@ export default function HomePage() {
           </div>
 
           {data.events.length === 0 ? (
-            <div className="mt-8 rounded-2xl bg-white p-8 text-center text-slate-500 shadow-sm dark:bg-slate-800 dark:text-slate-400">
+            <div className="mt-8 rounded-2xl bg-white p-8 text-center text-slate-600 shadow-sm dark:bg-slate-800 dark:text-slate-400">
               Belum ada event yang akan datang.
             </div>
           ) : (
@@ -273,7 +190,7 @@ export default function HomePage() {
           </div>
 
           {data.activities.length === 0 ? (
-            <div className="mt-8 rounded-2xl bg-white p-8 text-center text-slate-500 shadow-sm dark:bg-slate-800 dark:text-slate-400">
+            <div className="mt-8 rounded-2xl bg-white p-8 text-center text-slate-600 shadow-sm dark:bg-slate-800 dark:text-slate-400">
               Belum ada kegiatan yang tersedia.
             </div>
           ) : (
@@ -407,10 +324,10 @@ export default function HomePage() {
                   <h3 className="mt-5 font-display text-lg font-bold text-slate-900 dark:text-slate-100">
                     {contact.label}
                   </h3>
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                     {contact.url ? 'Klik untuk terhubung' : 'Segera hadir'}
                   </p>
-                  <span className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-brand-600 transition group-hover:gap-2 dark:text-brand-400">
+                  <span className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-brand-700 transition group-hover:gap-2 dark:text-brand-300">
                     Kunjungi
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                       <path d="M5 12h14M12 5l7 7-7 7" />
