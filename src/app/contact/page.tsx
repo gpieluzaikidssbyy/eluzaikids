@@ -80,7 +80,7 @@ export default function ContactPage() {
               href={contact.url || '#'}
               target={contact.url ? '_blank' : undefined}
               rel="noopener noreferrer"
-              className={`group relative flex flex-col items-center rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-lg dark:border-slate-700 dark:bg-slate-800 ${!contact.url ? 'pointer-events-none opacity-60' : ''}`}
+              className={`group relative flex flex-col items-center rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-lg dark:border-slate-700 dark:bg-slate-800 ${!contact.url ? 'pointer-events-none grayscale' : ''}`}
             >
               <div className={`flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br ${contact.color} text-white shadow-md`}>
                 {contact.icon}

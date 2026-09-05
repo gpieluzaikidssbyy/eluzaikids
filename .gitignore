@@ -33,3 +33,6 @@ Thumbs.db
 # Ai Agent
 .ai-agent/
 
+
+.vercel
+.env*

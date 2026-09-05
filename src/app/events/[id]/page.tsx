@@ -28,7 +28,6 @@ export default function EventDetailPage() {
 
   const remaining = remainingQuota(event.quota, event.registrations_count);
   const isFull = remaining !== null && remaining <= 0;
-  const isLow = remaining !== null && remaining > 0 && remaining <= 5;
 
   return (
     <>
@@ -142,20 +141,14 @@ export default function EventDetailPage() {
                   </div>
                 )}
 
-                {event.quota && (
+                {event.quota && isFull && (
                   <div className="flex items-start gap-3">
                     <svg className="mt-0.5 h-5 w-5 shrink-0 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                       <path d="M17 20h5v-2a3 3 0 0 0-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 0 1 5.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 0 1 9.288 0M15 7a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />
                     </svg>
                     <div>
-                      <p className="font-semibold text-slate-900 dark:text-slate-100">Sisa Kuota</p>
-                      {isFull ? (
-                        <p className="font-medium text-red-600 dark:text-red-400">Kuota penuh</p>
-                      ) : isLow ? (
-                        <p className="font-medium text-amber-600 dark:text-amber-400">{remaining} dari {event.quota} slot</p>
-                      ) : (
-                        <p className="font-medium text-emerald-600 dark:text-emerald-400">{remaining} dari {event.quota} slot</p>
-                      )}
+                      <p className="font-semibold text-slate-900 dark:text-slate-100">Kuota</p>
+                      <p className="font-medium text-red-600 dark:text-red-400">Kuota penuh</p>
                     </div>
                   </div>
                 )}

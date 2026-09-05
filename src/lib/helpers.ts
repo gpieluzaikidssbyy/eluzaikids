@@ -28,25 +28,26 @@ export function normalizePhone(phone: string): string {
 
 /**
  * Generate registration number with format ELZ-YYMMDD-XXXX.
- * Sequential number is bounded by quota if set.
+ * YYMMDD is the registration date; XXXX is a sequential number
+ * (0001..quota) cumulative per event/activity.
  */
 export async function generateNomorRegistrasi(
   table: 'event_registrations' | 'activity_registrations',
+  foreignKey: 'event_id' | 'activity_id',
+  id: number,
   quota: number | null
 ): Promise<string> {
   const supabase = createServiceClient();
   const now = new Date();
   const datePrefix = `ELZ-${String(now.getFullYear()).slice(2)}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-`;
 
-  const todayPrefix = `${datePrefix}%`;
-
   const { count } = await supabase
     .from(table)
     .select('*', { count: 'exact', head: true })
-    .like('nomor_registrasi', todayPrefix);
+    .eq(foreignKey, id);
 
   if (quota !== null && (count ?? 0) >= quota) {
-    throw new Error('Kuota nomor registrasi untuk hari ini sudah habis.');
+    throw new Error('Kuota nomor registrasi sudah habis.');
   }
 
   const sequence = (count ?? 0) + 1;

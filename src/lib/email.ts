@@ -1,5 +1,5 @@
 import * as QRCode from 'qrcode';
-import { Resend } from 'resend';
+import nodemailer, { type Transporter } from 'nodemailer';
 import { appBaseUrl, formatDateIndo, formatTimeWib } from './helpers';
 
 interface EmailInfo {
@@ -73,7 +73,29 @@ export async function generateQrPng(data: string): Promise<Buffer> {
 }
 
 /**
- * Send registration confirmation email via Resend API.
+ * SMTP transporter using Gmail app password.
+ */
+function getTransport(): Transporter {
+  return nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    auth: {
+      user: process.env.GMAIL_USER,
+      pass: process.env.GMAIL_APP_PASSWORD,
+    },
+  });
+}
+
+function senderConfig() {
+  return {
+    email: process.env.GMAIL_USER || 'gpieluzaikidssbyy@gmail.com',
+    name: process.env.GMAIL_SENDER_NAME || 'GPI Eluzai Kids',
+  };
+}
+
+/**
+ * Send registration confirmation email via Gmail SMTP.
  */
 export async function sendConfirmationEmail(
   name: string,
@@ -83,23 +105,20 @@ export async function sendConfirmationEmail(
 ): Promise<void> {
   if (!email) return;
 
-  const apiKey = process.env.RESEND_API_KEY;
-  const senderEmail = process.env.RESEND_SENDER_EMAIL || 'noreply@gpieluzai.com';
-  const senderName = process.env.RESEND_SENDER_NAME || 'GPI Eluzai Kids';
-
-  if (!apiKey) {
-    console.warn('Resend API key not configured, skipping email.');
+  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+    console.warn('Gmail SMTP not configured, skipping email.');
     return;
   }
 
-  const resend = new Resend(apiKey);
+  const { email: senderEmail, name: senderName } = senderConfig();
 
   const qrDataUrl = await generateQrDataUrl(info.qr_data);
   const htmlContent = buildEmailHtml(name, info, qrDataUrl);
   const qrPng = await generateQrPng(info.qr_data);
+  const transport = getTransport();
 
   try {
-    const { error } = await resend.emails.send({
+    await transport.sendMail({
       from: `${senderName} <${senderEmail}>`,
       to: [email],
       subject: `Konfirmasi Pendaftaran: #${info.title}`,
@@ -111,28 +130,21 @@ export async function sendConfirmationEmail(
         },
       ],
     });
-
-    if (error) {
-      console.error('Failed to send email:', error);
-    }
   } catch (error) {
     console.error('Email sending error:', error);
   }
 }
 
 export async function sendPasswordResetEmail(email: string, resetUrl: string): Promise<void> {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
-    console.warn('Resend API key not configured, skipping password reset email.');
-    return;
+  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+    throw new Error('Gmail SMTP not configured. Set GMAIL_USER and GMAIL_APP_PASSWORD.');
   }
 
-  const senderEmail = process.env.RESEND_SENDER_EMAIL || 'noreply@gpieluzai.com';
-  const senderName = process.env.RESEND_SENDER_NAME || 'GPI Eluzai Kids';
-  const resend = new Resend(apiKey);
+  const { email: senderEmail, name: senderName } = senderConfig();
+  const transport = getTransport();
   const safeUrl = escapeHtml(resetUrl);
 
-  const { error } = await resend.emails.send({
+  await transport.sendMail({
     from: `${senderName} <${senderEmail}>`,
     to: [email],
     subject: 'Reset Password Admin - GPI Eluzai Kids',
@@ -145,8 +157,6 @@ export async function sendPasswordResetEmail(email: string, resetUrl: string): P
       </div>
     `,
   });
-
-  if (error) throw new Error(error.message);
 }
 
 /**

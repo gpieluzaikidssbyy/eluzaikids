@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate registration number and QR token
-    const nomorRegistrasi = await generateNomorRegistrasi('event_registrations', event.quota);
+    const nomorRegistrasi = await generateNomorRegistrasi('event_registrations', 'event_id', eventId, event.quota);
     const qrToken = generateQrToken();
     const qrData = `${nomorRegistrasi}.${qrToken}`;
 

@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const nomorRegistrasi = await generateNomorRegistrasi('activity_registrations', activity.quota);
+    const nomorRegistrasi = await generateNomorRegistrasi('activity_registrations', 'activity_id', activityId, activity.quota);
     const qrToken = generateQrToken();
     const qrData = `${nomorRegistrasi}.${qrToken}`;
 

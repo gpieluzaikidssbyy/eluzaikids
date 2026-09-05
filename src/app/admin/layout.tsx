@@ -57,7 +57,7 @@ export default function AdminLayout({
   const [sessionUsername, setSessionUsername] = useState('');
 
   useEffect(() => {
-    if (pathname === '/admin/login') { setAuthLoading(false); return; }
+    if (pathname === '/admin/login' || pathname === '/admin/reset-password') { setAuthLoading(false); return; }
     fetch('/api/auth/session').then((response) => response.json()).then((data) => {
       if (!data.authenticated) router.replace('/admin/login');
       else {
@@ -76,7 +76,7 @@ export default function AdminLayout({
     });
   }, [pathname]);
 
-  if (pathname === '/admin/login') return <>{children}</>;
+  if (pathname === '/admin/login' || pathname === '/admin/reset-password') return <>{children}</>;
   if (authLoading) return <div className="flex min-h-screen items-center justify-center bg-slate-950"><div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-500 border-t-transparent" /></div>;
 
   return (

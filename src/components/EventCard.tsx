@@ -11,7 +11,6 @@ interface EventCardProps {
 export function EventCard({ event, registrationsCount = 0 }: EventCardProps) {
   const remaining = remainingQuota(event.quota, registrationsCount);
   const isFull = remaining !== null && remaining <= 0;
-  const isLow = remaining !== null && remaining > 0 && remaining <= 5;
 
   return (
     <div className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md dark:border-slate-700 dark:bg-slate-800">
@@ -48,9 +47,9 @@ export function EventCard({ event, registrationsCount = 0 }: EventCardProps) {
               {event.location}
             </p>
           )}
-          {event.quota && (
-            <p className={`flex items-center gap-2 font-medium ${isFull ? 'text-red-600 dark:text-red-400' : isLow ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-700 dark:text-emerald-400'}`}>
-              {isFull ? 'Kuota penuh' : `Sisa kuota: ${remaining} dari ${event.quota}`}
+          {event.quota && isFull && (
+            <p className="flex items-center gap-2 font-medium text-red-600 dark:text-red-400">
+              Kuota penuh
             </p>
           )}
         </div>

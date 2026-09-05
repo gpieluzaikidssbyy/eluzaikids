@@ -266,7 +266,7 @@ export default function ScanQrPage() {
 
   // Scanner page
   return (
-    <div className="min-h-[80vh] bg-slate-900">
+    <div className="min-h-screen bg-slate-900">
       <div className="mx-auto max-w-lg px-4 py-8">
         <div className="text-center">
           <h1 className="font-display text-2xl font-bold text-white">
