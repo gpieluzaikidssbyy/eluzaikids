@@ -1,0 +1,27 @@
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+/node_modules
+/package-lock.json
+
+# Build output
+/.next
+/public/build
+
+# OS files
+.DS_Store
+Thumbs.db
+*.log
+
+# Editor folders
+.idea/
+.vscode/
+.cursor/
+.nova/
+.zed/
+
+# Supabase local storage (if any)
+/supabase/.local/

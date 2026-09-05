@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" role="img" aria-labelledby="title3 desc3">
+    <title id="title3">GPI Eluzai Kids Aula Ibadah</title>
+    <desc id="desc3">Ilustrasi aula ibadah GPI Eluzai Kids</desc>
+    <defs>
+        <linearGradient id="sky3" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#c4b5fd"/>
+            <stop offset="100%" stop-color="#ede9fe"/>
+        </linearGradient>
+    </defs>
+    <rect width="1200" height="600" fill="url(#sky3)"/>
+    <circle cx="250" cy="130" r="45" fill="#fb923c" opacity="0.9"/>
+    <circle cx="920" cy="120" r="25" fill="#f8fafc" opacity="0.8"/>
+    <ellipse cx="600" cy="520" rx="620" ry="120" fill="#a5b4fc" opacity="0.6"/>
+    <rect x="410" y="200" width="380" height="260" fill="#ffffff"/>
+    <rect x="370" y="180" width="125" height="280" fill="#f5d0fe"/>
+    <rect x="705" y="180" width="125" height="280" fill="#f5d0fe"/>
+    <polygon points="420,150 435,150 370,240" fill="#a855f7"/>
+    <rect x="438" y="120" width="30" height="100" fill="#a855f7"/>
+    <polygon points="565,185 602,125 640,185" fill="#8b5cf6"/>
+    <rect x="470" y="300" width="115" height="70" fill="#1e1b4b" rx="8"/>
+    <rect x="488" y="320" width="80" height="34" fill="#c084fc"/>
+    <rect x="615" y="300" width="115" height="70" fill="#1e1b4b" rx="8"/>
+    <rect x="633" y="320" width="80" height="34" fill="#c084fc"/>
+    <rect x="600" y="380" width="40" height="80" fill="#7c3aed"/>
+    <polygon points="616,458 600,510 584,458" fill="#7c3aed"/>
+    <line x1="600" y1="510" x2="600" y2="545" stroke="#6d28d9" stroke-width="5"/>
+    <g fill="#fbbf24">
+        <circle cx="455" cy="265" r="8"/>
+        <circle cx="500" cy="250" r="8"/>
+        <circle cx="545" cy="265" r="8"/>
+        <circle cx="658" cy="265" r="8"/>
+        <circle cx="703" cy="250" r="8"/>
+    </g>
+    <text x="600" y="580" text-anchor="middle" font-family="Figtree, sans-serif" font-size="34" font-weight="700" fill="#4c1d95">Beribadah dengan Sukacita</text>
+</svg>

@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" role="img" aria-labelledby="title2 desc2">
+    <title id="title2">GPI Eluzai Kids Halaman Depan</title>
+    <desc id="desc2">Ilustrasi halaman depan dan area bermain GPI Eluzai Kids</desc>
+    <defs>
+        <linearGradient id="sky2" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#fcd34d"/>
+            <stop offset="100%" stop-color="#fffbeb"/>
+        </linearGradient>
+    </defs>
+    <rect width="1200" height="600" fill="url(#sky2)"/>
+    <circle cx="300" cy="110" r="55" fill="#f97316" opacity="0.9"/>
+    <circle cx="880" cy="140" r="28" fill="#818cf8" opacity="0.6"/>
+    <ellipse cx="600" cy="520" rx="620" ry="120" fill="#bef264" opacity="0.7"/>
+    <rect x="430" y="210" width="340" height="240" fill="#ffffff"/>
+    <rect x="390" y="190" width="115" height="260" fill="#fee2e2"/>
+    <rect x="695" y="190" width="115" height="260" fill="#fee2e2"/>
+    <polygon points="430,150 445,150 390,240" fill="#f97316"/>
+    <rect x="448" y="120" width="28" height="100" fill="#f97316"/>
+    <polygon points="560,190 600,130 640,190" fill="#f59e0b"/>
+    <rect x="470" y="320" width="120" height="65" fill="#831843" rx="8"/>
+    <rect x="488" y="340" width="84" height="32" fill="#fbbf24"/>
+    <rect x="610" y="320" width="120" height="65" fill="#831843" rx="8"/>
+    <rect x="628" y="340" width="84" height="32" fill="#fbbf24"/>
+    <rect x="600" y="375" width="38" height="75" fill="#92400e"/>
+    <rect x="560" y="240" width="44" height="120" fill="#cbd5e1"/>
+    <circle cx="582" cy="300" r="6" fill="#334155"/>
+    <rect x="520" y="455" width="160" height="8" rx="4" fill="#b45309"/>
+    <circle cx="560" cy="470" r="10" fill="#16a34a"/>
+    <rect x="550" y="480" width="30" height="120" rx="10" fill="#16a34a"/>
+    <circle cx="640" cy="500" r="9" fill="#ef4444"/>
+    <rect x="632" y="508" width="26" height="100" rx="9" fill="#ef4444"/>
+    <text x="600" y="575" text-anchor="middle" font-family="Figtree, sans-serif" font-size="34" font-weight="700" fill="#7c2d12">Selamat Datang!</text>
+</svg>
