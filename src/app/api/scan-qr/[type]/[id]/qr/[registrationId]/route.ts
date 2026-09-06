@@ -24,6 +24,10 @@ export async function GET(
       return NextResponse.json({ message: 'Registration not found' }, { status: 404 });
     }
 
+    if (!registration.qr_token) {
+      return NextResponse.json({ message: 'QR sudah tidak berlaku.' }, { status: 410 });
+    }
+
     const qrData = `${registration.nomor_registrasi}.${registration.qr_token}`;
 
     const pngBuffer = await QRCode.toBuffer(qrData, {

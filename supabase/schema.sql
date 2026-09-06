@@ -17,6 +17,14 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users(username) WHERE username IS NOT NULL;
 
+-- Main admin account
+-- username: admin@gpieluzaikids
+-- password: admin@gpieluzaikids1234
+-- recovery email: codingaja001@gmail.com
+INSERT INTO users (name, email, username, password, is_admin, email_verified_at)
+SELECT 'Main Admin', 'codingaja001@gmail.com', 'admin@gpieluzaikids', '$2b$10$yT1wAieZdEsLPRXlWArrHug/psTogI8tS5x1/aVbu04W9Z/fmDKmq', TRUE, NOW()
+WHERE NOT EXISTS (SELECT 1 FROM users WHERE username = 'admin@gpieluzaikids');
+
 -- Schedules table
 CREATE TABLE IF NOT EXISTS schedules (
   id BIGSERIAL PRIMARY KEY,

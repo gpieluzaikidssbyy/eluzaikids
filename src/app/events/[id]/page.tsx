@@ -111,7 +111,7 @@ export default function EventDetailPage() {
                     </svg>
                     <div>
                       <p className="font-semibold text-slate-900 dark:text-slate-100">Open Gate</p>
-                      <p>{event.open_gate} WIB</p>
+                      <p>{event.open_gate.slice(0, 5)} WIB</p>
                     </div>
                   </div>
                 )}
@@ -123,7 +123,7 @@ export default function EventDetailPage() {
                     </svg>
                     <div>
                       <p className="font-semibold text-slate-900 dark:text-slate-100">Mulai Pukul</p>
-                      <p>{event.start_time} WIB</p>
+                      <p>{event.start_time.slice(0, 5)} WIB</p>
                     </div>
                   </div>
                 )}

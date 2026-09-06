@@ -7,25 +7,39 @@ import { z } from 'zod';
 export const registrationSchema = z.object({
   name: z
     .string()
+    .trim()
     .min(1, 'Nama pendaftar wajib diisi.')
-    .max(255, 'Nama maksimal 255 karakter.'),
+    .max(255, 'Nama maksimal 255 karakter.')
+    .regex(
+      /^[\p{L}][\p{L}\s'.-]*$/u,
+      'Nama hanya boleh berisi huruf (tanpa simbol atau emoji).'
+    ),
   phone: z
     .string()
+    .trim()
     .min(1, 'Nomor HP wajib diisi.')
     .regex(
-      /^(\+62|62|0)8[1-9][0-9]{7,11}$/,
-      'Format nomor HP tidak valid (contoh: 0812xxxxxxx).'
+      /^08[1-9][0-9]{7,10}$/,
+      'Nomor HP hanya boleh berisi angka dengan format 08xxxxxxxx (contoh: 0812345678).'
     ),
   email: z
     .string()
+    .trim()
     .min(1, 'Email wajib diisi.')
-    .email('Format email tidak valid.'),
+    .email('Format email tidak valid.')
+    .refine(
+      (value) => /@(gmail|email)\.com$/i.test(value),
+      'Email harus menggunakan domain @gmail.com atau @email.com.'
+    ),
   jumlah_hadir: z
     .coerce
     .number({ invalid_type_error: 'Jumlah yang hadir wajib diisi.' })
     .int()
     .min(1, 'Jumlah yang hadir minimal 1.')
     .max(8, 'Jumlah yang hadir maksimal 8.'),
+  consent: z.literal(true, {
+    errorMap: () => ({ message: 'Anda harus menyetujui data digunakan untuk keperluan pendaftaran.' }),
+  }),
   honeypot: z.string().max(0, 'Terdeteksi sebagai bot.').optional().or(z.literal('')),
   'g-recaptcha-response': z
     .string()

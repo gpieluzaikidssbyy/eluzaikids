@@ -147,7 +147,11 @@ export async function POST(request: NextRequest) {
       registered_at: registration.registered_at,
     });
 
-    return NextResponse.json({ message: 'Pendaftaran berhasil!' });
+    return NextResponse.json({
+      message: 'Pendaftaran berhasil!',
+      qr_url: qrUrl,
+      nomor_registrasi: nomorRegistrasi,
+    });
   } catch (error) {
     console.error('Registration error:', error);
     return NextResponse.json(

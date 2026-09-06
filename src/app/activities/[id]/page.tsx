@@ -110,7 +110,7 @@ export default function ActivityDetailPage() {
                     </svg>
                     <div>
                       <p className="font-semibold text-slate-900 dark:text-slate-100">Pukul</p>
-                      <p>{activity.start_time} WIB</p>
+                      <p>{activity.start_time.slice(0, 5)} WIB</p>
                     </div>
                   </div>
                 )}

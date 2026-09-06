@@ -49,6 +49,30 @@ export async function POST(
         .eq('qr_token', token)
         .single();
       registration = data;
+
+      if (!registration) {
+        // QR token did not match — it may have been consumed by an earlier scan.
+        const { data: byNomor } = await supabase
+          .from(table)
+          .select('*')
+          .eq(foreignKey, id)
+          .eq('nomor_registrasi', nomorRegistrasi)
+          .single();
+        if (byNomor?.hadir) {
+          return NextResponse.json({
+            success: false,
+            message: 'QR sudah digunakan. Peserta sudah tercatat hadir.',
+            name: byNomor.name,
+            jumlah_hadir: byNomor.jumlah_hadir,
+          });
+        }
+        if (byNomor) {
+          return NextResponse.json(
+            { success: false, message: 'QR sudah tidak berlaku.' },
+            { status: 410 }
+          );
+        }
+      }
     } else {
       // Manual input: just registration number
       const suffix = String(qr_data).replace(/\D/g, '').slice(-4).padStart(4, '0');
@@ -77,10 +101,10 @@ export async function POST(
       });
     }
 
-    // Mark as present
+    // Mark as present and consume the QR token so the QR cannot be reused
     const { error } = await supabase
       .from(table)
-      .update({ hadir: true, scanned_at: new Date().toISOString() })
+      .update({ hadir: true, scanned_at: new Date().toISOString(), qr_token: null })
       .eq('id', registration.id)
       .eq('hadir', false);
 

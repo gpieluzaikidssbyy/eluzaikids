@@ -61,7 +61,7 @@ export default function EditActivityPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Jam Mulai <span className="text-red-500">*</span></label>
-            <input type="time" name="start_time" required defaultValue={activity.start_time || ''} className="input-field mt-1" />
+            <input type="time" name="start_time" required defaultValue={activity.start_time?.slice(0, 5) || ''} className="input-field mt-1" />
           </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">

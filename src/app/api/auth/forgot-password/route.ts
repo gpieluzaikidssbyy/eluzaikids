@@ -27,7 +27,12 @@ export async function POST(request: NextRequest) {
     if (process.env.NODE_ENV === 'production' && parsedUrl.protocol !== 'https:') {
       throw new Error('Password reset URL must use HTTPS in production.');
     }
-    await sendPasswordResetEmail(user.email, `${appUrl}/admin/reset-password?token=${token}`);
+
+    try {
+      await sendPasswordResetEmail(user.email, `${appUrl}/admin/reset-password?token=${token}`);
+    } catch (error) {
+      console.error('Password reset email error:', error);
+    }
   }
 
   return NextResponse.json({ message: 'Jika email terdaftar, instruksi reset password akan dikirim.' });

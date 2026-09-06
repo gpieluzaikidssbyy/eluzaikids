@@ -186,7 +186,7 @@ export default function ScanQrPage() {
         <div className="w-full max-w-sm">
           <div className="rounded-3xl bg-white p-8 shadow-2xl dark:bg-slate-900">
             <div className="text-center">
-              <img src="/images/logo-placeholder.webp" alt="GPI Eluzai Kids" className="mx-auto h-14 w-14 object-contain" />
+              <img src="/images/logo.webp" alt="GPI Eluzai Kids" className="mx-auto h-14 w-14 object-contain" />
               <h1 className="mt-4 font-display text-xl font-bold text-slate-900 dark:text-white">Presensi {type === 'event' ? 'Event' : 'Kegiatan'}</h1>
               <p className="mt-1 truncate text-sm text-slate-500 dark:text-slate-400">{eventTitle || 'GPI Eluzai Kids'}</p>
             </div>

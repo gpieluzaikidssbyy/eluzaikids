@@ -97,7 +97,7 @@ export default function AdminLayout({
         aria-label="Navigasi admin"
       >
         <div className="flex h-16 items-center justify-between border-b border-slate-200 px-4 dark:border-slate-700 lg:hidden">
-          <div className="flex items-center gap-2 font-display font-bold text-slate-900 dark:text-white"><img src="/images/logo-placeholder.webp" alt="GPI Eluzai Kids" className="h-9 w-9 object-contain" />{sessionUsername}</div>
+          <div className="flex items-center gap-2 font-display font-bold text-slate-900 dark:text-white"><img src="/images/logo.webp" alt="GPI Eluzai Kids" className="h-9 w-9 object-contain" />{sessionUsername}</div>
           <button
             onClick={() => setSidebarOpen(false)}
             aria-label="Tutup menu"
@@ -111,7 +111,7 @@ export default function AdminLayout({
 
         <div className="hidden border-b border-slate-100 px-5 py-5 lg:block dark:border-slate-800">
           <div className="flex items-center gap-3">
-            <img src="/images/logo-placeholder.webp" alt="GPI Eluzai Kids" className="h-10 w-10 object-contain" />
+            <img src="/images/logo.webp" alt="GPI Eluzai Kids" className="h-10 w-10 object-contain" />
             <div><p className="font-display text-sm font-bold text-slate-900 dark:text-white">Eluzai Kids</p><p className="text-xs text-slate-400">Selamat datang kembali, {sessionUsername} 👋</p></div>
           </div>
         </div>
@@ -229,7 +229,7 @@ export default function AdminLayout({
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
-          <img src="/images/logo-placeholder.webp" alt="GPI Eluzai Kids" className="h-8 w-8 shrink-0 object-contain" />
+          <img src="/images/logo.webp" alt="GPI Eluzai Kids" className="h-8 w-8 shrink-0 object-contain" />
           <div className="min-w-0 flex-1">
             <p className="truncate text-[10px] font-medium uppercase tracking-wider text-slate-400">GPI Eluzai Kids</p>
             <p className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">{sessionUsername}</p>
@@ -240,7 +240,7 @@ export default function AdminLayout({
           <div className="border-b border-slate-200 bg-white px-6 py-4 dark:border-slate-800 dark:bg-slate-900">
             <div className="mx-auto flex max-w-7xl items-center justify-between">
               <div className="flex min-w-0 items-center gap-3">
-                <img src="/images/logo-placeholder.webp" alt="GPI Eluzai Kids" className="h-9 w-9 object-contain" />
+                <img src="/images/logo.webp" alt="GPI Eluzai Kids" className="h-9 w-9 object-contain" />
                 <div>
                   <p className="text-xs font-medium uppercase tracking-wider text-slate-400">GPI Eluzai Kids</p>
                   <p className="mt-0.5 text-sm font-medium text-slate-700 dark:text-slate-200">Admin Panel</p>

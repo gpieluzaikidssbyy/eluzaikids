@@ -28,7 +28,7 @@ export function Navbar() {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
           <Image
-            src="/images/logo-placeholder.webp"
+            src="/images/logo.webp"
             alt="GPI Eluzai Kids"
             width={225}
             height={225}

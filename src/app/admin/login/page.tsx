@@ -37,7 +37,7 @@ export default function AdminLoginPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-950 px-4 py-10">
       <div className="w-full max-w-md rounded-3xl bg-white p-7 shadow-2xl dark:bg-slate-900">
-        <div className="text-center"><Image src="/images/logo-placeholder.webp" alt="GPI Eluzai Kids" width={64} height={64} className="mx-auto object-contain" /><p className="mt-4 text-xs font-semibold uppercase tracking-[0.18em] text-brand-600">Admin access</p><h1 className="mt-2 font-display text-2xl font-bold text-slate-900 dark:text-white">Welcome back</h1><p className="mt-2 text-sm text-slate-500">Masuk untuk mengelola website GPI Eluzai Kids.</p></div>
+        <div className="text-center"><Image src="/images/logo.webp" alt="GPI Eluzai Kids" width={64} height={64} className="mx-auto object-contain" /><p className="mt-4 text-xs font-semibold uppercase tracking-[0.18em] text-brand-600">Admin access</p><h1 className="mt-2 font-display text-2xl font-bold text-slate-900 dark:text-white">Welcome back</h1><p className="mt-2 text-sm text-slate-500">Masuk untuk mengelola website GPI Eluzai Kids.</p></div>
         {!forgotOpen ? <form onSubmit={login} className="mt-7 space-y-4">
           {error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</p>}
           <label><span className="field-label">Username</span><input value={username} onChange={(event) => setUsername(event.target.value.slice(0, 64))} maxLength={64} required autoComplete="username" className="input-field mt-1" /></label>

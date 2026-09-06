@@ -52,49 +52,32 @@ export default function SchedulePage() {
           {weekSchedule.map((day) => (
             <div
               key={day.day}
-              className={`rounded-2xl border-2 p-6 transition ${
-                day.schedules.length > 0
-                  ? 'border-green-500 bg-green-50 dark:bg-green-950/30'
-                  : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800'
-              }`}
+              className="rounded-2xl border-2 border-green-500 bg-green-50 p-6 dark:bg-green-950/30"
             >
-              <div className="flex items-center justify-between">
-                <h3 className="font-display text-lg font-bold text-slate-900 dark:text-slate-100">
-                  {day.day}
-                </h3>
-                {day.schedules.length > 0 ? (
-                  <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700 dark:bg-green-900/40 dark:text-green-300">
-                    Ada Jadwal
-                  </span>
-                ) : (
-                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500 dark:bg-slate-700 dark:text-slate-400">
-                    Libur
-                  </span>
-                )}
-              </div>
+              <h3 className="font-display text-lg font-bold text-slate-900 dark:text-slate-100">
+                {day.day}
+              </h3>
 
-              {day.schedules.length > 0 && (
-                <div className="mt-4 space-y-3">
-                  {day.schedules.map((schedule) => (
-                    <div key={schedule.id} className="flex items-start gap-3">
-                      <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-green-500" />
-                      <div>
-                        <p className="font-semibold text-slate-900 dark:text-slate-100">
-                          {schedule.type}
+              <div className="mt-4 space-y-3">
+                {day.schedules.map((schedule) => (
+                  <div key={schedule.id} className="flex items-start gap-3">
+                    <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-green-500" />
+                    <div>
+                      <p className="font-semibold text-slate-900 dark:text-slate-100">
+                        {schedule.type}
+                      </p>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">
+                        {schedule.time.slice(0, 5)} WIB
+                      </p>
+                      {schedule.description && (
+                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                          {schedule.description}
                         </p>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">
-                          {schedule.time.slice(0, 5)} WIB
-                        </p>
-                        {schedule.description && (
-                          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                            {schedule.description}
-                          </p>
-                        )}
-                      </div>
+                      )}
                     </div>
-                  ))}
-                </div>
-              )}
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
         </div>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase';
+import { randomBytes } from 'node:crypto';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,9 +24,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Registration not found' }, { status: 404 });
     }
 
+    // Marking present consumes the QR token (QR expires);
+    // unmarking issues a fresh token so a new valid QR can be generated.
     const { error } = await supabase
       .from(table)
-      .update({ hadir: !reg.hadir, scanned_at: !reg.hadir ? new Date().toISOString() : null })
+      .update({
+        hadir: !reg.hadir,
+        scanned_at: !reg.hadir ? new Date().toISOString() : null,
+        qr_token: !reg.hadir ? null : randomBytes(16).toString('hex'),
+      })
       .eq('id', registrationId);
 
     if (error) return NextResponse.json({ message: error.message }, { status: 500 });
@@ -87,7 +94,7 @@ export async function POST(request: NextRequest) {
 
     await supabase
       .from(table)
-      .update({ hadir: true, scanned_at: new Date().toISOString() })
+      .update({ hadir: true, scanned_at: new Date().toISOString(), qr_token: null })
       .eq('id', reg.id);
 
     return NextResponse.json({ success: true, message: 'Berhasil!', name: reg.name });

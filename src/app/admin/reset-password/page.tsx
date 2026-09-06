@@ -49,7 +49,7 @@ function ResetPasswordForm() {
     <main className="flex min-h-screen items-center justify-center bg-slate-950 px-4 py-10">
       <div className="w-full max-w-md rounded-3xl bg-white p-7 shadow-2xl dark:bg-slate-900">
         <div className="text-center">
-          <Image src="/images/logo-placeholder.webp" alt="GPI Eluzai Kids" width={64} height={64} className="mx-auto object-contain" />
+          <Image src="/images/logo.webp" alt="GPI Eluzai Kids" width={64} height={64} className="mx-auto object-contain" />
           <h1 className="mt-4 font-display text-2xl font-bold text-slate-900 dark:text-white">Buat Password Baru</h1>
         </div>
         <form onSubmit={submit} className="mt-7 space-y-4">

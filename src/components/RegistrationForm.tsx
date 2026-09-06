@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { registrationSchema } from '@/lib/validations';
 
 interface RegistrationFormProps {
   registrableType: 'event' | 'activity';
@@ -28,6 +29,8 @@ export function RegistrationForm({
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [qrUrl, setQrUrl] = useState('');
+  const [nomorRegistrasi, setNomorRegistrasi] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [recaptchaReady, setRecaptchaReady] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -82,6 +85,15 @@ export function RegistrationForm({
     setErrors({});
 
     const formData = new FormData(e.currentTarget);
+    const payload = {
+      name: formData.get('name'),
+      phone: formData.get('phone'),
+      email: formData.get('email'),
+      jumlah_hadir: formData.get('jumlah_hadir'),
+      consent: formData.get('consent') === 'on',
+      honeypot: formData.get('honeypot'),
+      id: registrableId,
+    };
 
     try {
       const captchaResponse = formData.get('g-recaptcha-response');
@@ -91,17 +103,27 @@ export function RegistrationForm({
         return;
       }
 
+      const validation = registrationSchema.safeParse({
+        ...payload,
+        'g-recaptcha-response': captchaResponse,
+      });
+      if (!validation.success) {
+        const fieldErrors: Record<string, string> = {};
+        validation.error.issues.forEach((issue) => {
+          const field = issue.path.join('.');
+          if (!fieldErrors[field]) fieldErrors[field] = issue.message;
+        });
+        setErrors(fieldErrors);
+        setIsSubmitting(false);
+        return;
+      }
+
       const response = await fetch(`/api/register/${registrableType}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: formData.get('name'),
-          phone: formData.get('phone'),
-          email: formData.get('email'),
-          jumlah_hadir: formData.get('jumlah_hadir'),
+          ...payload,
           'g-recaptcha-response': captchaResponse,
-          honeypot: formData.get('honeypot'),
-          id: registrableId,
         }),
       });
 
@@ -117,6 +139,8 @@ export function RegistrationForm({
       }
 
       setSuccess(true);
+      setQrUrl(typeof data.qr_url === 'string' ? data.qr_url : '');
+      setNomorRegistrasi(typeof data.nomor_registrasi === 'string' ? data.nomor_registrasi : '');
     } catch {
       setErrors({ general: 'Terjadi kesalahan saat mengirim data.' });
     } finally {
@@ -139,10 +163,30 @@ export function RegistrationForm({
           Terima kasih telah mendaftar untuk <strong>{registrableTitle}</strong>.
           {registrableType === 'event' ? ' cek email untuk QR Code.' : ' Silakan cek email untuk konfirmasi.'}
         </p>
+        {qrUrl && (
+          <div className="mt-4 rounded-xl border border-green-200 bg-white p-4 dark:border-green-900 dark:bg-slate-900">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              QR Code Presensi
+            </p>
+            {nomorRegistrasi && (
+              <p className="mt-1 font-mono text-xs font-semibold text-brand-600">{nomorRegistrasi}</p>
+            )}
+            <img
+              src={qrUrl}
+              alt="QR Code Presensi"
+              className="mx-auto mt-3 h-44 w-44 border border-slate-200 p-2 dark:border-slate-700"
+            />
+            <p className="mt-2 text-xs text-slate-500">
+              Simpan atau tunjukkan barcode ini saat presensi di lokasi.
+            </p>
+          </div>
+        )}
         <button
           onClick={() => {
             setIsOpen(false);
             setSuccess(false);
+            setQrUrl('');
+            setNomorRegistrasi('');
           }}
           className="mt-4 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-700"
         >
@@ -252,6 +296,22 @@ export function RegistrationForm({
                 </select>
                 {errors.jumlah_hadir && (
                   <p className="mt-1 text-xs text-red-500">{errors.jumlah_hadir}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="flex items-start gap-2">
+                  <input
+                    type="checkbox"
+                    name="consent"
+                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                  />
+                  <span className="text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+                    Saya menyetujui data ini akan digunakan untuk keperluan pendaftaran
+                  </span>
+                </label>
+                {errors.consent && (
+                  <p className="mt-1 text-xs text-red-500">{errors.consent}</p>
                 )}
               </div>
 

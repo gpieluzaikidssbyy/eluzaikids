@@ -77,10 +77,10 @@ export function formatDateIndo(date: string | Date): string {
 }
 
 /**
- * Format time to WIB.
+ * Format time to WIB (HH:MM WIB, without seconds).
  */
 export function formatTimeWib(time: string): string {
-  return `${time} WIB`;
+  return `${time.slice(0, 5)} WIB`;
 }
 
 /**

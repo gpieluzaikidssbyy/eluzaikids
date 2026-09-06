@@ -1,6 +1,8 @@
 import * as QRCode from 'qrcode';
-import nodemailer, { type Transporter } from 'nodemailer';
-import { appBaseUrl, formatDateIndo, formatTimeWib } from './helpers';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { Resend } from 'resend';
+import { appBaseUrl, formatTimeWib } from './helpers';
 
 interface EmailInfo {
   type: 'Event' | 'Activity';
@@ -51,17 +53,6 @@ function formatEmailDate(value: string | Date, includeTime = false): string {
 }
 
 /**
- * Generate QR code as base64 data URL.
- */
-export async function generateQrDataUrl(data: string): Promise<string> {
-  return QRCode.toDataURL(data, {
-    width: 300,
-    margin: 2,
-    color: { dark: '#000000', light: '#ffffff' },
-  });
-}
-
-/**
  * Generate QR code as PNG buffer.
  */
 export async function generateQrPng(data: string): Promise<Buffer> {
@@ -73,29 +64,84 @@ export async function generateQrPng(data: string): Promise<Buffer> {
 }
 
 /**
- * SMTP transporter using Gmail app password.
+ * Fallback logo URL used inside email HTML (hosted path).
  */
-function getTransport(): Transporter {
-  return nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
-    auth: {
-      user: process.env.GMAIL_USER,
-      pass: process.env.GMAIL_APP_PASSWORD,
-    },
-  });
-}
-
-function senderConfig() {
-  return {
-    email: process.env.GMAIL_USER || 'gpieluzaikidssbyy@gmail.com',
-    name: process.env.GMAIL_SENDER_NAME || 'GPI Eluzai Kids',
-  };
+function hostedLogoUrl(): string {
+  return `${appBaseUrl()}/images/logo1.webp`;
 }
 
 /**
- * Send registration confirmation email via Gmail SMTP.
+ * Embed the church logo as an inline attachment (cid:logo) so it renders in
+ * email clients that block data:/external images (e.g. Gmail). Falls back to
+ * the hosted URL when the local file cannot be read.
+ * The email header uses the dedicated letterhead file (images/logo1.webp);
+ * the website logo is untouched.
+ */
+function resolveLogo(): { src: string; buffer: Buffer | null } {
+  try {
+    const buffer = readFileSync(path.join(process.cwd(), 'public', 'images', 'logo1.webp'));
+    return { src: 'cid:logo', buffer };
+  } catch {
+    return { src: hostedLogoUrl(), buffer: null };
+  }
+}
+
+function logoInlineAttachment(logo: { buffer: Buffer | null }): Array<{
+  filename: string;
+  content: Buffer;
+  contentId: string;
+}> {
+  return logo.buffer ? [{ filename: 'logo1.webp', content: logo.buffer, contentId: 'logo' }] : [];
+}
+
+function senderConfig() {
+  const email = process.env.RESEND_SENDER_EMAIL || 'onboarding@resend.dev';
+  const name = process.env.RESEND_SENDER_NAME || 'GPI Eluzai Kids';
+  return { email, name };
+}
+
+function getResend(): Resend {
+  return new Resend(process.env.RESEND_API_KEY);
+}
+
+/**
+ * Shared email styles for a consistent, professional look across templates.
+ * Uses a system font stack (email clients strip web fonts) plus generous
+ * spacing, hierarchy and alignment.
+ */
+const emailStyles = `
+    body { margin: 0; padding: 32px 16px; background: #f1f5f9; color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+    .receipt { max-width: 600px; margin: 0 auto; overflow: hidden; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; }
+    .header { padding: 22px 28px; background: #2563eb; color: #ffffff; line-height: 1.2; }
+    .logo { width: 44px; height: 44px; margin-right: 12px; vertical-align: middle; object-fit: cover; border-radius: 50%; background: #ffffff; padding: 3px; box-sizing: border-box; }
+    .brand-name { display: inline-block; vertical-align: middle; font-size: 17px; font-weight: 700; letter-spacing: .01em; }
+    .content { padding: 32px 28px; }
+    h1 { margin: 0; font-size: 22px; line-height: 1.3; text-transform: uppercase; letter-spacing: .02em; color: #0f172a; }
+    .intro { margin: 14px 0 26px; color: #475569; font-size: 14px; line-height: 1.7; }
+    .section { padding: 22px 0; border-top: 1px solid #e2e8f0; }
+    h2 { margin: 0 0 18px; color: #2563eb; font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+    .row { padding: 5px 0 13px; }
+    .label { display: block; margin-bottom: 3px; color: #64748b; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+    .value { color: #0f172a; font-size: 14px; font-weight: 600; line-height: 1.5; }
+    .qr { padding: 6px 0 16px; text-align: center; }
+    .qr img { width: 200px; height: 200px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; }
+    .qr p { margin: 10px 0 0; color: #94a3b8; font-size: 12px; }
+    .link { color: #2563eb; text-decoration: underline; word-break: break-all; }
+    .buttonspace { margin: 22px 0 8px; }
+    .reset-button { display: inline-block; padding: 13px 20px; border-radius: 6px; background: #2563eb; color: #ffffff !important; font-size: 14px; font-weight: 600; text-decoration: none; }
+    .maps-button { display: inline-block; margin-top: 6px; padding: 11px 16px; border-radius: 6px; background: #2563eb; color: #ffffff !important; font-size: 13px; font-weight: 600; text-decoration: none; }
+    .fallback { border-top: 1px solid #e2e8f0; margin-top: 26px; padding-top: 18px; }
+    .fallback p { margin: 0; color: #64748b; font-size: 13px; line-height: 1.6; }
+    .muted { margin: 22px 0 0; color: #94a3b8; font-size: 13px; line-height: 1.6; }
+    .footer { padding: 20px 28px; border-top: 1px solid #e2e8f0; color: #94a3b8; font-size: 11px; line-height: 1.6; text-align: center; }
+`;
+
+/**
+ * Send registration confirmation email via Resend.
+ * The QR code and church logo are embedded as inline attachments so they
+ * render directly in the email body (no external Drive/files).
+ * For testing, the "from" is the Resend shared sender (onboarding@resend.dev);
+ * swap RESEND_SENDER_EMAIL to the verified domain once available.
  */
 export async function sendConfirmationEmail(
   name: string,
@@ -105,28 +151,29 @@ export async function sendConfirmationEmail(
 ): Promise<void> {
   if (!email) return;
 
-  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
-    console.warn('Gmail SMTP not configured, skipping email.');
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('Resend API key not configured, skipping email.');
     return;
   }
 
   const { email: senderEmail, name: senderName } = senderConfig();
-
-  const qrDataUrl = await generateQrDataUrl(info.qr_data);
-  const htmlContent = buildEmailHtml(name, info, qrDataUrl);
+  const logo = resolveLogo();
   const qrPng = await generateQrPng(info.qr_data);
-  const transport = getTransport();
+  const htmlContent = buildEmailHtml(name, info, logo.src);
 
   try {
-    await transport.sendMail({
+    await getResend().emails.send({
       from: `${senderName} <${senderEmail}>`,
       to: [email],
       subject: `Konfirmasi Pendaftaran: #${info.title}`,
       html: htmlContent,
+      headers: { 'X-Entity-Ref-ID': info.nomor_registrasi },
       attachments: [
+        ...logoInlineAttachment(logo),
         {
           filename: `QR-${info.nomor_registrasi}.png`,
           content: qrPng,
+          contentId: 'qr-presensi',
         },
       ],
     });
@@ -136,38 +183,60 @@ export async function sendConfirmationEmail(
 }
 
 export async function sendPasswordResetEmail(email: string, resetUrl: string): Promise<void> {
-  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
-    throw new Error('Gmail SMTP not configured. Set GMAIL_USER and GMAIL_APP_PASSWORD.');
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error('Resend API key not configured. Set RESEND_API_KEY.');
   }
 
   const { email: senderEmail, name: senderName } = senderConfig();
-  const transport = getTransport();
+  const logo = resolveLogo();
   const safeUrl = escapeHtml(resetUrl);
 
-  await transport.sendMail({
+  await getResend().emails.send({
     from: `${senderName} <${senderEmail}>`,
     to: [email],
     subject: 'Reset Password Admin - GPI Eluzai Kids',
     html: `
-      <div style="max-width:560px;margin:0 auto;padding:28px;font-family:Arial,sans-serif;color:#0f172a;border:1px solid #e2e8f0;border-radius:12px">
-        <h2 style="margin:0 0 12px;color:#2563eb">Reset Password Admin</h2>
-        <p>Gunakan tombol berikut untuk membuat password baru akun admin Anda.</p>
-        <p><a href="${safeUrl}" style="display:inline-block;padding:12px 18px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;font-weight:700">Reset Password</a></p>
-        <p style="color:#64748b;font-size:13px">Tautan ini berlaku selama 1 jam dan hanya dapat digunakan satu kali.</p>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    ${emailStyles}
+  </style>
+</head>
+<body>
+  <div class="receipt">
+    <div class="header">
+      <img class="logo" src="${escapeHtml(logo.src)}" alt="GPI Eluzai Kids">
+      <span class="brand-name">GPI Eluzai Kids</span>
+    </div>
+    <div class="content">
+      <h1>Reset Password Admin</h1>
+      <p class="intro"><strong>Permintaan reset password diterima.</strong><br>Gunakan tombol berikut untuk membuat password baru akun admin Anda.</p>
+      <p class="buttonspace"><a href="${safeUrl}" class="reset-button">Reset Password</a></p>
+      <div class="fallback">
+        <p>Jika tombol tidak berfungsi, salin tautan berikut ke browser Anda:</p>
+        <p style="margin-top:8px;"><a class="link" href="${safeUrl}">${safeUrl}</a></p>
       </div>
+      <p class="muted">Tautan ini berlaku selama 1 jam dan hanya dapat digunakan satu kali.</p>
+    </div>
+    <div class="footer">
+      © 2026 GPI ELUZAI KIDS. ALL RIGHTS RESERVED
+    </div>
+  </div>
+</body>
+</html>
     `,
+    attachments: [...logoInlineAttachment(logo)],
   });
 }
 
 /**
- * Build HTML email content.
+ * Build the confirmation email HTML content.
  */
-function buildEmailHtml(
-  name: string,
-  info: EmailInfo,
-  qrDataUrl: string
-): string {
-  const dateStr = info.date ? formatDateIndo(info.date) : '-';
+function buildEmailHtml(name: string, info: EmailInfo, logoSrc: string): string {
+  const dateStr = info.date ? formatEmailDate(info.date) : '-';
   const timeStr = info.time ? `${info.time.slice(0, 5)} WIB` : '-';
   const openGateStr = info.open_gate ? formatTimeWib(info.open_gate) : null;
   const kindLabel = info.type === 'Event' ? 'Event' : 'Activity';
@@ -181,7 +250,7 @@ function buildEmailHtml(
   const safeTime = escapeHtml(timeStr);
   const safeOpenGate = escapeHtml(openGateStr);
   const mapsButton = info.maps_link
-    ? `<a class="maps-button" href="${escapeHtml(info.maps_link)}">Buka lokasi di Google Maps</a>`
+    ? `<div class="row"><span class="label">Lokasi</span><span class="value">${safeLocation}</span><a class="maps-button" href="${escapeHtml(info.maps_link)}">Buka lokasi di Google Maps</a></div>`
     : '';
 
   return `
@@ -191,63 +260,47 @@ function buildEmailHtml(
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { margin: 0; padding: 24px 12px; background: #f1f5f9; color: #0f172a; font-family: Arial, Helvetica, sans-serif; }
-    .receipt { max-width: 620px; margin: 0 auto; overflow: hidden; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; }
-    .header { padding: 18px 24px; background: #2563eb; color: #ffffff; }
-    .brand { display: inline-block; vertical-align: middle; }
-    .logo { width: 42px; height: 42px; margin-right: 10px; vertical-align: middle; object-fit: contain; background: #ffffff; border-radius: 6px; }
-    .brand-name { display: inline-block; vertical-align: middle; font-size: 16px; font-weight: 700; }
-    .brand-caption { display: block; margin-top: 3px; font-size: 10px; font-weight: 400; opacity: .85; }
-    .content { padding: 28px 24px; }
-    h1 { margin: 0; font-size: 20px; }
-    h2 { margin: 0 0 18px; color: #2563eb; font-size: 12px; letter-spacing: .12em; }
-    .intro { margin: 12px 0 24px; color: #475569; font-size: 13px; line-height: 1.7; }
-    .section { padding: 20px 0; border-top: 1px solid #e2e8f0; }
-    .row { padding: 9px 0; }
-    .label { display: block; margin-bottom: 4px; color: #64748b; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
-    .value { color: #0f172a; font-size: 13px; font-weight: 600; line-height: 1.5; }
-    .qr { margin: 8px auto 0; text-align: center; }
-    .qr img { width: 190px; height: 190px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 5px; }
-    .qr p { margin: 9px 0 0; color: #64748b; font-size: 11px; }
-    .maps-button { display: inline-block; margin-top: 8px; padding: 10px 14px; border-radius: 5px; background: #2563eb; color: #ffffff !important; font-size: 12px; font-weight: 700; text-decoration: none; }
-    .footer { padding: 18px 24px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 11px; line-height: 1.6; text-align: center; }
+    ${emailStyles}
   </style>
 </head>
 <body>
   <div class="receipt">
     <div class="header">
-      <img class="logo" src="${escapeHtml(`${appBaseUrl()}/images/logo-placeholder.webp`)}" alt="GPI Eluzai Kids">
-      <span class="brand"><span class="brand-name">GPI Eluzai Kids</span><span class="brand-caption">Bukti Pendaftaran ${kindLabel}</span></span>
+      <img class="logo" src="${escapeHtml(logoSrc)}" alt="GPI Eluzai Kids">
+      <span class="brand-name">GPI Eluzai Kids</span>
     </div>
     <div class="content">
       <h1>Bukti Pendaftaran ${kindLabel}</h1>
-      <p class="intro"><strong>Pendaftaran berhasil!</strong><br>Terima kasih telah melakukan pendaftaran. Simpan tanda terima ini sebagai bukti pendaftaran Anda.</p>
+      <p class="intro">
+        <strong>Pendaftaran berhasil!</strong><br>
+        Terima kasih telah melakukan pendaftaran.<br>
+        Simpan tanda terima ini sebagai bukti pendaftaran Anda.
+      </p>
 
       <div class="section">
-        <h2>REGISTRATION DETAILS</h2>
+        <h2>Registration Details</h2>
         <div class="row"><span class="label">Registration Code</span><span class="value">${safeRegistration}</span></div>
         <div class="row"><span class="label">Jumlah yang Hadir</span><span class="value">${escapeHtml(info.jumlah_hadir)} orang</span></div>
-        <div class="row qr"><span class="label">QR Code Presensi</span><br><img src="${qrDataUrl}" alt="QR Code Pendaftaran"><p>Tunjukkan QR ini saat presensi di lokasi</p></div>
+        <div class="row"><span class="label">QR Code Presensi</span><div class="qr"><img src="cid:qr-presensi" alt="QR Code Presensi"><p>Tunjukkan QR ini saat presensi di lokasi</p></div></div>
         <div class="row"><span class="label">${kindLabel}</span><span class="value">${safeTitle}</span></div>
         <div class="row"><span class="label">Tanggal ${kindLabel}</span><span class="value">${safeDate}</span></div>
         ${openGateStr ? `<div class="row"><span class="label">Open Gate</span><span class="value">${safeOpenGate}</span></div>` : ''}
         ${info.time ? `<div class="row"><span class="label">Waktu ${kindLabel}</span><span class="value">${safeTime}</span></div>` : ''}
-        ${info.location ? `<div class="row"><span class="label">Lokasi</span><span class="value">${safeLocation}</span></div>` : ''}
+        ${info.location && !mapsButton ? `<div class="row"><span class="label">Lokasi</span><span class="value">${safeLocation}</span></div>` : ''}
         ${mapsButton}
       </div>
 
       <div class="section">
-        <h2>PARTICIPANT DETAILS</h2>
+        <h2>Participant Details</h2>
         <div class="row"><span class="label">Nama Lengkap</span><span class="value">${safeName}</span></div>
         <div class="row"><span class="label">Nomor WhatsApp</span><span class="value">${safePhone}</span></div>
-        <div class="row"><span class="label">Alamat Email</span><span class="value"><a href="mailto:${safeEmail}" style="color:#2563eb;">${safeEmail}</a></span></div>
+        <div class="row"><span class="label">Alamat Email</span><span class="value"><a class="link" href="mailto:${safeEmail}">${safeEmail}</a></span></div>
       </div>
 
       <div class="section"><span class="label">Tanggal Pendaftaran</span><span class="value">${escapeHtml(formatEmailDate(info.registered_at, true))}</span></div>
     </div>
     <div class="footer">
-      Terima kasih dan sampai bertemu!<br><br>
-      © 2026 GPI ELUZAI KIDS. ALL RIGHTS RESERVED •
+      © 2026 GPI ELUZAI KIDS. ALL RIGHTS RESERVED
     </div>
   </div>
 </body>

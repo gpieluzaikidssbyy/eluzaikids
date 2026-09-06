@@ -15,7 +15,7 @@ export async function GET() {
 
   const visibleSchedules = (schedules || []).filter((s) => s.show_schedule !== false);
 
-  const schedule = WEEKDAYS.map((day) => ({
+  const schedule = WEEKDAYS.filter((day) => visibleSchedules.some((s) => s.day === day)).map((day) => ({
     day,
     schedules: visibleSchedules.filter((s) => s.day === day),
   }));
