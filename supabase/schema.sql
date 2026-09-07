@@ -19,10 +19,10 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users(username) WHERE us
 
 -- Main admin account
 -- username: admin@gpieluzaikids
--- password: admin@gpieluzaikids1234
+-- password: admin@gpieluzaikids123
 -- recovery email: codingaja001@gmail.com
 INSERT INTO users (name, email, username, password, is_admin, email_verified_at)
-SELECT 'Main Admin', 'codingaja001@gmail.com', 'admin@gpieluzaikids', '$2b$10$yT1wAieZdEsLPRXlWArrHug/psTogI8tS5x1/aVbu04W9Z/fmDKmq', TRUE, NOW()
+SELECT 'Main Admin', 'codingaja001@gmail.com', 'admin@gpieluzaikids', '$2b$10$dWQXKPpCTJWOvVEG8lgEOODITjhrMH707tPFXlc47E.5yM5cRupUG', TRUE, NOW()
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE username = 'admin@gpieluzaikids');
 
 -- Schedules table

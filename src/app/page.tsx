@@ -210,16 +210,16 @@ export default async function HomePage() {
       </section>
 
       {/* Location */}
-      {data.churchInfo?.map_embed_url && (
-        <section id="lokasi" className="py-12 sm:py-16">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <div className="text-center">
-              <h2 className="font-display text-2xl font-bold text-slate-900 sm:text-3xl dark:text-slate-100">
-                Lokasi Kami
-              </h2>
-              <div className="mx-auto mt-3 h-1 w-16 rounded gradient-primary" />
-            </div>
+      <section id="lokasi" className="py-12 sm:py-16">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="text-center">
+            <h2 className="font-display text-2xl font-bold text-slate-900 sm:text-3xl dark:text-slate-100">
+              Lokasi Kami
+            </h2>
+            <div className="mx-auto mt-3 h-1 w-16 rounded gradient-primary" />
+          </div>
 
+          {data.churchInfo?.map_embed_url ? (
             <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200 shadow-md dark:border-slate-700">
               <iframe
                 src={data.churchInfo.map_embed_url}
@@ -231,35 +231,39 @@ export default async function HomePage() {
                 title="Lokasi GPI Eluzai Kids"
               />
             </div>
+          ) : (
+            <div className="mt-6 flex h-[300px] items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 px-8 text-center text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+              Google Maps belum dikonfigurasi.
+            </div>
+          )}
 
-            {data.churchInfo.address && (
-              <div className="mx-auto mt-6 max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 dark:border-slate-700 dark:bg-slate-800">
-                <div className="flex items-start justify-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl gradient-primary text-white">
-                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 0 1-2.827 0l-4.244-4.243a8 8 0 1 1 11.314 0z" />
-                      <path d="M15 11a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />
-                    </svg>
-                  </div>
-                  <div className="text-start">
-                    <p className="font-semibold text-slate-900 dark:text-slate-100">Alamat</p>
-                    <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{data.churchInfo.address}</p>
-                  </div>
+          {data.churchInfo?.address && (
+            <div className="mx-auto mt-6 max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 dark:border-slate-700 dark:bg-slate-800">
+              <div className="flex items-start justify-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl gradient-primary text-white">
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 0 1-2.827 0l-4.244-4.243a8 8 0 1 1 11.314 0z" />
+                    <path d="M15 11a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />
+                  </svg>
+                </div>
+                <div className="text-start">
+                  <p className="font-semibold text-slate-900 dark:text-slate-100">Alamat</p>
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{data.churchInfo.address}</p>
                 </div>
               </div>
-            )}
-
-            <div className="mt-6 text-center">
-              <Link href="/location?from=lokasi" className="inline-flex items-center gap-2 rounded-full gradient-primary px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90">
-                Lihat Halaman Lokasi
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M13 7l5 5-5 5M6 12h12" />
-                </svg>
-              </Link>
             </div>
+          )}
+
+          <div className="mt-6 text-center">
+            <Link href="/location?from=lokasi" className="inline-flex items-center gap-2 rounded-full gradient-primary px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90">
+              Lihat Halaman Lokasi
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M13 7l5 5-5 5M6 12h12" />
+              </svg>
+            </Link>
           </div>
-        </section>
-      )}
+        </div>
+      </section>
 
       {/* Contacts */}
       <section id="kontak" className="bg-slate-50 py-12 sm:py-16 dark:bg-slate-800/40">
