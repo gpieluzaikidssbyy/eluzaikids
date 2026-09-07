@@ -159,8 +159,11 @@ export default function AdminLayout({
               </div>
               {expanded[group] && (
                 <div className="ml-5 border-l border-slate-200 py-1 pl-3 dark:border-slate-700">
-                  {groupedLinks[group].map((link) => {
-                    const active = pathname === link.href || pathname.startsWith(`${link.href}/`);
+                  {groupedLinks[group].map((link, index) => {
+                    const isGroupHome = index === 0;
+                    const active = isGroupHome
+                      ? pathname === link.href
+                      : pathname === link.href || pathname.startsWith(`${link.href}/`);
                     return (
                       <Link
                         key={link.href}
@@ -195,22 +198,22 @@ export default function AdminLayout({
           ))}
           <div className="mt-3 border-t border-slate-200 pt-3 dark:border-slate-700">
             <Link
-              href="/"
-              onClick={() => setSidebarOpen(false)}
-              className="flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium text-slate-500 transition hover:bg-slate-50 hover:text-brand-600 dark:text-slate-400 dark:hover:bg-slate-800/70 dark:hover:text-brand-400"
-            >
-              <span>View site</span>
-              <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10" /></svg>
-            </Link>
-          </div>
-          <div className="mt-2 border-t border-slate-200 pt-3 dark:border-slate-700">
-            <Link
               href="/admin/settings"
               onClick={() => setSidebarOpen(false)}
               className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-500 transition hover:bg-slate-50 hover:text-brand-600 dark:text-slate-400 dark:hover:bg-slate-800/70 dark:hover:text-brand-400"
             >
               <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
               Settings
+            </Link>
+          </div>
+          <div className="mt-2 border-t border-slate-200 pt-3 dark:border-slate-700">
+            <Link
+              href="/"
+              onClick={() => setSidebarOpen(false)}
+              className="flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium text-slate-500 transition hover:bg-slate-50 hover:text-brand-600 dark:text-slate-400 dark:hover:bg-slate-800/70 dark:hover:text-brand-400"
+            >
+              <span>View site</span>
+              <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10" /></svg>
             </Link>
           </div>
         </nav>

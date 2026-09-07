@@ -139,6 +139,7 @@ export async function POST(request: NextRequest) {
       qr_data: qrData,
       qr_url: qrUrl,
       title: activity.title,
+      tema: null,
       date: activity.activity_date,
       open_gate: null,
       time: activity.start_time,

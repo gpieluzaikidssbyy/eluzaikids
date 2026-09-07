@@ -49,6 +49,11 @@ export default function CreateEventPage() {
         </div>
 
         <div>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Tema</label>
+          <input type="text" name="tema" className="input-field mt-1" placeholder="Contoh: Petualangan Keluarga Bahagia" />
+        </div>
+
+        <div>
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Deskripsi *</label>
           <textarea name="description" rows={4} required className="input-field mt-1" placeholder="Tuliskan informasi lengkap tentang event ini." />
         </div>
@@ -77,9 +82,25 @@ export default function CreateEventPage() {
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Kuota *</label>
-            <input type="number" name="quota" min="1" max="500" required className="input-field mt-1" />
-            <p className="mt-1 text-xs text-slate-500">Maksimal 500 pendaftar.</p>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Kuota</label>
+            <div className="mt-1 flex gap-2">
+              <input type="number" name="quota" min="1" max="500" className="input-field w-full" placeholder="Contoh: 100" />
+              <button type="button" className="shrink-0 rounded-xl border border-slate-200 px-3 text-sm font-medium text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800" title="Set kuota tidak terbatas" onClick={(e) => {
+                const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+                const wasUnlimited = input.disabled;
+                input.disabled = !wasUnlimited;
+                if (wasUnlimited) input.name = 'quota';
+                else input.removeAttribute('name');
+                e.currentTarget.classList.toggle('bg-brand-50', wasUnlimited);
+                e.currentTarget.classList.toggle('text-brand-600', wasUnlimited);
+                e.currentTarget.classList.toggle('border-brand-300', wasUnlimited);
+                e.currentTarget.classList.toggle('border-slate-200', !wasUnlimited);
+                e.currentTarget.classList.toggle('text-slate-500', !wasUnlimited);
+              }}>
+                Unlimited
+              </button>
+            </div>
+            <p className="mt-1 text-xs text-slate-500">Maksimal 500 pendaftar, atau pilih Unlimited.</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Lokasi *</label>
@@ -89,12 +110,12 @@ export default function CreateEventPage() {
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Google Maps Embed URL *</label>
-            <input type="url" name="map_embed_url" required className="input-field mt-1" placeholder="https://www.google.com/maps/embed?pb=..." />
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Google Maps Embed URL</label>
+            <input type="url" name="map_embed_url" className="input-field mt-1" placeholder="https://www.google.com/maps/embed?pb=..." />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Drive Link *</label>
-            <input type="url" name="drive_link" required className="input-field mt-1" placeholder="https://drive.google.com/..." />
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Drive Link</label>
+            <input type="url" name="drive_link" className="input-field mt-1" placeholder="https://drive.google.com/..." />
           </div>
         </div>
 

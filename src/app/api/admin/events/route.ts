@@ -23,18 +23,19 @@ export async function POST(request: NextRequest) {
   const supabase = createServiceClient();
   const form = await request.formData();
   const title = String(form.get('title') || '').trim();
+  const tema = String(form.get('tema') || '').trim() || null;
   const description = String(form.get('description') || '').trim();
   const eventDate = String(form.get('event_date') || '');
   const openGate = String(form.get('open_gate') || '');
   const startTime = String(form.get('start_time') || '');
   const location = String(form.get('location') || '').trim();
-  const quotaValue = String(form.get('quota') || '');
+  const quotaValue = String(form.get('quota') || '').trim();
   const mapEmbedUrl = String(form.get('map_embed_url') || '').trim();
   const driveLink = String(form.get('drive_link') || '').trim();
   const registrationDeadline = String(form.get('registration_deadline') || '');
   const poster = form.get('poster');
 
-  if (!title || !description || !eventDate || !openGate || !startTime || !location || !quotaValue || !mapEmbedUrl || !driveLink || !registrationDeadline || !(poster instanceof File) || poster.size === 0) {
+  if (!title || !description || !eventDate || !openGate || !startTime || !location || !registrationDeadline || !(poster instanceof File) || poster.size === 0) {
     return NextResponse.json({ message: 'Semua field wajib diisi, termasuk poster event.' }, { status: 422 });
   }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(eventDate)) {
@@ -44,9 +45,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'Batas pendaftaran tidak valid.' }, { status: 422 });
   }
 
-  const quota = Number(quotaValue);
-  if (!Number.isInteger(quota) || quota < 1 || quota > 500) {
-    return NextResponse.json({ message: 'Kuota harus berupa angka bulat antara 1 sampai 500.' }, { status: 422 });
+  let quota: number | null = null;
+  if (quotaValue) {
+    quota = Number(quotaValue);
+    if (!Number.isInteger(quota) || quota < 1 || quota > 500) {
+      return NextResponse.json({ message: 'Kuota harus berupa angka bulat antara 1 sampai 500.' }, { status: 422 });
+    }
   }
 
   const extension = poster.name.toLowerCase().split('.').pop();
@@ -74,6 +78,7 @@ export async function POST(request: NextRequest) {
     .from('events')
     .insert({
       title,
+      tema,
       description,
       event_date: `${eventDate}T00:00:00+07:00`,
       open_gate: openGate,
@@ -81,8 +86,8 @@ export async function POST(request: NextRequest) {
       location,
       quota,
       image: publicUrl.publicUrl,
-      map_embed_url: mapEmbedUrl,
-      drive_link: driveLink,
+      map_embed_url: mapEmbedUrl || null,
+      drive_link: driveLink || null,
       registration_deadline: `${registrationDeadline}:00+07:00`,
     })
     .select()

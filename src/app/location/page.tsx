@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import type { ChurchInfo } from '@/lib/types';
+import { BackToHome } from '@/components/BackToHome';
+import { LocationSkeleton } from '@/components/skeletons';
 
 export default function LocationPage() {
   const [churchInfo, setChurchInfo] = useState<ChurchInfo | null>(null);
@@ -14,20 +16,22 @@ export default function LocationPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  if (loading) {
+    return <LocationSkeleton />;
+  }
+
   return (
     <>
       <section className="gradient-hero py-12 text-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <h1 className="font-display text-3xl font-bold sm:text-4xl">Lokasi Kami</h1>
+          <BackToHome />
+          <h1 className="mt-4 font-display text-3xl font-bold sm:text-4xl">Lokasi Kami</h1>
           <p className="mt-2 text-white/80">Temukan lokasi GPI Eluzai Kids</p>
         </div>
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
-        {loading ? (
-          <div className="flex min-h-[50vh] items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-500 border-t-transparent" /></div>
-        ) : (
-          <div className="grid gap-8 lg:grid-cols-[1.3fr_0.7fr]">
+        <div className="grid gap-8 lg:grid-cols-[1.3fr_0.7fr]">
             <div className="card overflow-hidden p-0">
               {churchInfo?.map_embed_url ? (
                 <iframe
@@ -67,7 +71,6 @@ export default function LocationPage() {
               </div>
             </div>
           </div>
-        )}
       </section>
     </>
   );

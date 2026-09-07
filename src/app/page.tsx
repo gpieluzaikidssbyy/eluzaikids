@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { EventCard } from '@/components/EventCard';
 import { ActivityCard } from '@/components/ActivityCard';
 import { HeroSlider } from '@/components/HeroSlider';
+import { ScrollToSection } from '@/components/ScrollToSection';
 import { fetchHomeData } from '@/lib/home-data';
 
 export const dynamic = 'force-dynamic';
@@ -25,6 +26,8 @@ export default async function HomePage() {
 
   return (
     <>
+      <ScrollToSection />
+
       {/* Hero */}
       <section className="relative gradient-hero text-white">
         <div className="mx-auto grid max-w-7xl items-center gap-8 px-4 py-12 sm:px-6 sm:py-16 lg:grid-cols-2 lg:gap-12">
@@ -113,12 +116,6 @@ export default async function HomePage() {
                           {slot.schedule.description}
                         </p>
                       )}
-                      <p className="mt-3 flex items-center gap-2 text-sm font-medium text-green-700 dark:text-green-300">
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
-                        </svg>
-                        {slot.schedule.time.slice(0, 5)} WIB
-                      </p>
                     </>
                   ) : (
                     <>
@@ -136,7 +133,7 @@ export default async function HomePage() {
           )}
 
           <div className="mt-6 text-center">
-            <Link href="/schedule" className="inline-flex items-center gap-2 rounded-full gradient-primary px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90">
+            <Link href="/schedule?from=jadwal" className="inline-flex items-center gap-2 rounded-full gradient-primary px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90">
               Lihat Halaman Jadwal
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                 <path d="M13 7l5 5-5 5M6 12h12" />
@@ -163,13 +160,13 @@ export default async function HomePage() {
           ) : (
             <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {data.events.map((event) => (
-                <EventCard key={event.id} event={event} registrationsCount={event.registrations_count} />
+                <EventCard key={event.id} event={event} registrationsCount={event.registrations_count} section="event" />
               ))}
             </div>
           )}
 
           <div className="mt-6 text-center">
-            <Link href="/events" className="inline-flex items-center gap-2 rounded-full gradient-primary px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90">
+            <Link href="/events?from=event" className="inline-flex items-center gap-2 rounded-full gradient-primary px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90">
               Lihat Semua Event
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                 <path d="M13 7l5 5-5 5M6 12h12" />
@@ -196,13 +193,13 @@ export default async function HomePage() {
           ) : (
             <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {data.activities.map((activity) => (
-                <ActivityCard key={activity.id} activity={activity} registrationsCount={activity.registrations_count} />
+                <ActivityCard key={activity.id} activity={activity} registrationsCount={activity.registrations_count} section="kegiatan" />
               ))}
             </div>
           )}
 
           <div className="mt-6 text-center">
-            <Link href="/activities" className="inline-flex items-center gap-2 rounded-full gradient-primary px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90">
+            <Link href="/activities?from=kegiatan" className="inline-flex items-center gap-2 rounded-full gradient-primary px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90">
               Lihat Semua Kegiatan
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                 <path d="M13 7l5 5-5 5M6 12h12" />
@@ -253,7 +250,7 @@ export default async function HomePage() {
             )}
 
             <div className="mt-6 text-center">
-              <Link href="/location" className="inline-flex items-center gap-2 rounded-full gradient-primary px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90">
+              <Link href="/location?from=lokasi" className="inline-flex items-center gap-2 rounded-full gradient-primary px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90">
                 Lihat Halaman Lokasi
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                   <path d="M13 7l5 5-5 5M6 12h12" />
@@ -337,15 +334,6 @@ export default async function HomePage() {
               ))}
             </div>
           )}
-
-          <div className="mt-6 text-center">
-            <Link href="/contact" className="inline-flex items-center gap-2 rounded-full gradient-primary px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90">
-              Lihat Halaman Kontak
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                <path d="M13 7l5 5-5 5M6 12h12" />
-              </svg>
-            </Link>
-          </div>
         </div>
       </section>
     </>

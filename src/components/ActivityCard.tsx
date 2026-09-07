@@ -1,21 +1,22 @@
-import Link from 'next/link';
 import { formatDateIndo, remainingQuota } from '@/lib/helpers';
 import type { Activity } from '@/lib/types';
 import { RegistrationForm } from './RegistrationForm';
+import { PreserveFromLink } from './PreserveFromLink';
 
 interface ActivityCardProps {
   activity: Activity;
   registrationsCount?: number;
+  section?: string;
 }
 
-export function ActivityCard({ activity, registrationsCount = 0 }: ActivityCardProps) {
+export function ActivityCard({ activity, registrationsCount = 0, section }: ActivityCardProps) {
   const remaining = remainingQuota(activity.quota, registrationsCount);
   const isFull = remaining !== null && remaining <= 0;
 
   return (
     <div className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md dark:border-slate-700 dark:bg-slate-800">
       {activity.image ? (
-        <Link href={`/activities/${activity.id}`} className="block">
+        <PreserveFromLink section={section} href={`/activities/${activity.id}`} className="block">
           <div className="aspect-[4/5] w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
             <img
               src={activity.image}
@@ -24,7 +25,7 @@ export function ActivityCard({ activity, registrationsCount = 0 }: ActivityCardP
               className="h-full w-full object-cover transition duration-300 hover:scale-105"
             />
           </div>
-        </Link>
+        </PreserveFromLink>
       ) : (
         <div className="bg-gradient-to-br from-amber-400 to-orange-500 p-5 text-white">
           {activity.activity_date && (
@@ -47,12 +48,13 @@ export function ActivityCard({ activity, registrationsCount = 0 }: ActivityCardP
           </p>
         )}
         <div className="mt-auto flex gap-3 pt-3">
-          <Link
+          <PreserveFromLink
+            section={section}
             href={`/activities/${activity.id}`}
             className="flex-1 inline-flex items-center justify-center rounded-lg bg-brand-50 px-4 py-2.5 text-sm font-semibold text-brand-700 transition hover:bg-brand-100"
           >
             Detail
-          </Link>
+          </PreserveFromLink>
           {!isFull && (
             <div className="flex-1">
               <RegistrationForm

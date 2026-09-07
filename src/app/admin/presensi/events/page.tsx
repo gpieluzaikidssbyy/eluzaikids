@@ -19,15 +19,39 @@ export default function AdminPresensiEventsPage() {
     <div className="space-y-6">
       <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-600">Attendance</p><h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Event Attendance</h1><p className="mt-2 text-sm text-slate-500">Pilih event untuk membuka daftar kehadiran dan akses scanner.</p></div>
 
-      <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <table className="min-w-[850px] w-full text-left text-sm">
-          <thead className="border-b border-slate-200 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-800/50"><tr><th className="table-heading">No</th><th className="table-heading">Nama event</th><th className="table-heading">Open gate</th><th className="table-heading">Mulai pukul</th><th className="table-heading">Lokasi</th><th className="table-heading">Manage</th></tr></thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {events.map((event, index) => <tr key={event.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/60"><td className="table-cell text-slate-500">{index + 1}</td><td className="table-cell"><div className="font-semibold text-slate-900 dark:text-white">{event.title}</div><div className="mt-1 text-xs text-slate-500">{formatDateIndo(event.event_date)}</div></td><td className="table-cell">{event.open_gate?.slice(0, 5) || '-'}</td><td className="table-cell">{event.start_time?.slice(0, 5) || '-'}</td><td className="table-cell">{event.location || '-'}</td><td className="table-cell"><Link href={`/admin/presensi/events/${event.id}`} className="rounded-lg bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-700 hover:bg-brand-100">Manage</Link></td></tr>)}
-            {!events.length && <tr><td colSpan={6} className="px-4 py-10 text-center text-sm text-slate-500">Belum ada event.</td></tr>}
-          </tbody>
-        </table>
-      </div>
+      {!events.length ? (
+        <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900">Belum ada event.</div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
+          {events.map((event) => (
+            <Link
+              key={event.id}
+              href={`/admin/presensi/events/${event.id}`}
+              className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_8px_30px_rgba(15,23,42,0.04)] transition duration-200 hover:-translate-y-1 hover:border-brand-300 hover:shadow-[0_16px_36px_rgba(15,23,42,0.1)] dark:border-slate-800 dark:bg-slate-900"
+            >
+              <div className="absolute inset-x-0 top-0 h-1 gradient-primary" />
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="font-display text-lg font-bold leading-snug text-slate-900 dark:text-white">{event.title}</p>
+                  {event.tema && <p className="mt-1 text-sm text-slate-500">Tema: {event.tema}</p>}
+                  <p className="mt-1 text-sm text-slate-500">{formatDateIndo(event.event_date)}</p>
+                  {event.location && <p className="mt-1 truncate text-xs text-slate-400">{event.location}</p>}
+                </div>
+                <span className={`inline-flex shrink-0 items-center rounded-full px-3 py-1 text-xs font-semibold ${event.registrations_count > 0 ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>
+                  {event.registrations_count} pendaftar
+                </span>
+              </div>
+              <div className="mt-5 flex items-center justify-between">
+                <div className="flex gap-3 text-xs text-slate-500">
+                  <span>Open gate: {event.open_gate?.slice(0, 5) || '-'} WIB</span>
+                  <span>Mulai: {event.start_time?.slice(0, 5) || '-'} WIB</span>
+                </div>
+                <span className="text-sm font-semibold text-brand-600">Manage</span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

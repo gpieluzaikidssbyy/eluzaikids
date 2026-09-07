@@ -28,8 +28,25 @@ export default function AdminRegistrantEventDetailPage() {
           <Link href="/admin/registrants/events" className="text-sm text-brand-600 hover:underline">&larr; Kembali</Link>
           <h1 className="mt-2 font-display text-2xl font-bold text-slate-900 dark:text-white">Manage Registrants: {event?.title || '...'}</h1>
           <p className="mt-1 text-sm text-slate-500">{registrations.length} pendaftar</p>
+          {event?.tema && <p className="mt-1 text-sm text-slate-500">Tema: {event.tema}</p>}
         </div>
       </div>
+
+      {event && (
+        <div className="mt-4">
+          <a
+            href={`/api/admin/registrants/events/${event.id}/export`}
+            className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-700"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 3v12" />
+              <path d="m7 10 5 5 5-5" />
+              <path d="M5 21h14" />
+            </svg>
+            Export as Excel
+          </a>
+        </div>
+      )}
 
       <div className="mt-6 overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <table className="min-w-[850px] w-full text-left text-sm">

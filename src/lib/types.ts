@@ -17,6 +17,7 @@ export interface Schedule {
 export interface Event {
   id: number;
   title: string;
+  tema: string | null;
   description: string | null;
   event_date: string;
   open_gate: string | null;

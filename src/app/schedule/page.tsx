@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { BackToHome } from '@/components/BackToHome';
+import { ScheduleSkeleton } from '@/components/skeletons';
 
 interface ScheduleItem {
   id: number;
@@ -14,8 +16,6 @@ interface WeekDay {
   day: string;
   schedules: ScheduleItem[];
 }
-
-const WEEKDAYS = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
 
 export default function SchedulePage() {
   const [weekSchedule, setWeekSchedule] = useState<WeekDay[]>([]);
@@ -31,18 +31,15 @@ export default function SchedulePage() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-500 border-t-transparent" />
-      </div>
-    );
+    return <ScheduleSkeleton />;
   }
 
   return (
     <>
       <section className="gradient-hero py-12 text-white">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <h1 className="font-display text-3xl font-bold sm:text-4xl">Jadwal Ibadah</h1>
+        <div className="mx-auto max-w-5xl px-4 sm:px-6">
+          <BackToHome />
+          <h1 className="mt-4 font-display text-3xl font-bold sm:text-4xl">Jadwal Ibadah</h1>
           <p className="mt-2 text-white/80">Jadwal kegiatan mingguan GPI Eluzai Kids</p>
         </div>
       </section>
@@ -62,13 +59,15 @@ export default function SchedulePage() {
                 {day.schedules.map((schedule) => (
                   <div key={schedule.id} className="flex items-start gap-3">
                     <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-green-500" />
-                    <div>
-                      <p className="font-semibold text-slate-900 dark:text-slate-100">
-                        {schedule.type}
-                      </p>
-                      <p className="text-sm text-slate-600 dark:text-slate-400">
-                        {schedule.time.slice(0, 5)} WIB
-                      </p>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="font-semibold text-slate-900 dark:text-slate-100">
+                          {schedule.type}
+                        </p>
+                        <p className="shrink-0 text-sm font-medium text-slate-600 dark:text-slate-400">
+                          {schedule.time.slice(0, 5)} WIB
+                        </p>
+                      </div>
                       {schedule.description && (
                         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                           {schedule.description}

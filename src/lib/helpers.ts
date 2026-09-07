@@ -27,9 +27,9 @@ export function normalizePhone(phone: string): string {
 }
 
 /**
- * Generate registration number with format ELZ-YYMMDD-XXXX.
- * YYMMDD is the registration date; XXXX is a sequential number
- * (0001..quota) cumulative per event/activity.
+ * Generate registration number with format ELZ-YYMMDD-KXXX.
+ * YYMMDD is the registration date; K stands for Kids; XXX is a sequential
+ * number (001..quota) cumulative per event/activity.
  */
 export async function generateNomorRegistrasi(
   table: 'event_registrations' | 'activity_registrations',
@@ -39,7 +39,7 @@ export async function generateNomorRegistrasi(
 ): Promise<string> {
   const supabase = createServiceClient();
   const now = new Date();
-  const datePrefix = `ELZ-${String(now.getFullYear()).slice(2)}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-`;
+  const datePrefix = `ELZ-${String(now.getFullYear()).slice(2)}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-K`;
 
   const { count } = await supabase
     .from(table)
@@ -51,7 +51,7 @@ export async function generateNomorRegistrasi(
   }
 
   const sequence = (count ?? 0) + 1;
-  return datePrefix + String(sequence).padStart(4, '0');
+  return datePrefix + String(sequence).padStart(3, '0');
 }
 
 /**

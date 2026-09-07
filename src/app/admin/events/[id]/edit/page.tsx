@@ -29,6 +29,7 @@ export default function EditEventPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: form.get('title'),
+          tema: form.get('tema') || null,
           description: form.get('description'),
           event_date: form.get('event_date'),
           open_gate: form.get('open_gate') || null,
@@ -72,6 +73,11 @@ export default function EditEventPage() {
         </div>
 
         <div>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Tema</label>
+          <input type="text" name="tema" defaultValue={event.tema || ''} className="input-field mt-1" placeholder="Contoh: Petualangan Keluarga Bahagia" />
+        </div>
+
+        <div>
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Deskripsi <span className="text-red-500">*</span></label>
           <textarea name="description" rows={4} required defaultValue={event.description || ''} className="input-field mt-1" />
         </div>
@@ -100,9 +106,25 @@ export default function EditEventPage() {
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Kuota <span className="text-red-500">*</span></label>
-            <input type="number" name="quota" min="1" max="500" required defaultValue={event.quota || ''} className="input-field mt-1" />
-            <p className="mt-1 text-xs text-slate-500">Maksimal 500 pendaftar.</p>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Kuota</label>
+            <div className="mt-1 flex gap-2">
+              <input type="number" name="quota" min="1" max="500" defaultValue={event.quota || ''} disabled={event.quota === null} className="input-field w-full" />
+              <button type="button" className={`shrink-0 rounded-xl border px-3 text-sm font-medium ${event.quota === null ? 'bg-brand-50 text-brand-600 border-brand-300' : 'border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800'}`} title="Set kuota tidak terbatas" onClick={(e) => {
+                const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+                const unlimited = input.disabled;
+                input.disabled = !unlimited;
+                if (!unlimited) input.removeAttribute('name');
+                else input.name = 'quota';
+                e.currentTarget.classList.toggle('bg-brand-50', !unlimited);
+                e.currentTarget.classList.toggle('text-brand-600', !unlimited);
+                e.currentTarget.classList.toggle('border-brand-300', !unlimited);
+                e.currentTarget.classList.toggle('border-slate-200', unlimited);
+                e.currentTarget.classList.toggle('text-slate-500', unlimited);
+              }}>
+                Unlimited
+              </button>
+            </div>
+            <p className="mt-1 text-xs text-slate-500">Maksimal 500 pendaftar, atau pilih Unlimited.</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Lokasi <span className="text-red-500">*</span></label>
@@ -112,12 +134,12 @@ export default function EditEventPage() {
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Google Maps Embed URL <span className="text-red-500">*</span></label>
-            <input type="url" name="map_embed_url" required defaultValue={event.map_embed_url || ''} className="input-field mt-1" />
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Google Maps Embed URL</label>
+            <input type="url" name="map_embed_url" defaultValue={event.map_embed_url || ''} className="input-field mt-1" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Drive Link <span className="text-red-500">*</span></label>
-            <input type="url" name="drive_link" required defaultValue={event.drive_link || ''} className="input-field mt-1" />
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Drive Link</label>
+            <input type="url" name="drive_link" defaultValue={event.drive_link || ''} className="input-field mt-1" />
           </div>
         </div>
 

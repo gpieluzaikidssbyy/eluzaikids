@@ -236,7 +236,7 @@ export function RegistrationForm({
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Nama Lengkap
+                  Nama Lengkap <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -252,7 +252,7 @@ export function RegistrationForm({
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Nomor HP
+                  Nomor HP <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="tel"
@@ -268,7 +268,7 @@ export function RegistrationForm({
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Email
+                  Email <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="email"
@@ -284,7 +284,7 @@ export function RegistrationForm({
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Jumlah yang Hadir
+                  Jumlah yang Hadir <span className="text-red-500">*</span>
                 </label>
                 <select name="jumlah_hadir" required className="input-field mt-1">
                   <option value="">Pilih jumlah</option>
@@ -307,7 +307,8 @@ export function RegistrationForm({
                     className="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
                   />
                   <span className="text-xs leading-relaxed text-slate-600 dark:text-slate-300">
-                    Saya menyetujui data ini akan digunakan untuk keperluan pendaftaran
+                    Saya menyetujui data ini akan digunakan untuk keperluan pendaftaran{' '}
+                    <span className="text-red-500">*</span>
                   </span>
                 </label>
                 {errors.consent && (

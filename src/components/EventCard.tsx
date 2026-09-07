@@ -1,21 +1,22 @@
-import Link from 'next/link';
 import { formatDateIndo, getMapsLink, remainingQuota } from '@/lib/helpers';
 import type { Event } from '@/lib/types';
 import { RegistrationForm } from './RegistrationForm';
+import { PreserveFromLink } from './PreserveFromLink';
 
 interface EventCardProps {
   event: Event;
   registrationsCount?: number;
+  section?: string;
 }
 
-export function EventCard({ event, registrationsCount = 0 }: EventCardProps) {
+export function EventCard({ event, registrationsCount = 0, section }: EventCardProps) {
   const remaining = remainingQuota(event.quota, registrationsCount);
   const isFull = remaining !== null && remaining <= 0;
 
   return (
     <div className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md dark:border-slate-700 dark:bg-slate-800">
       {event.image && (
-        <Link href={`/events/${event.id}`} className="block">
+        <PreserveFromLink section={section} href={`/events/${event.id}`} className="block">
           <div className="aspect-[4/5] w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
             <img
               src={event.image}
@@ -24,7 +25,7 @@ export function EventCard({ event, registrationsCount = 0 }: EventCardProps) {
               className="h-full w-full object-cover transition duration-300 hover:scale-105"
             />
           </div>
-        </Link>
+        </PreserveFromLink>
       )}
 
       <div className="flex flex-1 flex-col gap-3 p-5">
@@ -54,12 +55,13 @@ export function EventCard({ event, registrationsCount = 0 }: EventCardProps) {
           )}
         </div>
         <div className="mt-auto flex gap-3 pt-3">
-          <Link
+          <PreserveFromLink
+            section={section}
             href={`/events/${event.id}`}
             className="flex-1 inline-flex items-center justify-center rounded-lg bg-brand-50 px-4 py-2.5 text-sm font-semibold text-brand-700 transition hover:bg-brand-100"
           >
             Detail
-          </Link>
+          </PreserveFromLink>
           {!isFull && (
             <div className="flex-1">
               <RegistrationForm

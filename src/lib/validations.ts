@@ -53,6 +53,7 @@ export type RegistrationFormData = z.infer<typeof registrationSchema>;
  */
 export const eventSchema = z.object({
   title: z.string().min(1, 'Judul wajib diisi.').max(255),
+  tema: z.string().optional().nullable(),
   description: z.string().optional().nullable(),
   event_date: z.string().min(1, 'Tanggal event wajib diisi.'),
   open_gate: z.string().optional().nullable(),

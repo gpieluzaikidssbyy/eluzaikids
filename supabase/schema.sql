@@ -43,6 +43,7 @@ CREATE INDEX IF NOT EXISTS idx_schedules_day_time ON schedules(day, time);
 CREATE TABLE IF NOT EXISTS events (
   id BIGSERIAL PRIMARY KEY,
   title VARCHAR(255) NOT NULL,
+  tema VARCHAR(255),
   description TEXT,
   event_date TIMESTAMP WITH TIME ZONE NOT NULL,
   open_gate TIME,
@@ -60,6 +61,9 @@ CREATE TABLE IF NOT EXISTS events (
 );
 
 CREATE INDEX IF NOT EXISTS idx_events_event_date ON events(event_date);
+
+-- Add 'tema' column for existing databases (idempotent migration)
+ALTER TABLE events ADD COLUMN IF NOT EXISTS tema VARCHAR(255);
 
 -- Event Registrations table
 CREATE TABLE IF NOT EXISTS event_registrations (

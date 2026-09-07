@@ -9,6 +9,17 @@ export const metadata: Metadata = {
     'Tempat anak-anak bertumbuh dalam iman, sukacita, dan kasih Kristus.',
 };
 
+const themeScript = `
+(function () {
+  try {
+    var stored = window.localStorage.getItem('theme');
+    if (stored === 'dark') {
+      document.documentElement.classList.add('dark');
+    }
+  } catch (e) {}
+})();
+`;
+
 export default function RootLayout({
   children,
 }: {
@@ -16,6 +27,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="id" className="scroll-smooth">
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className="flex min-h-screen flex-col bg-slate-50 dark:bg-slate-900">
         <Navbar />
         <main className="flex-1">{children}</main>

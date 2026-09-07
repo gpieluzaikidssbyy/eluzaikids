@@ -162,6 +162,7 @@ export async function POST(request: NextRequest) {
       qr_data: qrData,
       qr_url: qrUrl,
       title: event.title,
+      tema: event.tema || null,
       date: event.event_date,
       open_gate: event.open_gate,
       time: event.start_time,

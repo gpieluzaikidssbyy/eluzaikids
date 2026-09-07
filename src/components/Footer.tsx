@@ -8,10 +8,12 @@ export function Footer() {
           <span
             key={index}
             aria-hidden={index > 0}
-            className="flex shrink-0 items-center gap-8 px-8"
+            className="flex shrink-0 items-center"
           >
             {copyrightText}
-            <span aria-hidden="true">•</span>
+            <span aria-hidden="true" className="mx-8 opacity-70">
+              •
+            </span>
           </span>
         ))}
       </div>

@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import Link from 'next/link';
 import type { Event } from '@/lib/types';
 import { formatDateIndo, remainingQuota } from '@/lib/helpers';
 import { RegistrationForm } from '@/components/RegistrationForm';
+import { BackToHome } from '@/components/BackToHome';
+import { EventDetailSkeleton } from '@/components/skeletons';
 
 export default function EventDetailPage() {
   const params = useParams();
@@ -19,11 +20,7 @@ export default function EventDetailPage() {
   }, [params.id]);
 
   if (!event) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-500 border-t-transparent" />
-      </div>
-    );
+    return <EventDetailSkeleton />;
   }
 
   const remaining = remainingQuota(event.quota, event.registrations_count);
@@ -33,17 +30,17 @@ export default function EventDetailPage() {
     <>
       <section className="gradient-hero py-12 text-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <Link href="/events" className="inline-flex items-center gap-1 text-sm text-white/80 transition hover:text-white">
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M15 19l-7-7 7-7" />
-            </svg>
-            Kembali ke Event
-          </Link>
+          <BackToHome />
           <div className="mt-4">
             <p className="text-xs font-semibold uppercase tracking-wider text-white/80">
               {formatDateIndo(event.event_date)}
             </p>
             <h1 className="mt-1 font-display text-3xl font-bold sm:text-4xl">{event.title}</h1>
+            {event.tema && (
+              <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-sm font-semibold text-white">
+                Tema: {event.tema}
+              </p>
+            )}
           </div>
         </div>
       </section>
@@ -163,12 +160,7 @@ export default function EventDetailPage() {
                     buttonClass="w-full"
                   />
                 )}
-                <Link
-                  href="/events"
-                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-50 px-4 py-3 font-semibold text-brand-600 transition hover:bg-brand-100"
-                >
-                  Lihat Semua Event
-                </Link>
+                <BackToHome variant="secondary" />
               </div>
             </div>
           </div>

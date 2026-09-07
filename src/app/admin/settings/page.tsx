@@ -16,6 +16,8 @@ export default function AdminSettingsPage() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     fetch('/api/admin/settings')
@@ -140,11 +142,29 @@ export default function AdminSettingsPage() {
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Password baru</label>
-              <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} minLength={8} autoComplete="new-password" placeholder="Minimal 8 karakter" className="input-field mt-1" />
+              <span className="relative block mt-1">
+                <input type={showNewPassword ? 'text' : 'password'} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} minLength={8} autoComplete="new-password" placeholder="Minimal 8 karakter" className="input-field pr-12" />
+                <button type="button" onClick={() => setShowNewPassword((v) => !v)} aria-label={showNewPassword ? 'Sembunyikan password baru' : 'Tampilkan password baru'} className="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-brand-600">
+                  {showNewPassword ? (
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 4.2A10.7 10.7 0 0 1 12 4c5 0 8.5 4 9.5 6a12.8 12.8 0 0 1-3.1 3.8M6.2 6.2C3.9 7.7 2.5 10 2.5 10s3.5 6 9.5 6c1 0 1.9-.1 2.7-.4" /></svg>
+                  ) : (
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" /><circle cx="12" cy="12" r="2.5" /></svg>
+                  )}
+                </button>
+              </span>
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Konfirmasi password baru</label>
-              <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} autoComplete="new-password" placeholder="Ulangi password baru" className="input-field mt-1" />
+              <span className="relative block mt-1">
+                <input type={showConfirmPassword ? 'text' : 'password'} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} autoComplete="new-password" placeholder="Ulangi password baru" className="input-field pr-12" />
+                <button type="button" onClick={() => setShowConfirmPassword((v) => !v)} aria-label={showConfirmPassword ? 'Sembunyikan konfirmasi password' : 'Tampilkan konfirmasi password'} className="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-brand-600">
+                  {showConfirmPassword ? (
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 4.2A10.7 10.7 0 0 1 12 4c5 0 8.5 4 9.5 6a12.8 12.8 0 0 1-3.1 3.8M6.2 6.2C3.9 7.7 2.5 10 2.5 10s3.5 6 9.5 6c1 0 1.9-.1 2.7-.4" /></svg>
+                  ) : (
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" /><circle cx="12" cy="12" r="2.5" /></svg>
+                  )}
+                </button>
+              </span>
             </div>
           </div>
         </div>
@@ -153,7 +173,6 @@ export default function AdminSettingsPage() {
           <button type="submit" disabled={saving} className="btn-primary disabled:opacity-50">
             {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
           </button>
-          <p className="text-xs text-slate-400">Perubahan langsung tersimpan ke database.</p>
         </div>
       </form>
     </div>

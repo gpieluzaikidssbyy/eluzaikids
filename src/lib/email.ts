@@ -13,6 +13,7 @@ interface EmailInfo {
   qr_data: string;
   qr_url: string;
   title: string;
+  tema: string | null;
   date: string | null;
   open_gate: string | null;
   time: string | null;
@@ -282,7 +283,8 @@ function buildEmailHtml(name: string, info: EmailInfo, logoSrc: string): string 
         <div class="row"><span class="label">Registration Code</span><span class="value">${safeRegistration}</span></div>
         <div class="row"><span class="label">Jumlah yang Hadir</span><span class="value">${escapeHtml(info.jumlah_hadir)} orang</span></div>
         <div class="row"><span class="label">QR Code Presensi</span><div class="qr"><img src="cid:qr-presensi" alt="QR Code Presensi"><p>Tunjukkan QR ini saat presensi di lokasi</p></div></div>
-        <div class="row"><span class="label">${kindLabel}</span><span class="value">${safeTitle}</span></div>
+        <div className="row"><span class="label">${kindLabel}</span><span class="value">${safeTitle}</span></div>
+        ${info.tema ? `<div class="row"><span class="label">Tema ${kindLabel}</span><span class="value">${escapeHtml(info.tema)}</span></div>` : ''}
         <div class="row"><span class="label">Tanggal ${kindLabel}</span><span class="value">${safeDate}</span></div>
         ${openGateStr ? `<div class="row"><span class="label">Open Gate</span><span class="value">${safeOpenGate}</span></div>` : ''}
         ${info.time ? `<div class="row"><span class="label">Waktu ${kindLabel}</span><span class="value">${safeTime}</span></div>` : ''}

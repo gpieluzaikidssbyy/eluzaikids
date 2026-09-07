@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import Link from 'next/link';
 import type { Activity } from '@/lib/types';
 import { formatDateIndo, remainingQuota } from '@/lib/helpers';
 import { RegistrationForm } from '@/components/RegistrationForm';
+import { BackToHome } from '@/components/BackToHome';
+import { ActivityDetailSkeleton } from '@/components/skeletons';
 
 export default function ActivityDetailPage() {
   const params = useParams();
@@ -19,11 +20,7 @@ export default function ActivityDetailPage() {
   }, [params.id]);
 
   if (!activity) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-500 border-t-transparent" />
-      </div>
-    );
+    return <ActivityDetailSkeleton />;
   }
 
   const remaining = remainingQuota(activity.quota, activity.registrations_count);
@@ -33,12 +30,7 @@ export default function ActivityDetailPage() {
     <>
       <section className="gradient-hero py-12 text-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <Link href="/activities" className="inline-flex items-center gap-1 text-sm text-white/80 transition hover:text-white">
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M15 19l-7-7 7-7" />
-            </svg>
-            Kembali ke Kegiatan
-          </Link>
+          <BackToHome />
           <div className="mt-4">
             <h1 className="mt-3 font-display text-3xl font-bold sm:text-4xl">{activity.title}</h1>
             {activity.activity_date && (
@@ -138,12 +130,7 @@ export default function ActivityDetailPage() {
                     buttonClass="w-full"
                   />
                 )}
-                <Link
-                  href="/activities"
-                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-50 px-4 py-3 font-semibold text-brand-600 transition hover:bg-brand-100"
-                >
-                  Lihat Semua Kegiatan
-                </Link>
+                <BackToHome variant="secondary" />
               </div>
             </div>
           </div>

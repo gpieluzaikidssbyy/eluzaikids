@@ -75,12 +75,12 @@ export async function POST(
       }
     } else {
       // Manual input: just registration number
-      const suffix = String(qr_data).replace(/\D/g, '').slice(-4).padStart(4, '0');
+      const suffix = String(qr_data).replace(/\D/g, '').slice(-3).padStart(3, '0');
       const { data: matches } = await supabase
         .from(table)
         .select('*')
         .eq(foreignKey, id)
-        .ilike('nomor_registrasi', `%-${suffix}`)
+        .ilike('nomor_registrasi', `%-K${suffix}`)
         .limit(2);
       registration = matches?.length === 1 ? matches[0] : null;
     }

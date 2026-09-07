@@ -44,6 +44,7 @@ export default function AdminEventDetailsPage() {
           <p className="mt-5 text-xs font-semibold uppercase tracking-[0.16em] text-brand-600">Event details</p>
           <h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-slate-900 dark:text-white">{event.title}</h1>
           <p className="mt-2 text-sm text-slate-500">{formatDateIndo(event.event_date)} · {event.location || 'Lokasi belum diisi'}</p>
+          {event.tema && <p className="mt-1 text-sm text-slate-500">Tema: {event.tema}</p>}
         </div>
         <div className="flex gap-2">
           <Link href={`/admin/events/${event.id}/edit`} className="btn-secondary">Edit event</Link>

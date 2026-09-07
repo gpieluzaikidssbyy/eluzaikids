@@ -43,6 +43,7 @@ export async function PUT(
     .from('events')
     .update({
       title: body.title,
+      tema: body.tema || null,
       description: body.description || null,
       event_date: `${eventDate}T00:00:00+07:00`,
       open_gate: body.open_gate || null,
