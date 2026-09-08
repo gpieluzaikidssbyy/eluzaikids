@@ -7,6 +7,7 @@ interface RegistrationFormProps {
   registrableType: 'event' | 'activity';
   registrableId: number;
   registrableTitle: string;
+  emailEnabled?: boolean;
   buttonClass?: string;
 }
 
@@ -24,6 +25,7 @@ export function RegistrationForm({
   registrableType,
   registrableId,
   registrableTitle,
+  emailEnabled = true,
   buttonClass = '',
 }: RegistrationFormProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -31,6 +33,7 @@ export function RegistrationForm({
   const [success, setSuccess] = useState(false);
   const [qrUrl, setQrUrl] = useState('');
   const [nomorRegistrasi, setNomorRegistrasi] = useState('');
+  const [confirmationEmailEnabled, setConfirmationEmailEnabled] = useState(emailEnabled);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [recaptchaReady, setRecaptchaReady] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -141,6 +144,7 @@ export function RegistrationForm({
       setSuccess(true);
       setQrUrl(typeof data.qr_url === 'string' ? data.qr_url : '');
       setNomorRegistrasi(typeof data.nomor_registrasi === 'string' ? data.nomor_registrasi : '');
+      setConfirmationEmailEnabled(data.email_enabled !== false);
     } catch {
       setErrors({ general: 'Terjadi kesalahan saat mengirim data.' });
     } finally {
@@ -160,10 +164,14 @@ export function RegistrationForm({
           Pendaftaran Berhasil!
         </h3>
         <p className="mt-2 text-sm text-green-700 dark:text-green-400">
-          Terima kasih telah mendaftar untuk <strong>{registrableTitle}</strong>.
-          {registrableType === 'event' ? ' cek email untuk QR Code.' : ' Silakan cek email untuk konfirmasi.'}
+          {confirmationEmailEnabled
+            ? 'Pendaftaran berhasil!, silakan periksa email anda.'
+            : 'Pendaftaran berhasil!'}
         </p>
-        {qrUrl && (
+        <p className="mt-1 text-xs text-green-700/80 dark:text-green-400/80">
+          {registrableTitle}
+        </p>
+        {confirmationEmailEnabled && qrUrl && (
           <div className="mt-4 rounded-xl border border-green-200 bg-white p-4 dark:border-green-900 dark:bg-slate-900">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
               QR Code Presensi
@@ -187,6 +195,7 @@ export function RegistrationForm({
             setSuccess(false);
             setQrUrl('');
             setNomorRegistrasi('');
+            setConfirmationEmailEnabled(emailEnabled);
           }}
           className="mt-4 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-700"
         >
@@ -202,7 +211,7 @@ export function RegistrationForm({
         onClick={() => setIsOpen(true)}
         className={`btn-primary ${buttonClass}`}
       >
-        Daftar Sekarang
+        Daftar
       </button>
 
       {isOpen && (

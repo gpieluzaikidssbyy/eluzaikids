@@ -37,7 +37,9 @@ function checkRateLimit(ip: string): boolean {
 }
 
 export async function POST(request: NextRequest) {
-  const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+  const ip = (request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown')
+    .split(',')[0]
+    .trim();
 
   // Rate limiting
   if (!checkRateLimit(ip)) {
@@ -113,12 +115,14 @@ export async function POST(request: NextRequest) {
       'event_id',
       eventId,
       normalizedPhone,
-      email
+      email,
+      name,
+      ip
     );
 
     if (isDuplicate) {
       return NextResponse.json(
-        { errors: { phone: 'Nomor HP atau email ini sudah terdaftar untuk event tersebut.' } },
+        { errors: { phone: 'Data serupa (IP, nama, nomor HP, atau email) sudah terdaftar untuk event tersebut.' } },
         { status: 422 }
       );
     }
@@ -136,6 +140,7 @@ export async function POST(request: NextRequest) {
         name,
         phone: normalizedPhone,
         email,
+        registration_ip: ip,
         jumlah_hadir,
         nomor_registrasi: nomorRegistrasi,
         qr_token: qrToken,
@@ -150,29 +155,32 @@ export async function POST(request: NextRequest) {
     }
 
     // Send confirmation email
-    const qrUrl = `${appBaseUrl()}/api/scan-qr/event/${eventId}/qr/${registration.id}`;
+    const qrUrl = `${appBaseUrl()}/api/scan-qr/event/${eventId}/qr/${registration.id}?access=${encodeURIComponent(qrToken)}`;
     const mapsLink = getMapsLink(event.location);
 
-    await sendConfirmationEmail(name, normalizedPhone, email, {
-      type: 'Event',
-      phone: normalizedPhone,
-      email,
-      nomor_registrasi: nomorRegistrasi,
-      jumlah_hadir,
-      qr_data: qrData,
-      qr_url: qrUrl,
-      title: event.title,
-      tema: event.tema || null,
-      date: event.event_date,
-      open_gate: event.open_gate,
-      time: event.start_time,
-      location: event.location,
-      maps_link: mapsLink,
-      registered_at: registration.registered_at,
-    });
+    if (event.email_enabled !== false) {
+      await sendConfirmationEmail(name, normalizedPhone, email, {
+        type: 'Event',
+        phone: normalizedPhone,
+        email,
+        nomor_registrasi: nomorRegistrasi,
+        jumlah_hadir,
+        qr_data: qrData,
+        qr_url: qrUrl,
+        title: event.title,
+        tema: event.tema || null,
+        date: event.event_date,
+        open_gate: event.open_gate,
+        time: event.start_time,
+        location: event.location,
+        maps_link: mapsLink,
+        registered_at: registration.registered_at,
+      });
+    }
 
     return NextResponse.json({
       message: 'Pendaftaran berhasil!',
+      email_enabled: event.email_enabled !== false,
       qr_url: qrUrl,
       nomor_registrasi: nomorRegistrasi,
     });

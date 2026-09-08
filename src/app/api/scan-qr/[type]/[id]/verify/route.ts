@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase';
+import { verifyScanToken } from '@/lib/auth';
 
 export async function POST(
   request: NextRequest,
@@ -8,13 +9,16 @@ export async function POST(
   try {
     const { type, id } = params;
     const body = await request.json();
-    const { qr_data } = body;
+    const { qr_data, scan_token } = body;
 
     if (!qr_data) {
       return NextResponse.json(
         { success: false, message: 'QR data tidak valid.' },
         { status: 400 }
       );
+    }
+    if (!verifyScanToken(scan_token, type, id)) {
+      return NextResponse.json({ success: false, message: 'Sesi scan tidak valid atau sudah kedaluwarsa.' }, { status: 401 });
     }
 
     const supabase = createServiceClient();
@@ -74,13 +78,13 @@ export async function POST(
         }
       }
     } else {
-      // Manual input: just registration number
-      const suffix = String(qr_data).replace(/\D/g, '').slice(-3).padStart(3, '0');
+      // Manual input requires the full registration number to prevent enumeration.
+      const nomorRegistrasi = String(qr_data).trim().slice(0, 50);
       const { data: matches } = await supabase
         .from(table)
         .select('*')
         .eq(foreignKey, id)
-        .ilike('nomor_registrasi', `%-K${suffix}`)
+        .eq('nomor_registrasi', nomorRegistrasi)
         .limit(2);
       registration = matches?.length === 1 ? matches[0] : null;
     }

@@ -91,6 +91,19 @@ export default function EventDetailPage() {
             <div className="card lg:sticky lg:top-24">
               <h3 className="font-display text-lg font-bold text-slate-900 dark:text-slate-100">Informasi</h3>
               <div className="mt-4 space-y-4 text-sm text-slate-600 dark:text-slate-400">
+                {event.tema && (
+                  <div className="flex items-start gap-3">
+                    <svg className="mt-0.5 h-5 w-5 shrink-0 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+                      <path d="M7 7h.01" />
+                    </svg>
+                    <div>
+                      <p className="font-semibold text-slate-900 dark:text-slate-100">Tema</p>
+                      <p>{event.tema}</p>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex items-start gap-3">
                   <svg className="mt-0.5 h-5 w-5 shrink-0 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                     <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z" />
@@ -152,13 +165,27 @@ export default function EventDetailPage() {
               </div>
 
               <div className="mt-6 space-y-3">
-                {!isFull && (
+                {!isFull ? (
                   <RegistrationForm
                     registrableType="event"
                     registrableId={event.id}
                     registrableTitle={event.title}
+                    emailEnabled={event.email_enabled !== false}
                     buttonClass="w-full"
                   />
+                ) : event.drive_link ? (
+                  <a
+                    href={event.drive_link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex w-full items-center justify-center rounded-lg bg-green-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-green-700"
+                  >
+                    Foto
+                  </a>
+                ) : (
+                  <button type="button" disabled className="w-full cursor-not-allowed rounded-lg bg-slate-400 px-4 py-3 text-sm font-semibold text-white">
+                    Foto
+                  </button>
                 )}
                 <BackToHome variant="secondary" />
               </div>

@@ -26,6 +26,34 @@ export function normalizePhone(phone: string): string {
   return digits;
 }
 
+export function normalizeIdentity(value: string): string {
+  return value
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+}
+
+function similarity(a: string, b: string): number {
+  if (!a || !b) return 0;
+  if (a === b) return 1;
+  if (a.includes(b) || b.includes(a)) return Math.min(a.length, b.length) / Math.max(a.length, b.length);
+
+  const previous = Array.from({ length: b.length + 1 }, (_, index) => index);
+  for (let i = 1; i <= a.length; i++) {
+    const current = [i];
+    for (let j = 1; j <= b.length; j++) {
+      current[j] = Math.min(
+        current[j - 1] + 1,
+        previous[j] + 1,
+        previous[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1),
+      );
+    }
+    previous.splice(0, previous.length, ...current);
+  }
+  return 1 - previous[b.length] / Math.max(a.length, b.length);
+}
+
 /**
  * Generate registration number with format ELZ-YYMMDD-KXXX.
  * YYMMDD is the registration date; K stands for Kids; XXX is a sequential
@@ -125,23 +153,36 @@ export async function duplicateExists(
   foreignKey: 'event_id' | 'activity_id',
   id: number,
   phone: string,
-  email?: string | null
+  email?: string | null,
+  name?: string | null,
+  ip?: string | null,
 ): Promise<boolean> {
   const supabase = createServiceClient();
   const normalizedPhone = normalizePhone(phone);
+  const normalizedEmail = email?.trim().toLowerCase() || '';
+  const normalizedName = normalizeIdentity(name || '');
 
-  let query = supabase
+  const { data, error } = await supabase
     .from(table)
-    .select('id', { count: 'exact', head: true })
-    .eq(foreignKey, id)
-    .eq('phone', normalizedPhone);
+    .select('phone, email, name, registration_ip')
+    .eq(foreignKey, id);
 
-  if (email) {
-    query = query.or(`email.eq.${email}`);
-  }
+  if (error) throw error;
 
-  const { count } = await query;
-  return (count ?? 0) > 0;
+  return (data || []).some((registration) => {
+    const existingEmail = String(registration.email || '').trim().toLowerCase();
+    const existingName = normalizeIdentity(String(registration.name || ''));
+    const sameIp = Boolean(ip && ip !== 'unknown' && registration.registration_ip && registration.registration_ip === ip);
+    const similarName = normalizedName.length >= 5 && similarity(normalizedName, existingName) >= 0.9;
+    const similarEmail = normalizedEmail.length >= 6 && similarity(normalizedEmail, existingEmail) >= 0.96;
+
+    return (
+      registration.phone === normalizedPhone ||
+      sameIp ||
+      similarName ||
+      similarEmail
+    );
+  });
 }
 
 /**

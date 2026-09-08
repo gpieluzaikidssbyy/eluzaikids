@@ -32,7 +32,9 @@ function checkRateLimit(ip: string): boolean {
 }
 
 export async function POST(request: NextRequest) {
-  const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+  const ip = (request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown')
+    .split(',')[0]
+    .trim();
 
   if (!checkRateLimit(ip)) {
     return NextResponse.json(
@@ -94,11 +96,19 @@ export async function POST(request: NextRequest) {
     }
 
     const normalizedPhone = normalizePhone(phone);
-    const isDuplicate = await duplicateExists('activity_registrations', 'activity_id', activityId, normalizedPhone, email);
+    const isDuplicate = await duplicateExists(
+      'activity_registrations',
+      'activity_id',
+      activityId,
+      normalizedPhone,
+      email,
+      name,
+      ip,
+    );
 
     if (isDuplicate) {
       return NextResponse.json(
-        { errors: { phone: 'Nomor HP atau email ini sudah terdaftar untuk kegiatan tersebut.' } },
+        { errors: { phone: 'Data serupa (IP, nama, nomor HP, atau email) sudah terdaftar untuk kegiatan tersebut.' } },
         { status: 422 }
       );
     }
@@ -114,6 +124,7 @@ export async function POST(request: NextRequest) {
         name,
         phone: normalizedPhone,
         email,
+        registration_ip: ip,
         jumlah_hadir,
         nomor_registrasi: nomorRegistrasi,
         qr_token: qrToken,
@@ -127,29 +138,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Gagal menyimpan pendaftaran.' }, { status: 500 });
     }
 
-    const qrUrl = `${appBaseUrl()}/api/scan-qr/activity/${activityId}/qr/${registration.id}`;
+    const qrUrl = `${appBaseUrl()}/api/scan-qr/activity/${activityId}/qr/${registration.id}?access=${encodeURIComponent(qrToken)}`;
     const mapsLink = getMapsLink(activity.location);
 
-    await sendConfirmationEmail(name, normalizedPhone, email, {
-      type: 'Activity',
-      phone: normalizedPhone,
-      email,
-      nomor_registrasi: nomorRegistrasi,
-      jumlah_hadir,
-      qr_data: qrData,
-      qr_url: qrUrl,
-      title: activity.title,
-      tema: null,
-      date: activity.activity_date,
-      open_gate: null,
-      time: activity.start_time,
-      location: activity.location,
-      maps_link: mapsLink,
-      registered_at: registration.registered_at,
-    });
+    if (activity.email_enabled !== false) {
+      await sendConfirmationEmail(name, normalizedPhone, email, {
+        type: 'Activity',
+        phone: normalizedPhone,
+        email,
+        nomor_registrasi: nomorRegistrasi,
+        jumlah_hadir,
+        qr_data: qrData,
+        qr_url: qrUrl,
+        title: activity.title,
+        tema: null,
+        date: activity.activity_date,
+        open_gate: null,
+        time: activity.start_time,
+        location: activity.location,
+        maps_link: mapsLink,
+        registered_at: registration.registered_at,
+      });
+    }
 
     return NextResponse.json({
       message: 'Pendaftaran berhasil!',
+      email_enabled: activity.email_enabled !== false,
       qr_url: qrUrl,
       nomor_registrasi: nomorRegistrasi,
     });

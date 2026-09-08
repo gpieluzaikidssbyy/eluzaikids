@@ -122,13 +122,27 @@ export default function ActivityDetailPage() {
               </div>
 
               <div className="mt-6 space-y-3">
-                {!isFull && (
+                {!isFull ? (
                   <RegistrationForm
                     registrableType="activity"
                     registrableId={activity.id}
                     registrableTitle={activity.title}
+                    emailEnabled={activity.email_enabled !== false}
                     buttonClass="w-full"
                   />
+                ) : activity.drive_link ? (
+                  <a
+                    href={activity.drive_link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex w-full items-center justify-center rounded-lg bg-green-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-green-700"
+                  >
+                    Foto
+                  </a>
+                ) : (
+                  <button type="button" disabled className="w-full cursor-not-allowed rounded-lg bg-slate-400 px-4 py-3 text-sm font-semibold text-white">
+                    Foto
+                  </button>
                 )}
                 <BackToHome variant="secondary" />
               </div>

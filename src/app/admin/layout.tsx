@@ -1,258 +1,425 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
+import { useTheme } from '@/lib/use-theme';
+import {
+  LayoutDashboard,
+  CalendarDays,
+  Ticket,
+  ClipboardList,
+  Users,
+  Clock,
+  Building,
+  Settings,
+  Menu,
+  Sun,
+  Moon,
+  Loader2,
+  LogOut,
+  ExternalLink,
+  CheckCircle2,
+  ShoppingBag,
+  UserCircle,
+} from 'lucide-react';
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Badge } from '@/components/ui/badge';
+import { Toaster } from '@/components/ui/sonner';
 
-const sidebarLinks = [
-  { href: '/admin', label: 'Dashboard', icon: 'grid' },
-  { href: '/admin/schedules', label: 'Schedule', icon: 'clock' },
-  { href: '/admin/church-info', label: 'Church Info', icon: 'building' },
-];
+/* ─── Navigation structure ─── */
 
-const groupedLinks = {
-  event: [
-    { href: '/admin/events', label: 'Manage Event' },
-    { href: '/admin/registrants/events', label: 'Manage Registrants' },
-    { href: '/admin/presensi/events', label: 'Event Attendance' },
-  ],
-  activity: [
-    { href: '/admin/activities', label: 'Manage Activity' },
-    { href: '/admin/registrants/activities', label: 'Manage Registrants' },
-    { href: '/admin/presensi/activities', label: 'Activity Attendance' },
-  ],
-  members: [
-    { href: '/admin/members', label: 'Manage Members' },
-    { href: '/admin/members/attendance', label: 'Members Attendance' },
-    { href: '/admin/members/manage-attendance', label: 'Manage Attendance' },
-  ],
-};
-
-function NavIcon({ name }: { name: string }) {
-  const paths: Record<string, React.ReactNode> = {
-    grid: <><rect x="4" y="4" width="6" height="6" rx="1" /><rect x="14" y="4" width="6" height="6" rx="1" /><rect x="4" y="14" width="6" height="6" rx="1" /><rect x="14" y="14" width="6" height="6" rx="1" /></>,
-    calendar: <><rect x="3" y="4" width="18" height="17" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></>,
-    clipboard: <><rect x="5" y="4" width="14" height="17" rx="2" /><path d="M9 4V2h6v2M8 10h8M8 14h6" /></>,
-    clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
-    users: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></>,
-    check: <><path d="M20 6 9 17l-5-5" /><path d="M12 3v3M12 18v3M3 12h3M18 12h3" /></>,
-    user: <><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></>,
-    building: <><path d="M3 21h18M5 21V5l7-3 7 3v16M9 9h1M14 9h1M9 13h1M14 13h1M9 17h1M14 17h1" /></>,
-  };
-
-  return <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>;
+interface NavItem {
+  href: string;
+  label: string;
+  icon: React.ElementType;
+  badge?: string;
 }
 
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+interface NavGroup {
+  label: string;
+  items: NavItem[];
+}
+
+const navGroups: NavGroup[] = [
+  {
+    label: 'Main Menu',
+    items: [
+      { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+      { href: '/admin/calendar', label: 'Calendar', icon: CalendarDays, badge: 'New' },
+      { href: '/admin/schedules', label: 'Schedule', icon: Clock },
+    ],
+  },
+  {
+    label: 'Events',
+    items: [
+      { href: '/admin/events', label: 'Manage Event', icon: Ticket },
+      { href: '/admin/registrants/events', label: 'Event Registrants', icon: ShoppingBag },
+      { href: '/admin/presensi/events', label: 'Event Attendance', icon: Users },
+    ],
+  },
+  {
+    label: 'Kegiatan',
+    items: [
+      { href: '/admin/activities', label: 'Manage Activity', icon: ClipboardList },
+      { href: '/admin/registrants/activities', label: 'Activity Registrants', icon: ShoppingBag },
+      { href: '/admin/presensi/activities', label: 'Activity Attendance', icon: Users },
+    ],
+  },
+  {
+    label: 'Childs',
+    items: [
+      { href: '/admin/members', label: 'Manage Childs', icon: Users },
+      { href: '/admin/members/attendance', label: 'Childs Attendance', icon: CheckCircle2 },
+      { href: '/admin/members/manage-attendance', label: 'Manage Attendance', icon: Users },
+    ],
+  },
+  {
+    label: 'Lainnya',
+    items: [
+      { href: '/admin/church-info', label: 'Church Info', icon: Building },
+      { href: '/admin/settings', label: 'Settings', icon: Settings },
+    ],
+  },
+];
+
+/* ─── Standalone routes (rendered without the shell) ─── */
+
+const STANDALONE_ROUTES = ['/admin/login', '/admin/reset-password'];
+
+/* ─── Sidebar sizing ─── */
+
+const SIDEBAR_COLLAPSED_W = 80;
+const SIDEBAR_EXPANDED_W = 280;
+
+/* ─── Helpers ─── */
+
+function getPageTitle(pathname: string) {
+  if (pathname === '/admin') return 'Dashboard';
+  if (pathname.startsWith('/admin/calendar')) return 'Calendar';
+  if (pathname.startsWith('/admin/events')) return 'Event';
+  if (pathname.startsWith('/admin/activities')) return 'Kegiatan';
+  if (pathname.startsWith('/admin/registrants/events')) return 'Pendaftar Event';
+  if (pathname.startsWith('/admin/registrants/activities')) return 'Pendaftar Kegiatan';
+  if (pathname.startsWith('/admin/presensi')) return 'Presensi';
+  if (pathname.startsWith('/admin/members')) return 'Childs';
+  if (pathname.startsWith('/admin/schedules')) return 'Schedule';
+  if (pathname.startsWith('/admin/church-info')) return 'Church Info';
+  if (pathname.startsWith('/admin/settings')) return 'Settings';
+  return 'Admin';
+}
+
+function activeMatch(pathname: string, href: string, exact = false) {
+  if (exact) return pathname === href;
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+/* ─── Layout ─── */
+
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [expanded, setExpanded] = useState({ event: false, activity: false, members: false });
+  const { theme, toggleTheme } = useTheme();
+
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const [sessionUsername, setSessionUsername] = useState('');
 
+  /* Auth */
   useEffect(() => {
-    if (pathname === '/admin/login' || pathname === '/admin/reset-password') { setAuthLoading(false); return; }
-    fetch('/api/auth/session').then((response) => response.json()).then((data) => {
-      if (!data.authenticated) router.replace('/admin/login');
-      else {
-        setSessionUsername(data.user?.username || data.user?.name || 'Admin');
-        setAuthLoading(false);
-      }
-    });
+    if (STANDALONE_ROUTES.includes(pathname)) {
+      setAuthLoading(false);
+      return;
+    }
+    fetch('/api/auth/session')
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.authenticated) router.replace('/admin/login');
+        else {
+          setSessionUsername(data.user?.username || data.user?.name || 'Admin');
+          setAuthLoading(false);
+        }
+      });
   }, [pathname, router]);
 
   useEffect(() => {
-    setSidebarOpen(false);
-    setExpanded({
-      event: pathname.startsWith('/admin/events') || pathname.startsWith('/admin/registrants/events') || pathname.startsWith('/admin/presensi/events'),
-      activity: pathname.startsWith('/admin/activities') || pathname.startsWith('/admin/registrants/activities') || pathname.startsWith('/admin/presensi/activities'),
-      members: pathname.startsWith('/admin/members'),
-    });
+    setMobileOpen(false);
   }, [pathname]);
 
-  if (pathname === '/admin/login' || pathname === '/admin/reset-password') return <>{children}</>;
-  if (authLoading) return <div className="flex min-h-screen items-center justify-center bg-slate-950"><div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-500 border-t-transparent" /></div>;
+  /* Early returns for standalone routes */
+  if (STANDALONE_ROUTES.includes(pathname)) {
+    return (
+      <>
+        <Toaster />
+        {children}
+      </>
+    );
+  }
+
+  if (authLoading) {
+    return (
+      <div className="font-admin-scope flex min-h-screen flex-col items-center justify-center gap-5 bg-background text-muted-foreground">
+        <div className="relative">
+          <div className="absolute inset-0 -z-10 animate-ping rounded-full bg-primary/20" />
+          <img src="/images/logo.webp" alt="GPI Eluzai Kids" className="h-16 w-16 rounded-xl object-contain" />
+        </div>
+        <div className="flex items-center gap-2 text-sm">
+          <Loader2 className="h-4 w-4 animate-spin text-primary" />
+          Memeriksa sesi...
+        </div>
+      </div>
+    );
+  }
+
+  const initials = sessionUsername
+    .split(' ')
+    .map((p) => p[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    router.replace('/admin/login');
+  };
+
+  /* Hover state: mobile drawer always renders expanded */
+  const expanded = mobileOpen || isHovered;
+  const sidebarW = expanded ? SIDEBAR_EXPANDED_W : SIDEBAR_COLLAPSED_W;
+
+  /* Active item: only the most specific (longest) matching route gets highlighted */
+  let activeHref = pathname === '/admin' ? '/admin' : '';
+  for (const group of navGroups) {
+    for (const item of group.items) {
+      if (item.href === '/admin') continue;
+      if (activeMatch(pathname, item.href) && item.href.length > activeHref.length) {
+        activeHref = item.href;
+      }
+    }
+  }
+
+  const renderNavItem = (item: NavItem) => {
+    const Icon = item.icon;
+    const isActive = item.href === '/admin' ? pathname === '/admin' : item.href === activeHref;
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        onClick={() => setMobileOpen(false)}
+        title={!expanded ? item.label : undefined}
+        className={cn(
+          'group relative flex items-center gap-3 rounded-lg text-sm font-medium transition-colors duration-150',
+          expanded ? 'px-3 py-2.5' : 'justify-center px-0 py-2.5',
+          isActive
+            ? 'bg-[#ECF3FF] text-primary dark:bg-primary/15 dark:text-white'
+            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white'
+        )}
+      >
+        <Icon className={cn('h-5 w-5 shrink-0 transition-colors', isActive ? 'text-primary dark:text-white' : 'text-slate-400 group-hover:text-slate-600 dark:text-slate-500 dark:group-hover:text-slate-300')} />
+        <span
+          className={cn(
+            'min-w-0 truncate whitespace-nowrap transition-all duration-200',
+            expanded ? 'w-auto flex-1 opacity-100' : 'w-0 flex-none overflow-hidden opacity-0'
+          )}
+        >
+          {item.label}
+        </span>
+        {item.badge && (
+          <span
+            className={cn(
+              'shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold transition-all duration-200',
+              expanded ? 'opacity-100' : 'pointer-events-none absolute right-1 top-1 h-0 w-0 overflow-hidden p-0 opacity-0',
+              isActive
+                ? 'bg-primary text-white'
+                : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-300'
+            )}
+          >
+            {item.badge}
+          </span>
+        )}
+      </Link>
+    );
+  };
+
+  const renderGroupLabel = (label: string) => (
+    <p
+      className={cn(
+        'px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500 transition-all duration-200',
+        expanded ? 'mb-2 h-auto opacity-100' : 'mb-0 h-0 overflow-hidden opacity-0'
+      )}
+    >
+      {label}
+    </p>
+  );
+
+  const SidebarContent = (
+    <div className="flex h-full flex-col">
+      {/* ─── Nav ─── */}
+      <nav className={cn('flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin transition-all duration-300', expanded ? 'space-y-5 px-3 py-5' : 'space-y-4 px-2 py-4')}>
+        {navGroups.map((group) => (
+          <div key={group.label}>
+            {renderGroupLabel(group.label)}
+            <div className="space-y-0.5">
+              {group.items.map((item) => renderNavItem(item))}
+            </div>
+          </div>
+        ))}
+      </nav>
+
+      {/* ─── Bottom user card ─── */}
+      <div className="shrink-0 border-t border-border p-3">
+        <div
+          className={cn(
+            'flex items-center rounded-lg bg-slate-50 transition-all duration-300 dark:bg-slate-800/60',
+            expanded ? 'gap-3 p-3' : 'justify-center p-2'
+          )}
+        >
+          <Avatar className={cn('shrink-0 ring-2 ring-primary/20', expanded ? 'h-10 w-10' : 'h-9 w-9')}>
+            <AvatarImage src="/images/logo.webp" alt={sessionUsername} />
+            <AvatarFallback>{initials}</AvatarFallback>
+          </Avatar>
+          <div className={cn('min-w-0 transition-all duration-300', expanded ? 'w-auto flex-1 opacity-100' : 'w-0 flex-none overflow-hidden opacity-0')}>
+            <p className="truncate text-sm font-semibold text-foreground">{sessionUsername}</p>
+            <p className="text-[11px] text-muted-foreground">Administrator</p>
+          </div>
+          <button
+            type="button"
+            onClick={handleLogout}
+            title="Keluar"
+            className={cn(
+              'shrink-0 rounded-lg p-2 text-muted-foreground transition-all duration-300 hover:bg-destructive/10 hover:text-destructive',
+              expanded ? 'opacity-100' : 'pointer-events-none h-0 w-0 overflow-hidden p-0 opacity-0'
+            )}
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="flex min-h-[calc(100vh-64px)] bg-[#f7f8fa] dark:bg-slate-950">
-      {/* Mobile sidebar overlay */}
-      {sidebarOpen && (
+    <div className="font-admin-scope flex min-h-screen bg-background">
+      <Toaster />
+
+      {/* Mobile overlay */}
+      {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+          onClick={() => setMobileOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
+      {/* ─── Sidebar (hover-expandable on desktop, drawer on mobile) ─── */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-[min(82vw,18rem)] max-w-[18rem] transform border-r border-slate-200 bg-white transition-transform duration-200 ease-in-out dark:border-slate-800 dark:bg-slate-900 lg:static lg:w-64 lg:max-w-none lg:translate-x-0 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className={cn(
+          'flex shrink-0 flex-col border-r border-border bg-card',
+          'fixed inset-y-0 left-0 z-50 transition-all duration-300 ease-in-out lg:sticky lg:top-0 lg:h-screen lg:translate-x-0',
+          mobileOpen ? 'translate-x-0' : '-translate-x-full'
+        )}
+        style={{ width: mobileOpen ? SIDEBAR_EXPANDED_W : sidebarW, transitionProperty: 'width, transform' }}
         aria-label="Navigasi admin"
       >
-        <div className="flex h-16 items-center justify-between border-b border-slate-200 px-4 dark:border-slate-700 lg:hidden">
-          <div className="flex items-center gap-2 font-display font-bold text-slate-900 dark:text-white"><img src="/images/logo.webp" alt="GPI Eluzai Kids" className="h-9 w-9 object-contain" />{sessionUsername}</div>
-          <button
-            onClick={() => setSidebarOpen(false)}
-            aria-label="Tutup menu"
-            className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
-          >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        <div className="hidden border-b border-slate-100 px-5 py-5 lg:block dark:border-slate-800">
-          <div className="flex items-center gap-3">
-            <img src="/images/logo.webp" alt="GPI Eluzai Kids" className="h-10 w-10 object-contain" />
-            <div><p className="font-display text-sm font-bold text-slate-900 dark:text-white">Eluzai Kids</p><p className="text-xs text-slate-400">Selamat datang kembali, {sessionUsername} 👋</p></div>
-          </div>
-        </div>
-        <nav className="flex max-h-[calc(100vh-5rem)] flex-col gap-1 overflow-y-auto p-3">
-          <p className="mb-2 px-3 pt-2 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Main menu</p>
-          {sidebarLinks.slice(0, 2).map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={() => setSidebarOpen(false)}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
-                (pathname === link.href || (link.href !== '/admin' && pathname.startsWith(`${link.href}/`)))
-                  ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white'
-                    : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/70'
-              }`}
-            >
-              <span className={pathname === link.href ? 'text-brand-600 dark:text-brand-400' : 'text-slate-400'}><NavIcon name={link.icon} /></span>
-              {link.label}
-            </Link>
-          ))}
-          {(['event', 'activity', 'members'] as const).map((group) => (
-            <div key={group}>
-              <div className={`flex items-center rounded-lg text-sm font-medium transition ${
-                expanded[group] ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'
-              }`}>
-                <Link
-                  href={groupedLinks[group][0].href}
-                  onClick={() => {
-                    setExpanded((current) => ({ ...current, [group]: true }));
-                    setSidebarOpen(false);
-                  }}
-                  className="flex min-w-0 flex-1 items-center gap-3 rounded-l-lg px-3 py-2.5 hover:bg-slate-50 hover:text-slate-900 dark:hover:bg-slate-800/70"
-                >
-                  <span className={expanded[group] ? 'text-brand-600 dark:text-brand-400' : 'text-slate-400'}><NavIcon name={group === 'event' ? 'calendar' : 'clipboard'} /></span>
-                  <span>{group === 'event' ? 'Event' : group === 'activity' ? 'Activity' : 'Members'}</span>
-                </Link>
-                <button
-                  type="button"
-                  aria-label={`Toggle ${group} submenu`}
-                  onClick={() => setExpanded((current) => ({ ...current, [group]: !current[group] }))}
-                  className="rounded-r-lg px-3 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800/70"
-                >
-                  <svg className={`h-4 w-4 transition-transform ${expanded[group] ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path d="m6 9 6 6 6-6" /></svg>
-                </button>
-              </div>
-              {expanded[group] && (
-                <div className="ml-5 border-l border-slate-200 py-1 pl-3 dark:border-slate-700">
-                  {groupedLinks[group].map((link, index) => {
-                    const isGroupHome = index === 0;
-                    const active = isGroupHome
-                      ? pathname === link.href
-                      : pathname === link.href || pathname.startsWith(`${link.href}/`);
-                    return (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        onClick={() => setSidebarOpen(false)}
-                        className={`block rounded-md px-3 py-2 text-sm transition ${
-                          active ? 'bg-brand-50 font-semibold text-brand-700 dark:bg-brand-950/40 dark:text-brand-300' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/70'
-                        }`}
-                      >
-                        {link.label}
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          ))}
-          {sidebarLinks.slice(2).map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={() => setSidebarOpen(false)}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
-                pathname === link.href || pathname.startsWith(`${link.href}/`)
-                  ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white'
-                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/70'
-              }`}
-            >
-              <span className="text-slate-400"><NavIcon name={link.icon} /></span>
-              {link.label}
-            </Link>
-          ))}
-          <div className="mt-3 border-t border-slate-200 pt-3 dark:border-slate-700">
-            <Link
-              href="/admin/settings"
-              onClick={() => setSidebarOpen(false)}
-              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-500 transition hover:bg-slate-50 hover:text-brand-600 dark:text-slate-400 dark:hover:bg-slate-800/70 dark:hover:text-brand-400"
-            >
-              <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
-              Settings
-            </Link>
-          </div>
-          <div className="mt-2 border-t border-slate-200 pt-3 dark:border-slate-700">
-            <Link
-              href="/"
-              onClick={() => setSidebarOpen(false)}
-              className="flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium text-slate-500 transition hover:bg-slate-50 hover:text-brand-600 dark:text-slate-400 dark:hover:bg-slate-800/70 dark:hover:text-brand-400"
-            >
-              <span>View site</span>
-              <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10" /></svg>
-            </Link>
-          </div>
-        </nav>
+        {SidebarContent}
       </aside>
 
-      {/* Main content */}
+      {/* ─── Main column ─── */}
       <div className="min-w-0 flex-1">
-        {/* Mobile header */}
-        <div className="flex items-center gap-3 border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900 lg:hidden">
+        {/* Topbar */}
+        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-card px-4 sm:px-6">
           <button
-            onClick={() => setSidebarOpen(true)}
-            aria-label="Buka menu admin"
-            className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
+            onClick={() => setMobileOpen(true)}
+            aria-label="Buka menu"
+            className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground lg:hidden"
           >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
+            <Menu className="h-5 w-5" />
           </button>
-          <img src="/images/logo.webp" alt="GPI Eluzai Kids" className="h-8 w-8 shrink-0 object-contain" />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-[10px] font-medium uppercase tracking-wider text-slate-400">GPI Eluzai Kids</p>
-            <p className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">{sessionUsername}</p>
-          </div>
-        </div>
 
-        {pathname === '/admin' && (
-          <div className="border-b border-slate-200 bg-white px-6 py-4 dark:border-slate-800 dark:bg-slate-900">
-            <div className="mx-auto flex max-w-7xl items-center justify-between">
-              <div className="flex min-w-0 items-center gap-3">
-                <img src="/images/logo.webp" alt="GPI Eluzai Kids" className="h-9 w-9 object-contain" />
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-wider text-slate-400">GPI Eluzai Kids</p>
-                  <p className="mt-0.5 text-sm font-medium text-slate-700 dark:text-slate-200">Admin Panel</p>
-                </div>
-              </div>
-            </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Eluzai Kids · Admin</p>
+            <h2 className="truncate font-display text-sm font-bold text-foreground">{getPageTitle(pathname)}</h2>
           </div>
-        )}
-        <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">{children}</div>
+
+          {/* Theme toggle */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            aria-label="Ganti tema"
+            className="rounded-lg p-2 text-muted-foreground transition-all hover:rotate-12 hover:bg-muted hover:text-foreground"
+          >
+            {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          </button>
+
+          {/* User dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button type="button" className="flex items-center gap-2.5 rounded-lg p-1.5 transition-colors hover:bg-muted">
+                <Avatar className="h-8 w-8 ring-2 ring-primary/20">
+                  <AvatarImage src="/images/logo.webp" alt={sessionUsername} />
+                  <AvatarFallback>{initials}</AvatarFallback>
+                </Avatar>
+                <span className="hidden max-w-[10rem] truncate text-sm font-medium text-foreground sm:block">
+                  {sessionUsername}
+                </span>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuLabel className="flex flex-col gap-0.5">
+                <span className="text-sm font-semibold">{sessionUsername}</span>
+                <span className="text-xs font-normal text-muted-foreground">Administrator</span>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href="/admin/settings" className="cursor-pointer">
+                  <UserCircle className="h-4 w-4" />
+                  Settings
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/" target="_blank" className="cursor-pointer">
+                  <ExternalLink className="h-4 w-4" />
+                  Lihat situs
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={handleLogout} className="cursor-pointer text-destructive focus:text-destructive">
+                <LogOut className="h-4 w-4" />
+                Keluar
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </header>
+
+        {/* Content */}
+        <div className="relative">
+          <main className="mx-auto w-full max-w-[1600px] p-4 sm:p-6 lg:p-8">
+            <motion.div
+              key={pathname}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+            >
+              {children}
+            </motion.div>
+          </main>
+        </div>
       </div>
     </div>
   );

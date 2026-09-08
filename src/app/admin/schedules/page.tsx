@@ -1,12 +1,20 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { Plus, Pencil, Trash2, Loader2, CheckCircle, XCircle, CalendarDays } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { PageHeader } from '@/components/admin/page-header';
+import { ConfirmDialog } from '@/components/admin/confirm-dialog';
 import type { Schedule } from '@/lib/types';
 
 export default function AdminSchedulesPage() {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState<number | null>(null);
 
   const fetchData = () => {
     fetch('/api/admin/schedules').then((r) => r.json()).then((d) => { setSchedules(d); setLoading(false); });
@@ -14,59 +22,107 @@ export default function AdminSchedulesPage() {
   useEffect(() => { fetchData(); }, []);
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Yakin ingin menghapus jadwal ini?')) return;
+    setDeleting(id);
     await fetch(`/api/admin/schedules/${id}`, { method: 'DELETE' });
+    setDeleting(null);
     fetchData();
   };
 
-  if (loading) return <div className="flex min-h-[40vh] items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-500 border-t-transparent" /></div>;
+  if (loading) return (
+    <div className="flex min-h-[40vh] items-center justify-center">
+      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+    </div>
+  );
 
   return (
-    <div>
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white">Jadwal</h1>
-          <p className="mt-1 text-sm text-slate-500">Kelola jadwal ibadah dan latihan</p>
-        </div>
-        <Link href="/admin/schedules/create" className="btn-primary">+ Tambah Jadwal</Link>
-      </div>
-      <div className="mt-6 overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <table className="min-w-[980px] w-full text-left text-sm">
-          <thead className="border-b border-slate-200 bg-slate-50 dark:border-slate-700">
-            <tr>
-              <th className="px-4 py-3 font-semibold text-slate-600">No</th>
-              <th className="px-4 py-3 font-semibold text-slate-600">Tanggal</th>
-              <th className="px-4 py-3 font-semibold text-slate-600">Kategori</th>
-              <th className="px-4 py-3 font-semibold text-slate-600">Pukul</th>
-              <th className="px-4 py-3 text-center font-semibold text-slate-600">Status</th>
-              <th className="px-4 py-3 font-semibold text-slate-600">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35 }}
+      className="space-y-6"
+    >
+      <PageHeader
+        icon={<CalendarDays className="h-6 w-6" />}
+        title="Jadwal"
+        description="Kelola jadwal ibadah dan latihan"
+        actions={
+          <Link href="/admin/schedules/create">
+            <Button className="rounded-lg">
+              <Plus className="mr-2 h-4 w-4" />
+              Tambah Jadwal
+            </Button>
+          </Link>
+        }
+      />
+
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, delay: 0.05 }}
+        className="overflow-x-auto rounded-xl border border-border/60 bg-card shadow-card"
+      >
+        <Table className="min-w-[700px]">
+          <TableHeader>
+            <TableRow className="border-b border-border/40">
+              <TableHead className="table-heading w-12">No</TableHead>
+              <TableHead className="table-heading">Tanggal</TableHead>
+              <TableHead className="table-heading">Kategori</TableHead>
+              <TableHead className="table-heading">Pukul</TableHead>
+              <TableHead className="table-heading text-center">Status</TableHead>
+              <TableHead className="table-heading w-[120px]">Aksi</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {schedules.map((s, index) => (
-              <tr key={s.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                <td className="px-4 py-3 text-slate-600">{index + 1}</td>
-                <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">{s.day}</td>
-                <td className="px-4 py-3 text-slate-600">{s.type}</td>
-                <td className="px-4 py-3 text-slate-600">{s.time?.slice(0, 5)} WIB</td>
-                <td className="px-4 py-3 text-center">
+              <TableRow key={s.id} className="border-b border-border/30 transition-colors hover:bg-muted/40">
+                <TableCell className="table-cell text-muted-foreground">{index + 1}</TableCell>
+                <TableCell className="table-cell font-medium text-foreground">{s.day}</TableCell>
+                <TableCell className="table-cell">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/10 px-2.5 py-1 text-xs font-semibold text-blue-600 dark:text-blue-400">
+                    {s.type}
+                  </span>
+                </TableCell>
+                <TableCell className="table-cell">{s.time?.slice(0, 5)} WIB</TableCell>
+                <TableCell className="table-cell text-center">
                   {s.show_schedule !== false ? (
-                    <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-green-100 text-sm font-bold text-green-600" aria-label="Ada">✓</span>
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-2.5 py-1 text-xs font-semibold text-success">
+                      <CheckCircle className="h-3 w-3" />
+                      Ada
+                    </span>
                   ) : (
-                    <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-red-100 text-sm font-bold text-red-600" aria-label="Tidak ada">✕</span>
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-destructive/10 px-2.5 py-1 text-xs font-semibold text-destructive">
+                      <XCircle className="h-3 w-3" />
+                      Tidak
+                    </span>
                   )}
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex gap-2">
-                    <Link href={`/admin/schedules/${s.id}/edit`} className="rounded-lg bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-600 hover:bg-brand-100">Edit</Link>
-                    <button onClick={() => handleDelete(s.id)} className="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100">Hapus</button>
+                </TableCell>
+                <TableCell className="table-cell">
+                  <div className="flex gap-1">
+                    <Link href={`/admin/schedules/${s.id}/edit`}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                    <ConfirmDialog
+                      trigger={
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      }
+                      title="Hapus jadwal?"
+                      description="Jadwal ini akan dihapus secara permanen. Tindakan ini tidak dapat dibatalkan."
+                      confirmLabel="Hapus"
+                      pending={deleting === s.id}
+                      variant="destructive"
+                      onConfirm={() => handleDelete(s.id)}
+                    />
                   </div>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+          </TableBody>
+        </Table>
+      </motion.div>
+    </motion.div>
   );
 }

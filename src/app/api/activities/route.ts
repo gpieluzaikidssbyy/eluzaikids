@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
 
   const { data: activities } = await supabase
     .from('activities')
-    .select('*, activity_registrations(count)')
+    .select('id, title, description, image, drive_link, activity_date, start_time, location, map_embed_url, quota, email_enabled, activity_registrations(count)')
     .order('activity_date', { ascending: false })
     .range((page - 1) * perPage, page * perPage - 1);
 

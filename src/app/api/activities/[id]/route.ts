@@ -11,7 +11,7 @@ export async function GET(
 
   const { data: activity } = await supabase
     .from('activities')
-    .select('*, activity_registrations(count)')
+    .select('id, title, description, image, drive_link, activity_date, start_time, location, map_embed_url, quota, email_enabled, activity_registrations(count)')
     .eq('id', params.id)
     .single();
 

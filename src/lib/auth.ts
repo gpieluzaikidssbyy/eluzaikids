@@ -63,4 +63,21 @@ export function createResetToken() {
   return randomBytes(32).toString('hex');
 }
 
+export function createScanToken(type: 'event' | 'activity', id: string): string {
+  const expiresAt = Math.floor(Date.now() / 1000) + 60 * 60;
+  const payload = `scan.${type}.${id}.${expiresAt}`;
+  return `${Buffer.from(payload).toString('base64url')}.${sign(payload)}`;
+}
+
+export function verifyScanToken(value: string | undefined, type: string, id: string): boolean {
+  if (!value) return false;
+  const [encoded, signature] = value.split('.');
+  if (!encoded || !signature) return false;
+  const payload = Buffer.from(encoded, 'base64url').toString();
+  const expected = sign(payload);
+  if (signature.length !== expected.length || !timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) return false;
+  const [, tokenType, tokenId, expiresAt] = payload.split('.');
+  return tokenType === type && tokenId === id && Number(expiresAt) >= Math.floor(Date.now() / 1000);
+}
+
 export { COOKIE_NAME };

@@ -4,6 +4,11 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import type { Event } from '@/lib/types';
 import { formatDateIndo } from '@/lib/helpers';
+import { CalendarDays, MapPin, ChevronRight, QrCode } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { motion } from 'framer-motion';
+import { PageHeader } from '@/components/admin/page-header';
+import { EmptyState } from '@/components/admin/empty-state';
 
 export default function AdminPresensiEventsPage() {
   const [events, setEvents] = useState<(Event & { registrations_count: number })[]>([]);
@@ -16,42 +21,63 @@ export default function AdminPresensiEventsPage() {
   }, []);
 
   return (
-    <div className="space-y-6">
-      <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-600">Attendance</p><h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Event Attendance</h1><p className="mt-2 text-sm text-slate-500">Pilih event untuk membuka daftar kehadiran dan akses scanner.</p></div>
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35 }}
+      className="space-y-6"
+    >
+      <PageHeader
+        icon={<QrCode className="h-6 w-6" />}
+        title="Event Attendance"
+        description="Pilih event untuk membuka daftar kehadiran dan akses scanner."
+      />
 
       {!events.length ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900">Belum ada event.</div>
+        <EmptyState
+          icon={CalendarDays}
+          title="Belum ada event"
+          description="Event yang tersedia akan muncul di sini."
+        />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
-          {events.map((event) => (
-            <Link
+        <div className="grid gap-4 sm:grid-cols-2">
+          {events.map((event, i) => (
+            <motion.div
               key={event.id}
-              href={`/admin/presensi/events/${event.id}`}
-              className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_8px_30px_rgba(15,23,42,0.04)] transition duration-200 hover:-translate-y-1 hover:border-brand-300 hover:shadow-[0_16px_36px_rgba(15,23,42,0.1)] dark:border-slate-800 dark:bg-slate-900"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, delay: 0.05 * (i % 6) }}
             >
-              <div className="absolute inset-x-0 top-0 h-1 gradient-primary" />
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="font-display text-lg font-bold leading-snug text-slate-900 dark:text-white">{event.title}</p>
-                  {event.tema && <p className="mt-1 text-sm text-slate-500">Tema: {event.tema}</p>}
-                  <p className="mt-1 text-sm text-slate-500">{formatDateIndo(event.event_date)}</p>
-                  {event.location && <p className="mt-1 truncate text-xs text-slate-400">{event.location}</p>}
+              <div className="group block rounded-xl border border-border/60 bg-card p-6 shadow-card transition duration-200 hover:border-primary/40 hover:shadow-md">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="font-display text-lg font-bold leading-snug text-foreground">{event.title}</p>
+                    {event.tema && <p className="mt-1 text-sm text-muted-foreground">Tema: {event.tema}</p>}
+                    <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
+                      <CalendarDays className="h-3.5 w-3.5" />
+                      {formatDateIndo(event.event_date)}
+                    </p>
+                    {event.location && (
+                      <p className="mt-1 flex items-center gap-1.5 truncate text-xs text-muted-foreground/70">
+                        <MapPin className="h-3 w-3 shrink-0" />
+                        {event.location}
+                      </p>
+                    )}
+                  </div>
                 </div>
-                <span className={`inline-flex shrink-0 items-center rounded-full px-3 py-1 text-xs font-semibold ${event.registrations_count > 0 ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>
-                  {event.registrations_count} pendaftar
-                </span>
-              </div>
-              <div className="mt-5 flex items-center justify-between">
-                <div className="flex gap-3 text-xs text-slate-500">
-                  <span>Open gate: {event.open_gate?.slice(0, 5) || '-'} WIB</span>
-                  <span>Mulai: {event.start_time?.slice(0, 5) || '-'} WIB</span>
+                <div className="mt-5 flex items-center justify-end">
+                  <Button asChild>
+                    <Link href={`/admin/presensi/events/${event.id}`}>
+                      Manage
+                      <ChevronRight className="ml-1 h-4 w-4" />
+                    </Link>
+                  </Button>
                 </div>
-                <span className="text-sm font-semibold text-brand-600">Manage</span>
               </div>
-            </Link>
+            </motion.div>
           ))}
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

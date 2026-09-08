@@ -41,6 +41,7 @@ export async function PUT(
       location: body.location || null,
       map_embed_url: body.map_embed_url || null,
       quota: body.quota || null,
+      email_enabled: body.email_enabled !== false,
     })
     .eq('id', params.id)
     .select()

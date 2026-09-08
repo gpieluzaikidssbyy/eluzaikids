@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
   const mapEmbedUrl = String(body.map_embed_url || '').trim();
   const driveLink = String(body.drive_link || '').trim();
   const quotaValue = body.quota;
+  const emailEnabled = body.email_enabled !== false;
 
   if (!title || !description || !activityDate || !startTime || !location || !mapEmbedUrl || !driveLink || quotaValue === null || quotaValue === undefined || quotaValue === '') {
     return NextResponse.json({ message: 'Semua field wajib diisi.' }, { status: 422 });
@@ -54,6 +55,7 @@ export async function POST(request: NextRequest) {
       location,
       map_embed_url: mapEmbedUrl,
       quota,
+      email_enabled: emailEnabled,
     })
     .select()
     .single();

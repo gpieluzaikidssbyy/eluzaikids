@@ -11,7 +11,7 @@ export async function GET(
 
   const { data: event } = await supabase
     .from('events')
-    .select('*, event_registrations(count)')
+    .select('id, title, tema, description, event_date, open_gate, start_time, location, quota, email_enabled, image, map_embed_url, drive_link, registration_deadline, event_registrations(count)')
     .eq('id', params.id)
     .single();
 

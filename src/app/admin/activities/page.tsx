@@ -2,8 +2,21 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { toast } from 'sonner';
+import { Plus, Pencil, Trash2, Eye, ClipboardList, Loader2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import type { Activity } from '@/lib/types';
 import { formatDateIndo } from '@/lib/helpers';
+import { PageHeader } from '@/components/admin/page-header';
+import { ConfirmDialog } from '@/components/admin/confirm-dialog';
+import { EmptyState } from '@/components/admin/empty-state';
 
 export default function AdminActivitiesPage() {
   const [activities, setActivities] = useState<(Activity & { registrations_count: number })[]>([]);
@@ -19,7 +32,6 @@ export default function AdminActivitiesPage() {
   useEffect(() => { fetchData(); }, []);
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Yakin ingin menghapus kegiatan ini?')) return;
     await fetch(`/api/admin/activities/${id}`, { method: 'DELETE' });
     fetchData();
   };
@@ -41,6 +53,7 @@ export default function AdminActivitiesPage() {
           quota: form.get('quota') ? Number(form.get('quota')) : null,
           map_embed_url: form.get('map_embed_url') || null,
           drive_link: form.get('drive_link') || null,
+          email_enabled: form.get('email_enabled') === 'on',
         }),
       });
       if (!response.ok) {
@@ -51,79 +64,188 @@ export default function AdminActivitiesPage() {
       setShowForm(false);
       fetchData();
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : 'Gagal menyimpan activity.');
+      const msg = submitError instanceof Error ? submitError.message : 'Gagal menyimpan activity.';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) return <div className="flex min-h-[40vh] items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-500 border-t-transparent" /></div>;
+  if (loading) return (
+    <div className="flex min-h-[40vh] items-center justify-center">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    </div>
+  );
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-600">Activity management</p>
-          <h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Manage Activity</h1>
-          <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">Buat activity baru dan kelola informasi kegiatan untuk pengunjung.</p>
-        </div>
-        <button type="button" onClick={() => setShowForm((open) => !open)} className="btn-primary">
-          {showForm ? 'Tutup form' : 'Add activity'}
-        </button>
-      </div>
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35 }}
+      className="space-y-6"
+    >
+      <PageHeader
+        icon={<ClipboardList className="h-6 w-6" />}
+        iconClassName="bg-amber-500/10 text-amber-500"
+        title="Manage Kegiatan"
+        description="Buat activity baru dan kelola informasi kegiatan untuk pengunjung."
+        actions={
+          <Button onClick={() => setShowForm((open) => !open)}>
+            <Plus className="mr-2 h-4 w-4" />
+            {showForm ? 'Tutup form' : 'Tambah Kegiatan'}
+          </Button>
+        }
+      />
 
       {showForm && (
-        <form onSubmit={(event) => { event.preventDefault(); void handleSubmit(event.currentTarget); }} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <div className="flex items-start justify-between gap-4">
-            <div><h2 className="font-display text-lg font-bold text-slate-900 dark:text-white">Add activity</h2><p className="mt-1 text-sm text-slate-500">Isi informasi utama activity.</p></div>
-            <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700">New</span>
-          </div>
-          {error && <p className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</p>}
-          <div className="mt-5 grid gap-4 md:grid-cols-2">
-            <label className="md:col-span-2"><span className="field-label">Judul <span className="text-red-500">*</span></span><input name="title" required className="input-field mt-1" /></label>
-            <label className="md:col-span-2"><span className="field-label">Deskripsi <span className="text-red-500">*</span></span><textarea name="description" rows={3} required className="input-field mt-1" /></label>
-            <label><span className="field-label">Tanggal <span className="text-red-500">*</span></span><input name="activity_date" type="date" required className="input-field mt-1" /></label>
-            <label><span className="field-label">Jam Mulai <span className="text-red-500">*</span></span><input name="start_time" type="time" required className="input-field mt-1" /></label>
-            <label><span className="field-label">Kuota <span className="text-red-500">*</span></span><input name="quota" type="number" min="1" required className="input-field mt-1" /></label>
-            <label><span className="field-label">Lokasi <span className="text-red-500">*</span></span><input name="location" required className="input-field mt-1" /></label>
-            <label><span className="field-label">Google Maps Embed URL <span className="text-red-500">*</span></span><input name="map_embed_url" type="url" required className="input-field mt-1" /></label>
-            <label><span className="field-label">Drive Link <span className="text-red-500">*</span></span><input name="drive_link" type="url" required className="input-field mt-1" /></label>
-          </div>
-          <div className="mt-5 flex justify-end"><button type="submit" disabled={saving} className="btn-primary disabled:opacity-50">{saving ? 'Saving...' : 'Save activity'}</button></div>
-        </form>
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.05 }}>
+          <Card className="rounded-xl border border-border/60 bg-card p-6 shadow-card">
+            <CardHeader className="p-0 pb-5">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <CardTitle>Tambah Kegiatan</CardTitle>
+                  <CardDescription className="mt-1">Isi informasi utama kegiatan.</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <form onSubmit={(event) => { event.preventDefault(); void handleSubmit(event.currentTarget); }} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="sm:col-span-2 lg:col-span-3">
+                  <Label htmlFor="title" className="field-label">Judul <span className="text-destructive">*</span></Label>
+                  <Input id="title" name="title" required className="mt-1" />
+                </div>
+                <div className="sm:col-span-2 lg:col-span-3">
+                  <Label htmlFor="description" className="field-label">Deskripsi <span className="text-destructive">*</span></Label>
+                  <Textarea id="description" name="description" rows={3} required className="mt-1" />
+                </div>
+                <div>
+                  <Label htmlFor="activity_date" className="field-label">Tanggal <span className="text-destructive">*</span></Label>
+                  <Input id="activity_date" name="activity_date" type="date" required className="mt-1" />
+                </div>
+                <div>
+                  <Label htmlFor="start_time" className="field-label">Jam Mulai <span className="text-destructive">*</span></Label>
+                  <Input id="start_time" name="start_time" type="time" required className="mt-1" />
+                </div>
+                <div>
+                  <Label htmlFor="quota" className="field-label">Kuota <span className="text-destructive">*</span></Label>
+                  <Input id="quota" name="quota" type="number" min="1" required className="mt-1" />
+                </div>
+                <div>
+                  <Label htmlFor="location" className="field-label">Lokasi <span className="text-destructive">*</span></Label>
+                  <Input id="location" name="location" required className="mt-1" />
+                </div>
+                <div>
+                  <Label htmlFor="map_embed_url" className="field-label">Google Maps Embed URL <span className="text-destructive">*</span></Label>
+                  <Input id="map_embed_url" name="map_embed_url" type="url" required className="mt-1" />
+                </div>
+                <div>
+                  <Label htmlFor="drive_link" className="field-label">Drive Link <span className="text-destructive">*</span></Label>
+                  <Input id="drive_link" name="drive_link" type="url" required className="mt-1" />
+                </div>
+                <label className="flex items-center gap-3 rounded-lg border border-border/60 bg-muted/30 p-3 sm:col-span-2 lg:col-span-3">
+                  <input type="checkbox" name="email_enabled" defaultChecked className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary" />
+                  <span>
+                    <span className="block text-sm font-medium">Email konfirmasi</span>
+                    <span className="block text-xs text-muted-foreground">Kirim email konfirmasi kepada pendaftar.</span>
+                  </span>
+                </label>
+              </form>
+            </CardContent>
+          </Card>
+        </motion.div>
       )}
 
-      <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <table className="min-w-[800px] w-full text-left text-sm">
-          <thead className="border-b border-slate-200 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-800/50">
-            <tr>
-              <th className="table-heading">No</th>
-              <th className="table-heading">Nama activity</th>
-              <th className="table-heading">Mulai pukul</th>
-              <th className="table-heading">Lokasi</th>
-              <th className="table-heading">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-            {activities.map((a, index) => (
-              <tr key={a.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                <td className="table-cell text-slate-500">{index + 1}</td>
-                <td className="table-cell"><div className="font-semibold text-slate-900 dark:text-white">{a.title}</div><div className="mt-1 text-xs text-slate-500">{a.activity_date ? formatDateIndo(a.activity_date) : '-'}</div></td>
-                <td className="table-cell">{a.start_time?.slice(0, 5) || '-'}</td>
-                <td className="table-cell">{a.location || '-'}</td>
-                <td className="table-cell">
-                  <div className="flex gap-2">
-                    <Link href={`/admin/activities/${a.id}/edit`} className="rounded-lg bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-600 hover:bg-brand-100">Edit</Link>
-                    <Link href={`/admin/activities/${a.id}`} className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-200">Details</Link>
-                    <button onClick={() => handleDelete(a.id)} className="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100">Hapus</button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {!activities.length && <tr><td colSpan={5} className="px-4 py-10 text-center text-sm text-slate-500">Belum ada activity.</td></tr>}
-          </tbody>
-        </table>
-      </div>
-    </div>
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.1 }}>
+        <div className="overflow-x-auto rounded-lg border border-border bg-card shadow-sm">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/40">
+                <TableHead className="table-heading">Kegiatan</TableHead>
+                <TableHead className="table-heading">Tanggal</TableHead>
+                <TableHead className="table-heading hidden md:table-cell">Lokasi</TableHead>
+                <TableHead className="table-heading">Kuota</TableHead>
+                <TableHead className="table-heading">Status</TableHead>
+                <TableHead className="table-heading text-right">Aksi</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {activities.map((a, index) => {
+                const today = new Date().toISOString().slice(0, 10);
+                const upcoming = (a.activity_date || '').slice(0, 10) >= today;
+                return (
+                  <TableRow key={a.id} className="hover:bg-muted/30">
+                    <TableCell className="table-cell">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-12 w-10 shrink-0 items-center justify-center rounded-md bg-amber-500/10 text-amber-500">
+                          <ClipboardList className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="truncate font-semibold text-foreground">{a.title}</div>
+                          <div className="mt-0.5 text-xs text-muted-foreground">{index + 1}. {a.registrations_count} terdaftar</div>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="table-cell">
+                      <div className="font-medium text-foreground">{a.activity_date ? formatDateIndo(a.activity_date) : '-'}</div>
+                      <div className="mt-0.5 text-xs text-muted-foreground">
+                        {a.start_time?.slice(0, 5) && `Mulai ${a.start_time?.slice(0, 5)}`}
+                      </div>
+                    </TableCell>
+                    <TableCell className="table-cell hidden md:table-cell">{a.location || '-'}</TableCell>
+                    <TableCell className="table-cell">
+                      <span className="font-semibold tabular-nums text-foreground">{a.quota ?? '∞'}</span>
+                      <p className="mt-0.5 text-[11px] text-muted-foreground">{a.registrations_count} terdaftar</p>
+                    </TableCell>
+                    <TableCell className="table-cell">
+                      {upcoming ? (
+                        <Badge variant="success" className="rounded-full bg-success/10 text-success">
+                          Mendatang
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary" className="rounded-full">
+                          Selesai
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="table-cell text-right">
+                      <div className="flex justify-end gap-1.5">
+                        <Button asChild variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                          <Link href={`/admin/activities/${a.id}`}>
+                            <Eye className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                        <Button asChild variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                          <Link href={`/admin/activities/${a.id}/edit`}>
+                            <Pencil className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                        <ConfirmDialog
+                          trigger={
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          }
+                          title="Hapus kegiatan ini?"
+                          description="Tindakan ini tidak dapat dibatalkan."
+                          onConfirm={() => void handleDelete(a.id)}
+                        />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+          {!activities.length && (
+            <EmptyState
+              icon={ClipboardList}
+              title="Belum ada kegiatan"
+              description="Mulai dengan membuat kegiatan baru."
+            />
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }

@@ -104,20 +104,28 @@ export async function POST(request: NextRequest) {
     const eventTable = type === 'event' ? 'events' : 'activities';
     const { data: ev } = await supabase
       .from(eventTable)
-      .select('scan_active')
+      .select('scan_active, scan_pin')
       .eq('id', id)
       .single();
 
+    const nextActive = !ev?.scan_active;
+    if (nextActive && (typeof ev?.scan_pin !== 'string' || !/^\d{6}$/.test(ev.scan_pin))) {
+      return NextResponse.json({ message: 'PIN 6 digit wajib diatur sebelum scan diaktifkan.' }, { status: 422 });
+    }
+
     await supabase
       .from(eventTable)
-      .update({ scan_active: !ev?.scan_active })
+      .update({ scan_active: nextActive })
       .eq('id', id);
 
-    return NextResponse.json({ scan_active: !ev?.scan_active });
+    return NextResponse.json({ scan_active: nextActive });
   }
 
   if (action === 'update-scan-pin') {
     const eventTable = type === 'event' ? 'events' : 'activities';
+    if (typeof body.scan_pin !== 'string' || !/^\d{6}$/.test(body.scan_pin)) {
+      return NextResponse.json({ message: 'PIN harus terdiri dari 6 angka.' }, { status: 422 });
+    }
     await supabase
       .from(eventTable)
       .update({ scan_pin: body.scan_pin })

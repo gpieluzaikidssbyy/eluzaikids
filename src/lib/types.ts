@@ -24,14 +24,15 @@ export interface Event {
   start_time: string | null;
   location: string | null;
   quota: number | null;
+  email_enabled: boolean;
   image: string | null;
   map_embed_url: string | null;
   drive_link: string | null;
   registration_deadline: string | null;
-  scan_pin: string | null;
-  scan_active: boolean;
-  created_at: string;
-  updated_at: string;
+  scan_pin?: string | null;
+  scan_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
   registrations_count?: number;
 }
 
@@ -46,10 +47,11 @@ export interface Activity {
   location: string | null;
   map_embed_url: string | null;
   quota: number | null;
-  scan_pin: string | null;
-  scan_active: boolean;
-  created_at: string;
-  updated_at: string;
+  email_enabled: boolean;
+  scan_pin?: string | null;
+  scan_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
   registrations_count?: number;
 }
 

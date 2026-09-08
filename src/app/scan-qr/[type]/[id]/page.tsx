@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams } from 'next/navigation';
+import { Lock, QrCode, Camera, CameraOff, Delete, ChevronRight, ShieldCheck, CheckCircle2, XCircle } from 'lucide-react';
 
 export default function ScanQrPage() {
   const params = useParams();
@@ -12,6 +13,7 @@ export default function ScanQrPage() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [pin, setPin] = useState('');
   const [pinError, setPinError] = useState('');
+  const [scanToken, setScanToken] = useState('');
   const [scanResult, setScanResult] = useState<{ success: boolean; message: string; name?: string; jumlah_hadir?: number } | null>(null);
   const [manualCode, setManualCode] = useState('');
   const [isScanning, setIsScanning] = useState(false);
@@ -42,7 +44,7 @@ export default function ScanQrPage() {
       const response = await fetch(`/api/scan-qr/${type}/${id}/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ qr_data: qrData }),
+        body: JSON.stringify({ qr_data: qrData, scan_token: scanToken }),
       });
 
       const data = await response.json();
@@ -69,6 +71,7 @@ export default function ScanQrPage() {
 
       const data = await response.json();
       if (data.success) {
+        setScanToken(typeof data.scan_token === 'string' ? data.scan_token : '');
         setIsAuthorized(true);
       } else {
         setPinError(data.message || 'PIN salah.');
@@ -153,8 +156,12 @@ export default function ScanQrPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-500 border-t-transparent" />
+      <div className="flex min-h-screen flex-col items-center justify-center gap-5 bg-navy-950">
+        <div className="relative">
+          <div className="absolute inset-0 -z-10 animate-ping rounded-full bg-brand-500/30" />
+          <div className="h-14 w-14 animate-spin rounded-full border-[3px] border-white/10 border-t-brand-500" />
+        </div>
+        <p className="text-sm font-medium text-slate-400">Menyiapkan presensi...</p>
       </div>
     );
   }
@@ -162,17 +169,15 @@ export default function ScanQrPage() {
   // Scan nonaktif / ditutup
   if (!scanActive) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4">
-        <div className="w-full max-w-sm rounded-3xl bg-white p-8 text-center shadow-2xl dark:bg-slate-900">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-red-100 text-red-600">
-            <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-            </svg>
+      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-navy-950 px-4">
+        <div className="pointer-events-none absolute -top-24 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-red-500/10 blur-3xl" />
+        <div className="relative w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-10 text-center shadow-2xl backdrop-blur-xl">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-red-500/15 ring-1 ring-red-500/30">
+            <XCircle className="h-8 w-8 text-red-400" />
           </div>
-          <h1 className="mt-4 font-display text-xl font-bold text-slate-900 dark:text-white">Scan Ditutup</h1>
-          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-            Presensi scan untuk {eventTitle || `${type} ini`} sedang tidak aktif. Silakan hubungi admin.
+          <h1 className="mt-5 font-display text-2xl font-bold text-white">Scan Ditutup</h1>
+          <p className="mt-3 text-sm leading-relaxed text-slate-400">
+            Presensi scan untuk <span className="font-semibold text-white">{eventTitle || `${type} ini`}</span> sedang tidak aktif. Silakan hubungi admin.
           </p>
         </div>
       </div>
@@ -182,83 +187,95 @@ export default function ScanQrPage() {
   // PIN form
   if (!isAuthorized) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-950 via-navy-900 to-slate-900 px-4 py-10">
-        <div className="w-full max-w-sm">
-          <div className="rounded-3xl bg-white p-8 shadow-2xl dark:bg-slate-900">
-            <div className="text-center">
-              <img src="/images/logo.webp" alt="GPI Eluzai Kids" className="mx-auto h-14 w-14 object-contain" />
-              <h1 className="mt-4 font-display text-xl font-bold text-slate-900 dark:text-white">Presensi {type === 'event' ? 'Event' : 'Kegiatan'}</h1>
-              <p className="mt-1 truncate text-sm text-slate-500 dark:text-slate-400">{eventTitle || 'GPI Eluzai Kids'}</p>
-            </div>
+      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-navy-950 px-4 py-10">
+        <div className="pointer-events-none absolute -top-32 left-1/2 h-80 w-[36rem] -translate-x-1/2 rounded-full bg-brand-500/15 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 right-0 h-72 w-72 rounded-full bg-sky-500/10 blur-3xl" />
 
-            {pinError && (
-              <div className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-center text-sm text-red-600 dark:bg-red-950/30 dark:text-red-400">
-                {pinError}
-              </div>
-            )}
-
-            <p className="mt-5 text-center text-xs font-medium uppercase tracking-[0.14em] text-slate-400">Masukkan PIN 6 digit</p>
-
-            {/* PIN boxes */}
-            <div className="mt-3 flex justify-center gap-2">
-              {Array.from({ length: 6 }).map((_, index) => (
-                <div
-                  key={index}
-                  className={`flex h-12 w-12 items-center justify-center rounded-xl border-2 text-xl font-bold transition ${
-                    index === pin.length
-                      ? 'border-brand-500 bg-brand-50 text-brand-500 dark:bg-brand-950/40'
-                      : pin[index]
-                        ? 'border-slate-300 text-slate-900 dark:border-slate-600 dark:text-white'
-                        : 'border-slate-200 text-slate-300 dark:border-slate-700'
-                  }`}
-                >
-                  {pin[index] ? '●' : ''}
+        <div className="relative w-full max-w-sm">
+          <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] shadow-2xl backdrop-blur-xl">
+            <div className="h-1.5 bg-gradient-to-r from-brand-500 via-sky-400 to-brand-600" />
+            <div className="p-8 sm:p-9">
+              <div className="text-center">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl bg-white/10 ring-1 ring-white/15">
+                  <img src="/images/logo.webp" alt="GPI Eluzai Kids" className="h-10 w-10 object-contain" />
                 </div>
-              ))}
-            </div>
+                <h1 className="mt-4 font-display text-xl font-bold text-white">Presensi {type === 'event' ? 'Event' : 'Kegiatan'}</h1>
+                <p className="mt-1 truncate text-sm text-slate-400">{eventTitle || 'GPI Eluzai Kids'}</p>
+              </div>
 
-            {/* Keypad */}
-            <div className="mx-auto mt-6 grid max-w-[220px] grid-cols-3 gap-2">
-              {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
+              {pinError && (
+                <div className="mt-5 flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2.5 text-sm text-red-400">
+                  <ShieldCheck className="h-4 w-4 shrink-0" />
+                  {pinError}
+                </div>
+              )}
+
+              <p className="mt-6 text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Masukkan PIN 6 digit</p>
+
+              {/* PIN boxes */}
+              <div className="mt-3 flex justify-center gap-2.5">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <div
+                    key={index}
+                    className={`flex h-14 w-11 items-center justify-center rounded-xl border text-lg font-bold transition ${
+                      index === pin.length
+                        ? 'border-brand-500/70 bg-brand-500/10 text-brand-300 shadow-lg shadow-brand-500/10'
+                        : pin[index]
+                          ? 'border-white/20 bg-white/5 text-white'
+                          : 'border-white/10 bg-white/[0.02] text-white/20'
+                    }`}
+                  >
+                    {pin[index] ? '●' : ''}
+                  </div>
+                ))}
+              </div>
+
+              {/* Keypad */}
+              <div className="mx-auto mt-7 grid max-w-[230px] grid-cols-3 gap-2.5">
+                {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
+                  <button
+                    key={digit}
+                    type="button"
+                    onClick={() => appendPinDigit(digit)}
+                    className="rounded-2xl py-3.5 text-lg font-semibold text-white transition hover:bg-white/10 active:scale-95"
+                  >
+                    {digit}
+                  </button>
+                ))}
+                <div />
                 <button
-                  key={digit}
                   type="button"
-                  onClick={() => appendPinDigit(digit)}
-                  className="rounded-xl py-3 text-lg font-semibold text-slate-700 transition hover:bg-slate-100 active:scale-95 dark:text-slate-200 dark:hover:bg-slate-800"
+                  onClick={() => appendPinDigit('0')}
+                  className="rounded-2xl py-3.5 text-lg font-semibold text-white transition hover:bg-white/10 active:scale-95"
                 >
-                  {digit}
+                  0
                 </button>
-              ))}
-              <div />
+                <button
+                  type="button"
+                  onClick={backspacePin}
+                  aria-label="Hapus digit"
+                  className="flex items-center justify-center rounded-2xl py-3.5 text-slate-500 transition hover:bg-white/10 active:scale-95"
+                >
+                  <Delete className="h-5 w-5" />
+                </button>
+              </div>
+
               <button
                 type="button"
-                onClick={() => appendPinDigit('0')}
-                className="rounded-xl py-3 text-lg font-semibold text-slate-700 transition hover:bg-slate-100 active:scale-95 dark:text-slate-200 dark:hover:bg-slate-800"
+                disabled={pin.length !== 6}
+                onClick={() => void handlePinSubmit({ preventDefault: () => {} } as React.FormEvent)}
+                className="mt-7 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand-500 to-brand-600 py-3.5 text-sm font-semibold text-white shadow-lg shadow-brand-500/25 transition hover:from-brand-400 hover:to-brand-500 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                0
-              </button>
-              <button
-                type="button"
-                onClick={backspacePin}
-                aria-label="Hapus digit"
-                className="flex items-center justify-center rounded-xl py-3 text-slate-400 transition hover:bg-slate-100 active:scale-95 dark:hover:bg-slate-800"
-              >
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Z" />
-                  <path d="m18 9-6 6M12 9l6 6" />
-                </svg>
+                Masuk
+                <ChevronRight className="h-4 w-4" />
               </button>
             </div>
-
-            <button
-              type="button"
-              disabled={pin.length !== 6}
-              onClick={() => void handlePinSubmit({ preventDefault: () => {} } as React.FormEvent)}
-              className="btn-primary mt-6 w-full disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Masuk
-            </button>
           </div>
+
+          <p className="mt-6 flex items-center justify-center gap-1.5 text-center text-xs text-slate-500">
+            <Lock className="h-3.5 w-3.5" />
+            Akses terbatas untuk petugas presensi
+          </p>
         </div>
       </div>
     );
@@ -266,46 +283,82 @@ export default function ScanQrPage() {
 
   // Scanner page
   return (
-    <div className="min-h-screen bg-slate-900">
+    <div className="min-h-screen bg-navy-950">
       <div className="mx-auto max-w-lg px-4 py-8">
         <div className="text-center">
-          <h1 className="font-display text-2xl font-bold text-white">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white/5 ring-1 ring-white/10">
+            <QrCode className="h-6 w-6 text-brand-400" />
+          </div>
+          <h1 className="mt-3 font-display text-2xl font-bold text-white">
             {type === 'event' ? 'Scan Event' : 'Scan Kegiatan'}
           </h1>
-          <p className="mt-2 text-sm text-slate-400">
+          {eventTitle && <p className="mt-1 truncate text-sm text-slate-400">{eventTitle}</p>}
+          <p className="mt-3 text-sm text-slate-400">
             Arahkan kamera ke QR Code atau masukkan kode manual
           </p>
         </div>
 
         {/* Scan result toast */}
         {scanResult && (
-          <div className={`mt-4 rounded-xl p-4 text-center ${scanResult.success ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
-            <p className="font-semibold">{scanResult.message}</p>
-            {scanResult.name && (
-              <p className="mt-1 text-sm">{scanResult.name} ({scanResult.jumlah_hadir} orang)</p>
-            )}
+          <div
+            className={`mt-5 flex items-start gap-3 rounded-2xl border p-4 ${
+              scanResult.success
+                ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-300'
+                : 'border-red-500/20 bg-red-500/10 text-red-300'
+            }`}
+          >
+            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${scanResult.success ? 'bg-emerald-500/20' : 'bg-red-500/20'}`}>
+              {scanResult.success ? <CheckCircle2 className="h-5 w-5" /> : <XCircle className="h-5 w-5" />}
+            </div>
+            <div className="min-w-0">
+              <p className="font-semibold">{scanResult.message}</p>
+              {scanResult.name && (
+                <p className="mt-0.5 text-sm opacity-90">{scanResult.name} ({scanResult.jumlah_hadir} orang)</p>
+              )}
+            </div>
           </div>
         )}
 
         {/* QR Scanner */}
-        <div className="mt-6 rounded-2xl bg-slate-800 p-4">
-          <div id="qr-reader" ref={scannerRef} className="w-full overflow-hidden rounded-xl" />
+        <div className="mt-6 rounded-3xl border border-white/10 bg-white/[0.03] p-5 shadow-xl">
+          <div className="relative overflow-hidden rounded-2xl bg-black/40">
+            <div id="qr-reader" ref={scannerRef} className="w-full" />
+            {isScanning && (
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                <div className="relative h-56 w-56">
+                  <span className="absolute left-0 top-0 h-10 w-10 rounded-tl-xl border-l-2 border-t-2 border-brand-400" />
+                  <span className="absolute right-0 top-0 h-10 w-10 rounded-tr-xl border-r-2 border-t-2 border-brand-400" />
+                  <span className="absolute bottom-0 left-0 h-10 w-10 rounded-bl-xl border-b-2 border-l-2 border-brand-400" />
+                  <span className="absolute bottom-0 right-0 h-10 w-10 rounded-br-xl border-b-2 border-r-2 border-brand-400" />
+                  <span className="absolute left-1/2 top-1/2 h-full w-px -translate-x-1/2 -translate-y-1/2 animate-pulse bg-brand-400/60" />
+                </div>
+              </div>
+            )}
+          </div>
 
-          <div className="mt-4 flex gap-3">
+          <div className="mt-5 flex gap-3">
             {!isScanning ? (
-              <button onClick={startScanner} className="flex-1 rounded-lg bg-green-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-green-700">
-                📷 Mulai Scan
+              <button
+                onClick={startScanner}
+                className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 transition hover:from-emerald-400 hover:to-teal-500"
+              >
+                <Camera className="h-4 w-4" />
+                Mulai Scan
               </button>
             ) : (
-              <button onClick={stopScanner} className="flex-1 rounded-lg bg-red-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-red-700">
-                ⏹ Stop Scan
+              <button
+                onClick={stopScanner}
+                className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-red-500 to-rose-600 px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-red-500/20 transition hover:from-red-400 hover:to-rose-500"
+              >
+                <CameraOff className="h-4 w-4" />
+                Stop Scan
               </button>
             )}
           </div>
         </div>
 
         {/* Manual input */}
-        <div className="mt-4 rounded-2xl bg-slate-800 p-4">
+        <div className="mt-4 rounded-3xl border border-white/10 bg-white/[0.03] p-5 shadow-xl">
           <h3 className="text-sm font-semibold text-white">Input Manual</h3>
           <form onSubmit={handleManualSubmit} className="mt-3 flex gap-3">
             <input
@@ -313,14 +366,20 @@ export default function ScanQrPage() {
               value={manualCode}
               onChange={(e) => setManualCode(e.target.value)}
               placeholder="0001"
-              className="flex-1 rounded-lg border border-slate-600 bg-slate-700 px-4 py-3 text-sm text-white placeholder:text-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none"
+              className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3.5 text-sm text-white placeholder:text-slate-500 focus:border-brand-500/60 focus:ring-2 focus:ring-brand-500/20 focus:outline-none"
             />
-            <button type="submit" className="rounded-lg bg-brand-500 px-6 py-3 text-sm font-semibold text-white transition hover:bg-brand-600">
+            <button
+              type="submit"
+              className="rounded-2xl bg-gradient-to-r from-brand-500 to-brand-600 px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-brand-500/25 transition hover:from-brand-400 hover:to-brand-500"
+            >
               Submit
             </button>
           </form>
+          <p className="mt-3 flex items-center gap-1.5 text-xs text-slate-500">
+            <Lock className="h-3 w-3" />
+            Masukkan 4 angka terakhir nomor registrasi, misalnya 0001 atau 0120.
+          </p>
         </div>
-        <p className="mt-2 text-xs text-slate-400">Masukkan 4 angka terakhir nomor registrasi, misalnya 0001 atau 0120.</p>
       </div>
     </div>
   );

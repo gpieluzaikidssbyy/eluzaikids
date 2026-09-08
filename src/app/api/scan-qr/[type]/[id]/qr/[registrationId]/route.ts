@@ -9,22 +9,25 @@ export async function GET(
   { params }: { params: { type: string; id: string; registrationId: string } }
 ) {
   try {
-    const { type, registrationId } = params;
+    const { type, id, registrationId } = params;
     const table = type === 'event' ? 'event_registrations' : 'activity_registrations';
+    const foreignKey = type === 'event' ? 'event_id' : 'activity_id';
 
     const supabase = createServiceClient();
 
+    const accessToken = request.nextUrl.searchParams.get('access');
     const { data: registration } = await supabase
       .from(table)
       .select('nomor_registrasi, qr_token')
       .eq('id', registrationId)
+      .eq(foreignKey, id)
       .single();
 
     if (!registration) {
       return NextResponse.json({ message: 'Registration not found' }, { status: 404 });
     }
 
-    if (!registration.qr_token) {
+    if (!registration.qr_token || accessToken !== registration.qr_token) {
       return NextResponse.json({ message: 'QR sudah tidak berlaku.' }, { status: 410 });
     }
 

@@ -33,6 +33,7 @@ export async function POST(request: NextRequest) {
   const mapEmbedUrl = String(form.get('map_embed_url') || '').trim();
   const driveLink = String(form.get('drive_link') || '').trim();
   const registrationDeadline = String(form.get('registration_deadline') || '');
+  const emailEnabled = form.get('email_enabled') === 'on';
   const poster = form.get('poster');
 
   if (!title || !description || !eventDate || !openGate || !startTime || !location || !registrationDeadline || !(poster instanceof File) || poster.size === 0) {
@@ -89,6 +90,7 @@ export async function POST(request: NextRequest) {
       map_embed_url: mapEmbedUrl || null,
       drive_link: driveLink || null,
       registration_deadline: `${registrationDeadline}:00+07:00`,
+      email_enabled: emailEnabled,
     })
     .select()
     .single();

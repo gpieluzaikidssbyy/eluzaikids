@@ -54,6 +54,7 @@ export async function PUT(
       map_embed_url: body.map_embed_url || null,
       drive_link: body.drive_link || null,
       registration_deadline: body.registration_deadline || null,
+      email_enabled: body.email_enabled !== false,
     })
     .eq('id', params.id)
     .select()

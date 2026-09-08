@@ -17,14 +17,6 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users(username) WHERE username IS NOT NULL;
 
--- Main admin account
--- username: admin@gpieluzaikids
--- password: admin@gpieluzaikids123
--- recovery email: codingaja001@gmail.com
-INSERT INTO users (name, email, username, password, is_admin, email_verified_at)
-SELECT 'Main Admin', 'codingaja001@gmail.com', 'admin@gpieluzaikids', '$2b$10$dWQXKPpCTJWOvVEG8lgEOODITjhrMH707tPFXlc47E.5yM5cRupUG', TRUE, NOW()
-WHERE NOT EXISTS (SELECT 1 FROM users WHERE username = 'admin@gpieluzaikids');
-
 -- Schedules table
 CREATE TABLE IF NOT EXISTS schedules (
   id BIGSERIAL PRIMARY KEY,
@@ -50,6 +42,7 @@ CREATE TABLE IF NOT EXISTS events (
   start_time TIME,
   location VARCHAR(255),
   quota INTEGER,
+  email_enabled BOOLEAN NOT NULL DEFAULT TRUE,
   image VARCHAR(255),
   map_embed_url TEXT,
   drive_link VARCHAR(255),
@@ -64,6 +57,7 @@ CREATE INDEX IF NOT EXISTS idx_events_event_date ON events(event_date);
 
 -- Add 'tema' column for existing databases (idempotent migration)
 ALTER TABLE events ADD COLUMN IF NOT EXISTS tema VARCHAR(255);
+ALTER TABLE events ADD COLUMN IF NOT EXISTS email_enabled BOOLEAN NOT NULL DEFAULT TRUE;
 
 -- Event Registrations table
 CREATE TABLE IF NOT EXISTS event_registrations (
@@ -72,6 +66,7 @@ CREATE TABLE IF NOT EXISTS event_registrations (
   name VARCHAR(255) NOT NULL,
   phone VARCHAR(20) NOT NULL,
   email VARCHAR(255),
+  registration_ip VARCHAR(64),
   jumlah_hadir INTEGER DEFAULT 1,
   nomor_registrasi VARCHAR(50),
   qr_token VARCHAR(64),
@@ -99,6 +94,7 @@ CREATE TABLE IF NOT EXISTS activities (
   location VARCHAR(255),
   map_embed_url TEXT,
   quota INTEGER,
+  email_enabled BOOLEAN NOT NULL DEFAULT TRUE,
   scan_pin VARCHAR(6),
   scan_active BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -112,6 +108,7 @@ CREATE TABLE IF NOT EXISTS activity_registrations (
   name VARCHAR(255) NOT NULL,
   phone VARCHAR(20) NOT NULL,
   email VARCHAR(255),
+  registration_ip VARCHAR(64),
   jumlah_hadir INTEGER DEFAULT 1,
   nomor_registrasi VARCHAR(50),
   qr_token VARCHAR(64),
@@ -126,6 +123,9 @@ CREATE INDEX IF NOT EXISTS idx_activity_registrations_activity_id ON activity_re
 CREATE INDEX IF NOT EXISTS idx_activity_registrations_name ON activity_registrations(name);
 CREATE INDEX IF NOT EXISTS idx_activity_registrations_phone ON activity_registrations(phone);
 CREATE INDEX IF NOT EXISTS idx_activity_registrations_email ON activity_registrations(email);
+ALTER TABLE event_registrations ADD COLUMN IF NOT EXISTS registration_ip VARCHAR(64);
+ALTER TABLE activity_registrations ADD COLUMN IF NOT EXISTS registration_ip VARCHAR(64);
+ALTER TABLE activities ADD COLUMN IF NOT EXISTS email_enabled BOOLEAN NOT NULL DEFAULT TRUE;
 
 -- Church Info table
 CREATE TABLE IF NOT EXISTS church_info (
@@ -165,6 +165,20 @@ CREATE TABLE IF NOT EXISTS attendances (
 
 CREATE INDEX IF NOT EXISTS idx_attendances_date ON attendances(attendance_date);
 
+-- Calendar Events table (internal agenda — Rapat, Pertemuan, Doa Bersama, dsb.)
+-- NOT shown publicly, only on /admin/calendar
+CREATE TABLE IF NOT EXISTS calendar_events (
+  id BIGSERIAL PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  event_date DATE NOT NULL,
+  start_time TIME,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_calendar_events_event_date ON calendar_events(event_date);
+
 -- Insert default church info
 INSERT INTO church_info (address, map_embed_url, phone, whatsapp, email, instagram_url, youtube_url)
 VALUES (
@@ -176,3 +190,27 @@ VALUES (
   '',
   ''
 ) ON CONFLICT DO NOTHING;
+
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE schedules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE event_registrations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE activities ENABLE ROW LEVEL SECURITY;
+ALTER TABLE activity_registrations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE church_info ENABLE ROW LEVEL SECURITY;
+ALTER TABLE members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE attendances ENABLE ROW LEVEL SECURITY;
+ALTER TABLE calendar_events ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS public_events_read ON events;
+CREATE POLICY public_events_read ON events FOR SELECT USING (true);
+DROP POLICY IF EXISTS public_activities_read ON activities;
+CREATE POLICY public_activities_read ON activities FOR SELECT USING (true);
+DROP POLICY IF EXISTS public_schedules_read ON schedules;
+CREATE POLICY public_schedules_read ON schedules FOR SELECT USING (show_schedule = true);
+DROP POLICY IF EXISTS public_church_info_read ON church_info;
+CREATE POLICY public_church_info_read ON church_info FOR SELECT USING (true);
+
+REVOKE ALL ON users, schedules, events, event_registrations, activities,
+  activity_registrations, church_info, members, attendances, calendar_events
+  FROM anon, authenticated;

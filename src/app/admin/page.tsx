@@ -2,6 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { CalendarDays, ClipboardList, Users, ArrowUpRight, MoreHorizontal } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Loading } from '@/components/admin/loading';
+import { EmptyState } from '@/components/admin/empty-state';
+import { CalendarGrid, fetchCalendarItems, type CalendarEventItem } from '@/components/admin/calendar-grid';
 
 interface DashboardStats {
   events: number;
@@ -11,10 +18,30 @@ interface DashboardStats {
   members: number;
 }
 
-const iconClass = 'h-5 w-5';
+interface EventItem {
+  id: string;
+  title: string;
+  tema?: string | null;
+  event_date: string;
+  location?: string | null;
+  image?: string | null;
+  registrations_count?: number | null;
+}
+
+const DAYS = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+const MONTHS = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
+function formatDate(dateStr: string) {
+  const date = new Date(`${dateStr.slice(0, 10)}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return dateStr;
+  return `${DAYS[date.getDay()]}, ${date.getDate()} ${MONTHS[date.getMonth()]} ${date.getFullYear()}`;
+}
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [events, setEvents] = useState<EventItem[]>([]);
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEventItem[]>([]);
+  const [calendarLoading, setCalendarLoading] = useState(true);
   const [username, setUsername] = useState('');
 
   useEffect(() => {
@@ -24,108 +51,218 @@ export default function AdminDashboard() {
     fetch('/api/admin/stats')
       .then((r) => r.json())
       .then(setStats);
+    fetch('/api/admin/events')
+      .then((r) => r.json())
+      .then((list: EventItem[]) => {
+        const sorted = [...list].sort((a, b) => (a.event_date < b.event_date ? 1 : -1));
+        setEvents(sorted.slice(0, 5));
+      });
+    fetchCalendarItems()
+      .then((items) => {
+        setCalendarEvents(items);
+        setCalendarLoading(false);
+      })
+      .catch(() => setCalendarLoading(false));
   }, []);
 
-  if (!stats) {
-    return (
-      <div className="flex min-h-[40vh] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-500 border-t-transparent" />
-      </div>
-    );
-  }
+  if (!stats) return <Loading label="Memuat dashboard..." />;
 
-  const statCards = [
+  const kpis = [
     {
       label: 'Event',
       value: stats.events,
+      icon: CalendarDays,
+      tone: 'bg-[#ECF3FF] text-[#465FFF]',
       href: '/admin/events',
-      icon: (
-        <svg className={iconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <rect x="3" y="4" width="18" height="18" rx="2" />
-          <path d="M16 2v4M8 2v4M3 10h18" />
-        </svg>
-      ),
     },
     {
       label: 'Kegiatan',
       value: stats.activities,
+      icon: ClipboardList,
+      tone: 'bg-amber-500/10 text-amber-500',
       href: '/admin/activities',
-      icon: (
-        <svg className={iconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <rect x="3" y="4" width="18" height="18" rx="2" />
-          <path d="M16 2v4M8 2v4M3 10h18" />
-          <path d="m9 16 2 2 4-4" />
-        </svg>
-      ),
-    },
-    {
-      label: 'Pendaftar Event',
-      value: stats.eventRegistrations,
-      href: '/admin/registrants/events',
-      icon: (
-        <svg className={iconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <circle cx="10" cy="8" r="4" />
-          <path d="M2 21v-2a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v2" />
-          <path d="M19 8v6M22 11h-6" />
-        </svg>
-      ),
-    },
-    {
-      label: 'Pendaftar Kegiatan',
-      value: stats.activityRegistrations,
-      href: '/admin/registrants/activities',
-      icon: (
-        <svg className={iconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <rect x="5" y="4" width="14" height="18" rx="2" />
-          <path d="M9 2h6v4H9z" />
-          <path d="M9 11h6M9 15h6" />
-        </svg>
-      ),
     },
     {
       label: 'Anggota',
       value: stats.members,
+      icon: Users,
+      tone: 'bg-[#ECF3FF] text-[#465FFF]',
       href: '/admin/members',
-      icon: (
-        <svg className={iconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-          <circle cx="9" cy="7" r="4" />
-          <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-        </svg>
-      ),
     },
   ];
 
-  return (
-    <div>
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-        <div>
-          <p className="text-sm font-medium text-brand-600 dark:text-brand-400">Selamat datang kembali, {username}</p>
-          <h1 className="mt-1 font-display text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Ringkasan kegiatan</h1>
-          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Pantau pendaftaran, kegiatan, dan kehadiran dari satu tempat.</p>
-        </div>
-        <Link href="/admin/events/create" className="btn-primary self-start sm:self-auto">Tambah event <span aria-hidden="true">+</span></Link>
-      </div>
+  const today = new Date().toISOString().slice(0, 10);
 
-      <div className="mt-9 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-        {statCards.map((card) => (
-          <Link
-            key={card.label}
-            href={card.href}
-            className="group flex min-h-[170px] flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition duration-200 hover:border-slate-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700"
+  return (
+    <div className="space-y-6">
+      {/* ─── Page header ─── */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
+        className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+      >
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            {formatDate(today)}
+          </p>
+          <h1 className="mt-1 font-display text-2xl font-bold tracking-tight text-foreground">
+            Selamat datang, {username} 👋
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Pantau pendaftaran, kegiatan, dan kehadiran dari satu tempat.
+          </p>
+        </div>
+      </motion.div>
+
+      {/* ─── KPI cards ─── */}
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {kpis.map(({ label, value, icon: Icon, tone, href }, index) => (
+          <motion.div
+            key={label}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: index * 0.05, ease: 'easeOut' }}
           >
-            <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-brand-50 text-brand-600 transition group-hover:bg-brand-100 dark:bg-brand-500/10 dark:text-brand-400 dark:group-hover:bg-brand-500/20">
-              {card.icon}
-            </div>
-            <p className="mt-auto pt-6 font-display text-4xl font-bold tabular-nums tracking-tight text-slate-900 dark:text-white">
-              {card.value}
-            </p>
-            <p className="mt-1 text-sm font-medium text-slate-500 dark:text-slate-400">
-              {card.label}
-            </p>
-          </Link>
+            <Link
+              href={href}
+              className="group relative block overflow-hidden rounded-xl border border-border bg-card p-6 shadow-sm transition-all hover:border-[#465FFF]/30 hover:shadow-md"
+            >
+              <div className="flex items-start justify-between">
+                <span className={`flex h-12 w-12 items-center justify-center rounded-xl ${tone}`}>
+                  <Icon className="h-6 w-6" />
+                </span>
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground transition-all group-hover:bg-[#465FFF] group-hover:text-white">
+                  <ArrowUpRight className="h-4 w-4" />
+                </span>
+              </div>
+              <p className="mt-5 font-display text-3xl font-bold tabular-nums text-foreground">{value}</p>
+              <p className="mt-1 text-sm font-medium text-muted-foreground">{label}</p>
+            </Link>
+          </motion.div>
         ))}
-      </div>
+      </section>
+
+      {/* ─── Calendar ─── */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.1 }}
+      >
+        <CalendarGrid
+          events={calendarEvents}
+          loading={calendarLoading}
+          toolbarAction={
+            <Button asChild variant="ghost" className="text-xs">
+              <Link href="/admin/calendar">
+                Lihat semua
+                <ArrowUpRight className="h-3.5 w-3.5" />
+              </Link>
+            </Button>
+          }
+        />
+      </motion.div>
+
+      {/* ─── Recent events table ─── */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.22 }}
+        className="rounded-lg border border-border bg-card shadow-sm"
+      >
+        <div className="flex items-center justify-between border-b border-border px-6 py-4">
+          <div>
+            <h2 className="font-display text-base font-bold text-foreground">Event Terdekat</h2>
+            <p className="text-xs text-muted-foreground">5 event dengan jadwal terdekat</p>
+          </div>
+          <Button asChild variant="ghost" className="text-xs">
+            <Link href="/admin/events">
+              Lihat semua
+              <ArrowUpRight className="h-3.5 w-3.5" />
+            </Link>
+          </Button>
+        </div>
+
+        {events.length === 0 ? (
+          <div className="p-6">
+            <EmptyState
+              icon={CalendarDays}
+              title="Belum ada event"
+              description="Buat event pertama dan mulai kelola pendaftaran."
+            />
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/40">
+                  <th className="table-heading">Event</th>
+                  <th className="table-heading">Tanggal</th>
+                  <th className="table-heading hidden md:table-cell">Lokasi</th>
+                  <th className="table-heading">Pendaftar</th>
+                  <th className="table-heading">Status</th>
+                  <th className="table-heading text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                {events.map((event) => {
+                  const upcoming = event.event_date.slice(0, 10) >= today;
+                  return (
+                    <tr key={event.id} className="border-b border-border/60 last:border-0 hover:bg-muted/30">
+                      <td className="table-cell">
+                        <div className="flex items-center gap-3">
+                          <div className="relative h-11 w-9 shrink-0 overflow-hidden rounded-md bg-[#ECF3FF]">
+                            {event.image ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={event.image} alt={event.title} className="h-full w-full object-cover" />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center text-[#465FFF]">
+                                <CalendarDays className="h-4 w-4" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="max-w-[16rem] truncate font-medium text-foreground">{event.title}</p>
+                            {event.tema && (
+                              <p className="truncate text-xs text-muted-foreground">{event.tema}</p>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="table-cell">{formatDate(event.event_date)}</td>
+                      <td className="table-cell hidden md:table-cell">{event.location || '—'}</td>
+                      <td className="table-cell">
+                        <span className="font-semibold tabular-nums text-foreground">
+                          {event.registrations_count || 0}
+                        </span>
+                      </td>
+                      <td className="table-cell">
+                        {upcoming ? (
+                          <Badge variant="success" className="rounded-full bg-success/10 text-success">
+                            Mendatang
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary" className="rounded-full">
+                            Selesai
+                          </Badge>
+                        )}
+                      </td>
+                      <td className="table-cell text-right">
+                        <Button asChild variant="ghost" size="sm" className="h-8 px-2.5">
+                          <Link href={`/admin/events/${event.id}`}>
+                            Detail
+                            <MoreHorizontal className="ml-1 h-3.5 w-3.5" />
+                          </Link>
+                        </Button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </motion.div>
     </div>
   );
 }

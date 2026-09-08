@@ -2,6 +2,16 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { PageHeader } from '@/components/admin/page-header';
+import { CalendarDays, Loader2, ImageIcon, Info, MapPin, Image } from 'lucide-react';
+import { AlertError } from '@/components/ui/alert';
 
 export default function CreateEventPage() {
   const router = useRouter();
@@ -23,115 +33,187 @@ export default function CreateEventPage() {
 
       if (!response.ok) {
         const data = await response.json();
-        setError(data.message || 'Gagal menyimpan.');
+        const msg = data.message || 'Gagal menyimpan.';
+        setError(msg);
+        toast.error(msg);
         return;
       }
 
+      toast.success('Event berhasil disimpan.');
       router.push('/admin/events');
     } catch {
-      setError('Terjadi kesalahan.');
+      const msg = 'Terjadi kesalahan.';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white">Tambah Event</h1>
-      <p className="mt-1 text-sm text-slate-500">Lengkapi seluruh informasi event di bawah ini.</p>
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35 }}
+      className="mx-auto max-w-3xl space-y-6"
+    >
+      <PageHeader
+        icon={<CalendarDays className="h-6 w-6" />}
+        title="Tambah Event"
+        description="Lengkapi seluruh informasi event di bawah ini."
+        backHref="/admin/events"
+      />
 
-      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-        {error && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div>}
+      {error && (
+        <AlertError title="Gagal menyimpan">{error}</AlertError>
+      )}
 
-        <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Judul Event *</label>
-          <input type="text" name="title" required className="input-field mt-1" placeholder="Contoh: Family Fun Day 2026" />
-        </div>
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.05 }}>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* ─── Informasi dasar ─── */}
+          <Card className="rounded-lg border border-border/60 bg-card shadow-sm">
+            <CardHeader className="flex flex-row items-start gap-4 space-y-0 border-b border-border/40 px-6 py-5">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#ECF3FF] text-[#465FFF]">
+                <Info className="h-5 w-5" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Informasi Event</CardTitle>
+                <CardDescription>Identitas utama dan deskripsi event.</CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4 px-6 py-6">
+              <div className="space-y-2">
+                <Label htmlFor="title" className="field-label">Judul Event <span className="text-destructive">*</span></Label>
+                <Input type="text" id="title" name="title" required className="rounded-lg" placeholder="Contoh: Family Fun Day 2026" />
+                <p className="text-xs text-muted-foreground">Nama event yang ditampilkan ke pengunjung website.</p>
+              </div>
 
-        <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Tema</label>
-          <input type="text" name="tema" className="input-field mt-1" placeholder="Contoh: Petualangan Keluarga Bahagia" />
-        </div>
+              <div className="space-y-2">
+                <Label htmlFor="tema" className="field-label">Tema</Label>
+                <Input type="text" id="tema" name="tema" className="rounded-lg" placeholder="Contoh: Petualangan Keluarga Bahagia" />
+              </div>
 
-        <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Deskripsi *</label>
-          <textarea name="description" rows={4} required className="input-field mt-1" placeholder="Tuliskan informasi lengkap tentang event ini." />
-        </div>
+              <div className="space-y-2">
+                <Label htmlFor="description" className="field-label">Deskripsi <span className="text-destructive">*</span></Label>
+                <Textarea id="description" name="description" rows={4} required className="rounded-lg" placeholder="Tuliskan informasi lengkap tentang event ini." />
+              </div>
+            </CardContent>
+          </Card>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Tanggal Event *</label>
-            <input type="date" name="event_date" required className="input-field mt-1" />
+          {/* ─── Jadwal & lokasi ─── */}
+          <Card className="rounded-lg border border-border/60 bg-card shadow-sm">
+            <CardHeader className="flex flex-row items-start gap-4 space-y-0 border-b border-border/40 px-6 py-5">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#ECF3FF] text-[#465FFF]">
+                <MapPin className="h-5 w-5" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Jadwal & Lokasi</CardTitle>
+                <CardDescription>Tanggal, waktu, dan tempat pelaksanaan.</CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent className="px-6 py-6">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="event_date" className="field-label">Tanggal Event <span className="text-destructive">*</span></Label>
+                  <Input type="date" id="event_date" name="event_date" required className="rounded-lg" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="registration_deadline" className="field-label">Batas Pendaftaran <span className="text-destructive">*</span></Label>
+                  <Input type="datetime-local" id="registration_deadline" name="registration_deadline" required className="rounded-lg" />
+                  <p className="text-xs text-muted-foreground">Waktu terakhir pengunjung dapat mendaftar.</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="open_gate" className="field-label">Open Gate <span className="text-destructive">*</span></Label>
+                  <Input type="time" id="open_gate" name="open_gate" required className="rounded-lg" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="start_time" className="field-label">Jam Mulai <span className="text-destructive">*</span></Label>
+                  <Input type="time" id="start_time" name="start_time" required className="rounded-lg" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="location" className="field-label">Lokasi <span className="text-destructive">*</span></Label>
+                  <Input type="text" id="location" name="location" required className="rounded-lg" placeholder="Nama gedung / alamat" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="quota" className="field-label">Kuota</Label>
+                  <div className="flex gap-2">
+                    <Input type="number" id="quota" name="quota" min="1" max="500" className="rounded-lg" placeholder="Contoh: 100" />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="shrink-0 rounded-lg"
+                      title="Set kuota tidak terbatas"
+                      onClick={(e) => {
+                        const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+                        const wasUnlimited = input.disabled;
+                        input.disabled = !wasUnlimited;
+                        if (wasUnlimited) input.name = 'quota';
+                        else input.removeAttribute('name');
+                        e.currentTarget.classList.toggle('bg-primary/10', wasUnlimited);
+                        e.currentTarget.classList.toggle('text-primary', wasUnlimited);
+                        e.currentTarget.classList.toggle('border-primary', wasUnlimited);
+                      }}
+                    >
+                      Unlimited
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Maksimal 500 pendaftar, atau pilih Unlimited.</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* ─── Media & tautan ─── */}
+          <Card className="rounded-lg border border-border/60 bg-card shadow-sm">
+            <CardHeader className="flex flex-row items-start gap-4 space-y-0 border-b border-border/40 px-6 py-5">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#ECF3FF] text-[#465FFF]">
+                <Image className="h-5 w-5" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Media & Tautan</CardTitle>
+                <CardDescription>Poster event, peta, dan materi pendukung.</CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4 px-6 py-6">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="map_embed_url" className="field-label">Google Maps Embed URL</Label>
+                  <Input type="url" id="map_embed_url" name="map_embed_url" className="rounded-lg" placeholder="https://www.google.com/maps/embed?pb=..." />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="drive_link" className="field-label">Drive Link</Label>
+                  <Input type="url" id="drive_link" name="drive_link" className="rounded-lg" placeholder="https://drive.google.com/..." />
+                </div>
+              </div>
+              <label className="flex items-center gap-3 rounded-lg border border-border/60 bg-muted/30 p-3">
+                <input type="checkbox" name="email_enabled" defaultChecked className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary" />
+                <span>
+                  <span className="block text-sm font-medium">Email konfirmasi</span>
+                  <span className="block text-xs text-muted-foreground">Kirim email konfirmasi setelah pendaftaran berhasil.</span>
+                </span>
+              </label>
+
+              <div className="space-y-2">
+                <Label htmlFor="poster" className="field-label">Poster Event <span className="text-destructive">*</span></Label>
+                <div className="rounded-lg border border-dashed border-border bg-muted/50 p-8 text-center">
+                  <ImageIcon className="mx-auto h-10 w-10 text-muted-foreground/60" />
+                  <p className="mt-2 text-sm text-muted-foreground">Klik untuk memilih poster atau seret ke sini</p>
+                  <Input type="file" id="poster" name="poster" required accept=".jpg,.png,.webp,image/jpeg,image/png,image/webp" className="mx-auto mt-3 max-w-xs rounded-lg" />
+                </div>
+                <p className="text-xs text-muted-foreground">Rasio 4:5, maksimal 2 MB. Format JPG, PNG, atau WEBP.</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="flex gap-3">
+            <Button type="submit" disabled={saving} className="rounded-lg">
+              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {saving ? 'Menyimpan...' : 'Simpan Event'}
+            </Button>
+            <Button type="button" variant="outline" onClick={() => router.back()} className="rounded-lg">Batal</Button>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Batas Pendaftaran *</label>
-            <input type="datetime-local" name="registration_deadline" required className="input-field mt-1" />
-          </div>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Open Gate *</label>
-            <input type="time" name="open_gate" required className="input-field mt-1" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Jam Mulai *</label>
-            <input type="time" name="start_time" required className="input-field mt-1" />
-          </div>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Kuota</label>
-            <div className="mt-1 flex gap-2">
-              <input type="number" name="quota" min="1" max="500" className="input-field w-full" placeholder="Contoh: 100" />
-              <button type="button" className="shrink-0 rounded-xl border border-slate-200 px-3 text-sm font-medium text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800" title="Set kuota tidak terbatas" onClick={(e) => {
-                const input = e.currentTarget.previousElementSibling as HTMLInputElement;
-                const wasUnlimited = input.disabled;
-                input.disabled = !wasUnlimited;
-                if (wasUnlimited) input.name = 'quota';
-                else input.removeAttribute('name');
-                e.currentTarget.classList.toggle('bg-brand-50', wasUnlimited);
-                e.currentTarget.classList.toggle('text-brand-600', wasUnlimited);
-                e.currentTarget.classList.toggle('border-brand-300', wasUnlimited);
-                e.currentTarget.classList.toggle('border-slate-200', !wasUnlimited);
-                e.currentTarget.classList.toggle('text-slate-500', !wasUnlimited);
-              }}>
-                Unlimited
-              </button>
-            </div>
-            <p className="mt-1 text-xs text-slate-500">Maksimal 500 pendaftar, atau pilih Unlimited.</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Lokasi *</label>
-            <input type="text" name="location" required className="input-field mt-1" placeholder="Nama gedung / alamat" />
-          </div>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Google Maps Embed URL</label>
-            <input type="url" name="map_embed_url" className="input-field mt-1" placeholder="https://www.google.com/maps/embed?pb=..." />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Drive Link</label>
-            <input type="url" name="drive_link" className="input-field mt-1" placeholder="https://drive.google.com/..." />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Poster Event *</label>
-          <input type="file" name="poster" required accept=".jpg,.png,.webp,image/jpeg,image/png,image/webp" className="input-field mt-1" />
-          <p className="mt-1 text-xs text-slate-500">Rasio 4:5, maksimal 2 MB. Format JPG, PNG, atau WEBP.</p>
-        </div>
-
-        <div className="flex gap-3 pt-4">
-          <button type="submit" disabled={saving} className="btn-primary disabled:opacity-50">
-            {saving ? 'Menyimpan...' : 'Simpan Event'}
-          </button>
-          <button type="button" onClick={() => router.back()} className="btn-secondary">Batal</button>
-        </div>
-      </form>
-    </div>
+        </form>
+      </motion.div>
+    </motion.div>
   );
 }

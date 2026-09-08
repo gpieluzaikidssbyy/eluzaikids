@@ -2,7 +2,16 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { motion } from 'framer-motion';
+import { UserCog, Loader2, Info } from 'lucide-react';
 import { MEMBER_CLASSES } from '@/lib/helpers';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select } from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { PageHeader } from '@/components/admin/page-header';
+import { Loading } from '@/components/admin/loading';
 
 export default function EditMemberPage() {
   const router = useRouter();
@@ -28,27 +37,77 @@ export default function EditMemberPage() {
     router.push('/admin/members');
   };
 
-  if (!member) return <div className="flex min-h-[40vh] items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-500 border-t-transparent" /></div>;
+  if (!member) return <Loading />;
 
   return (
-    <div className="mx-auto max-w-lg">
-      <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white">Edit Anggota</h1>
-      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-slate-700">Nama *</label>
-          <input type="text" name="name" required defaultValue={member.name} className="input-field mt-1" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700">Kelas *</label>
-          <select name="class" required defaultValue={member.class} className="input-field mt-1">
-            {MEMBER_CLASSES.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
-        </div>
-        <div className="flex gap-3 pt-4">
-          <button type="submit" disabled={saving} className="btn-primary disabled:opacity-50">{saving ? 'Menyimpan...' : 'Simpan'}</button>
-          <button type="button" onClick={() => router.back()} className="btn-secondary">Batal</button>
-        </div>
-      </form>
-    </div>
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35 }}
+      className="mx-auto max-w-lg space-y-6"
+    >
+      <PageHeader
+        icon={<UserCog className="h-6 w-6" />}
+        title="Edit Anak"
+        description={`Mengedit data ${member.name}.`}
+        backHref="/admin/members"
+      />
+
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, delay: 0.1 }}
+      >
+        <Card className="rounded-lg border border-border/60 bg-card shadow-sm">
+          <CardHeader className="flex flex-row items-start gap-4 space-y-0 border-b border-border/40 px-6 py-5">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#ECF3FF] text-[#465FFF]">
+              <UserCog className="h-5 w-5" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Data Anak</CardTitle>
+              <CardDescription>Ubah identitas anak di bawah ini.</CardDescription>
+            </div>
+          </CardHeader>
+          <form onSubmit={handleSubmit}>
+            <CardContent className="space-y-5 px-6 py-6">
+              <div className="space-y-2">
+                <Label htmlFor="name" className="field-label">
+                  Nama <span className="text-destructive">*</span>
+                </Label>
+                <Input type="text" id="name" name="name" required defaultValue={member.name} placeholder="Masukkan nama Anak" className="rounded-lg" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="class" className="field-label">
+                  Kelas <span className="text-destructive">*</span>
+                </Label>
+                <Select name="class" id="class" required defaultValue={member.class} className="rounded-lg">
+                  {MEMBER_CLASSES.map((c) => <option key={c} value={c}>{c}</option>)}
+                </Select>
+                <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Info className="h-3 w-3" />
+                  Kelas menentukan kelompok presensi Anak.
+                </p>
+              </div>
+            </CardContent>
+            <div className="flex gap-3 border-t border-border/40 px-6 py-5">
+              <Button type="submit" disabled={saving} className="rounded-lg">
+                {saving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Menyimpan...
+                  </>
+                ) : (
+                  <>
+                    <UserCog className="mr-2 h-4 w-4" />
+                    Simpan
+                  </>
+                )}
+              </Button>
+              <Button type="button" variant="outline" onClick={() => router.back()} className="rounded-lg">Batal</Button>
+            </div>
+          </form>
+        </Card>
+      </motion.div>
+    </motion.div>
   );
 }

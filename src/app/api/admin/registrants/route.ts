@@ -67,3 +67,64 @@ export async function GET(request: NextRequest) {
     totalBelumHadir,
   });
 }
+
+export async function PATCH(request: NextRequest) {
+  const searchParams = request.nextUrl.searchParams;
+  const type = searchParams.get('type'); // 'event' or 'activity'
+  const id = searchParams.get('id');
+
+  if (!type || !id) {
+    return NextResponse.json({ message: 'Missing type or id' }, { status: 400 });
+  }
+
+  const body = await request.json();
+  const name = String(body.name || '').trim();
+  const jumlahHadir = Number(body.jumlah_hadir);
+
+  if (!name) {
+    return NextResponse.json({ message: 'Nama lengkap tidak boleh kosong.' }, { status: 422 });
+  }
+  if (name.length > 255) {
+    return NextResponse.json({ message: 'Nama lengkap maksimal 255 karakter.' }, { status: 422 });
+  }
+  if (!Number.isInteger(jumlahHadir) || jumlahHadir < 1 || jumlahHadir > 500) {
+    return NextResponse.json({ message: 'Jumlah hadir harus berupa angka bulat antara 1 sampai 500.' }, { status: 422 });
+  }
+
+  const supabase = createServiceClient();
+  const table = type === 'event' ? 'event_registrations' : 'activity_registrations';
+
+  const { data, error } = await supabase
+    .from(table)
+    .update({ name, jumlah_hadir: jumlahHadir })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    return NextResponse.json({ message: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json(data);
+}
+
+export async function DELETE(request: NextRequest) {
+  const searchParams = request.nextUrl.searchParams;
+  const type = searchParams.get('type'); // 'event' or 'activity'
+  const id = searchParams.get('id');
+
+  if (!type || !id) {
+    return NextResponse.json({ message: 'Missing type or id' }, { status: 400 });
+  }
+
+  const supabase = createServiceClient();
+  const table = type === 'event' ? 'event_registrations' : 'activity_registrations';
+
+  const { error } = await supabase.from(table).delete().eq('id', id);
+
+  if (error) {
+    return NextResponse.json({ message: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ message: 'Deleted' });
+}

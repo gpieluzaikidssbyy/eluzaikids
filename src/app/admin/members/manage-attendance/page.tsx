@@ -1,7 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { ListChecks, Download, Loader2, Users } from 'lucide-react';
 import { MEMBER_CLASSES } from '@/lib/helpers';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
+import { cn } from '@/lib/utils';
+import { PageHeader } from '@/components/admin/page-header';
+import { Loading } from '@/components/admin/loading';
+import { EmptyState } from '@/components/admin/empty-state';
 
 interface AttendanceSummary {
   total: number;
@@ -9,11 +21,11 @@ interface AttendanceSummary {
   hasAttendance: boolean;
 }
 
-const CLASS_STYLES: Record<string, { badge: string; bar: string }> = {
-  Baby: { badge: 'bg-pink-100 text-pink-700 dark:bg-pink-950/50 dark:text-pink-300', bar: 'from-pink-400 to-rose-500' },
-  Samuel: { badge: 'bg-sky-100 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300', bar: 'from-sky-400 to-blue-500' },
-  Yosua: { badge: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300', bar: 'from-emerald-400 to-teal-500' },
-  Musa: { badge: 'bg-violet-100 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300', bar: 'from-violet-400 to-purple-500' },
+const CLASS_STYLES: Record<string, { badge: string; bar: string; gradient: string }> = {
+  Baby: { badge: 'bg-pink-100 text-pink-700 dark:bg-pink-950/50 dark:text-pink-300', bar: 'from-pink-400 to-rose-500', gradient: 'from-pink-500 to-rose-600' },
+  Samuel: { badge: 'bg-sky-100 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300', bar: 'from-sky-400 to-blue-500', gradient: 'from-sky-500 to-blue-600' },
+  Yosua: { badge: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300', bar: 'from-emerald-400 to-teal-500', gradient: 'from-emerald-500 to-teal-600' },
+  Musa: { badge: 'bg-violet-100 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300', bar: 'from-violet-400 to-purple-500', gradient: 'from-violet-500 to-purple-600' },
 };
 
 function formatDate(date: string) {
@@ -68,82 +80,107 @@ export default function ManageAttendancePage() {
   const totalMembers = classesWithAttendance.reduce((sum, memberClass) => sum + (summaries[memberClass]?.total || 0), 0);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-600">Member attendance</p>
-        <h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Manage Attendance</h1>
-        <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">Rekap kehadiran member per kelas dan tanggal.</p>
-      </div>
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35 }}
+      className="space-y-6"
+    >
+      <PageHeader
+        icon={<ListChecks className="h-6 w-6" />}
+        title="Manage Attendance"
+        description="Rekap kehadiran anak per kelas dan tanggal."
+        backHref="/admin/members"
+      />
 
-      <div className="flex flex-col justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-end dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:gap-6">
-          <label>
-            <span className="field-label">Tanggal presensi</span>
-            <input type="date" value={date} onChange={(event) => setDate(event.target.value)} className="input-field mt-1 max-w-xs" />
-          </label>
-          {!loading && classesWithAttendance.length > 0 && (
-            <div className="rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-800 dark:bg-brand-950/30 dark:text-brand-200">
-              <span className="font-bold">{totalPresent}</span> dari <span className="font-bold">{totalMembers}</span> anak hadir pada {formatDate(date)}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, delay: 0.08 }}
+      >
+        <Card className="rounded-xl border border-border/60 shadow-card">
+          <CardContent className="flex flex-col justify-between gap-4 pt-6 sm:flex-row sm:items-end">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="manage-date">Tanggal presensi</Label>
+                <Input
+                  id="manage-date"
+                  type="date"
+                  value={date}
+                  onChange={(event) => setDate(event.target.value)}
+                  className="max-w-xs"
+                />
+              </div>
+              {!loading && classesWithAttendance.length > 0 && (
+                <div className="flex items-center gap-2 rounded-xl bg-primary/10 px-4 py-3 text-sm text-primary">
+                  <Users className="h-4 w-4 shrink-0" />
+                  <span>
+                    <span className="font-bold">{totalPresent}</span> dari <span className="font-bold">{totalMembers}</span> anak hadir pada {formatDate(date)}
+                  </span>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-        <button type="button" onClick={exportAll} disabled={loading} className="btn-primary disabled:opacity-50">
-          Export as Excel
-        </button>
-      </div>
+            <Button type="button" onClick={exportAll} disabled={loading}>
+              <Download className="mr-2 h-4 w-4" />
+              Export as Excel
+            </Button>
+          </CardContent>
+        </Card>
+      </motion.div>
 
       {loading ? (
-        <div className="flex min-h-[30vh] items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-500 border-t-transparent" /></div>
+        <Loading />
       ) : classesWithAttendance.length === 0 ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center dark:border-slate-800 dark:bg-slate-900">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400 dark:bg-slate-800">
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
-          </div>
-          <p className="mt-4 text-sm font-medium text-slate-700 dark:text-slate-200">Belum ada data presensi</p>
-        </div>
+        <EmptyState
+          icon={ListChecks}
+          title="Belum ada data presensi"
+          description="Tidak ada kelas yang memiliki data presensi pada tanggal ini."
+        />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
-          {classesWithAttendance.map((memberClass) => {
+        <div className="grid gap-4 sm:grid-cols-2">
+          {classesWithAttendance.map((memberClass, i) => {
             const summary = summaries[memberClass];
             const style = CLASS_STYLES[memberClass];
             const percent = summary.total > 0 ? Math.round((summary.present / summary.total) * 100) : 0;
             return (
-              <div key={memberClass} className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_8px_30px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900">
-                <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${style.bar}`} />
+              <motion.div
+                key={memberClass}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, delay: 0.16 + i * 0.06 }}
+                className="relative overflow-hidden rounded-xl border border-border/60 bg-card p-6 shadow-card transition-all duration-300 hover:border-primary/40 hover:shadow-md"
+              >
+                <div className={cn('absolute inset-x-0 top-0 h-1 bg-gradient-to-r', style.bar)} />
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <p className="font-display text-lg font-bold text-slate-900 dark:text-white">{memberClass}</p>
-                    <p className="mt-1 text-sm text-slate-500">{formatDate(date)}</p>
+                    <p className="font-display text-lg font-bold text-foreground">{memberClass}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{formatDate(date)}</p>
                   </div>
                   <button
                     type="button"
                     onClick={() => exportClass(memberClass)}
-                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-50 text-green-600 transition hover:bg-green-100 hover:text-green-700 dark:bg-green-950/40 dark:text-green-300"
+                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-success/10 text-success transition-colors hover:bg-success/20"
                     aria-label={`Download rekap kehadiran ${memberClass}`}
                     title="Export as Excel"
                   >
-                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M12 3v12" />
-                      <path d="m7 10 5 5 5-5" />
-                      <path d="M5 21h14" />
-                    </svg>
+                    <Download className="h-5 w-5" />
                   </button>
                 </div>
                 <div className="mt-5 flex items-end justify-between">
                   <div>
-                    <p className="font-display text-3xl font-bold tracking-tight text-slate-900 dark:text-white">{summary.present}<span className="text-base font-semibold text-slate-400">/{summary.total}</span></p>
-                    <p className="mt-1 text-xs text-slate-500">anak hadir</p>
+                    <p className="font-display text-3xl font-bold tracking-tight text-foreground">{summary.present}<span className="text-base font-semibold text-muted-foreground">/{summary.total}</span></p>
+                    <p className="mt-1 text-xs text-muted-foreground">anak hadir</p>
                   </div>
-                  <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${style.badge}`}>{percent}%</span>
+                  <span className={cn('inline-flex rounded-full px-3 py-1 text-xs font-semibold', style.badge)}>{percent}%</span>
                 </div>
-                <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-                  <div className={`h-full rounded-full bg-gradient-to-r ${style.bar}`} style={{ width: `${percent}%` }} />
+                <div className="mt-4">
+                  <Progress value={percent} className="h-2" />
                 </div>
-              </div>
+              </motion.div>
             );
           })}
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

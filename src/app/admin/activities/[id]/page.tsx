@@ -1,15 +1,24 @@
 'use client';
 
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { toast } from 'sonner';
+import { ArrowLeft, Pencil, Trash2, Clock, MapPin, Users, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { Activity, ActivityRegistration } from '@/lib/types';
 import { formatDateIndo } from '@/lib/helpers';
+import { PageHeader } from '@/components/admin/page-header';
+import { ConfirmDialog } from '@/components/admin/confirm-dialog';
 
 type AdminActivity = Activity & { registrations_count: number };
 
 export default function AdminActivityDetailsPage() {
   const params = useParams();
+  const router = useRouter();
   const [activity, setActivity] = useState<AdminActivity | null>(null);
   const [registrations, setRegistrations] = useState<ActivityRegistration[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,74 +41,158 @@ export default function AdminActivityDetailsPage() {
     return () => window.clearInterval(interval);
   }, [params.id]);
 
+  const handleDelete = async () => {
+    await fetch(`/api/admin/activities/${params.id}`, { method: 'DELETE' });
+    toast.success('Kegiatan berhasil dihapus.');
+    router.push('/admin/activities');
+  };
+
   if (loading || !activity) {
-    return <div className="flex min-h-[40vh] items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-500 border-t-transparent" /></div>;
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-        <div>
-          <Link href="/admin/activities" className="text-sm font-medium text-brand-600 hover:underline">&larr; Back to Manage Activity</Link>
-          <p className="mt-5 text-xs font-semibold uppercase tracking-[0.16em] text-brand-600">Activity details</p>
-          <h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-slate-900 dark:text-white">{activity.title}</h1>
-          <p className="mt-2 text-sm text-slate-500">{activity.activity_date ? formatDateIndo(activity.activity_date) : 'Tanggal belum diatur'} · {activity.location || 'Lokasi belum diisi'}</p>
-        </div>
-        <div className="flex gap-2">
-          <Link href={`/admin/activities/${activity.id}/edit`} className="btn-secondary">Edit activity</Link>
-          <Link href={`/admin/registrants/activities/${activity.id}`} className="btn-primary">Manage registrants</Link>
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35 }}
+      className="space-y-6"
+    >
+      <div className="rounded-xl bg-gradient-to-br from-primary via-blue-700 to-blue-900 p-6 sm:p-8">
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+          <div>
+            <Link href="/admin/activities" className="mb-2 inline-flex items-center gap-1 text-xs font-medium text-white/60 transition-colors hover:text-white">
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Kembali ke Manage Kegiatan
+            </Link>
+            <h1 className="mt-2 font-display text-2xl font-bold tracking-tight text-white sm:text-3xl">{activity.title}</h1>
+            <p className="mt-2 flex items-center gap-2 text-sm text-white/70">
+              <Clock className="h-4 w-4" />
+              {activity.activity_date ? formatDateIndo(activity.activity_date) : 'Tanggal belum diatur'}
+              <span className="text-white/30">·</span>
+              <MapPin className="h-4 w-4" />
+              {activity.location || 'Lokasi belum diisi'}
+            </p>
+          </div>
+          <div className="flex shrink-0 flex-wrap gap-2">
+            <Button asChild variant="outline" className="border-white/20 bg-white/10 text-white hover:bg-white/20">
+              <Link href={`/admin/activities/${activity.id}/edit`}>
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link href={`/admin/registrants/activities/${activity.id}`}>
+                <Users className="mr-2 h-4 w-4" />
+                Manage registrants
+              </Link>
+            </Button>
+            <ConfirmDialog
+              trigger={
+                <Button variant="destructive">
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Hapus
+                </Button>
+              }
+              title="Hapus kegiatan ini?"
+              description="Semua data pendaftaran terkait juga akan dihapus."
+              onConfirm={() => void handleDelete()}
+            />
+          </div>
         </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="card"><p className="text-xs uppercase tracking-wider text-slate-400">Jam Mulai</p><p className="mt-2 text-lg font-bold text-slate-900 dark:text-white">{activity.start_time?.slice(0, 5) || '-'}</p></div>
-        <div className="card"><p className="text-xs uppercase tracking-wider text-slate-400">Kuota</p><p className="mt-2 text-lg font-bold text-slate-900 dark:text-white">{activity.quota ?? 'Tanpa batas'}</p></div>
-        <div className="card"><p className="text-xs uppercase tracking-wider text-slate-400">Total pendaftar</p><p className="mt-2 text-lg font-bold text-brand-600">{registrations.length}</p></div>
-        <div className="card"><p className="text-xs uppercase tracking-wider text-slate-400">Drive Link</p>{activity.drive_link ? <a href={activity.drive_link} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 text-lg font-bold text-brand-600 hover:underline">Buka &rarr;</a> : <p className="mt-2 text-lg font-bold text-slate-900 dark:text-white">-</p>}</div>
+        <Card className="rounded-xl border bg-card p-6 shadow-card">
+          <CardContent className="p-0">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Jam Mulai</p>
+            <p className="mt-2 text-lg font-bold text-foreground">{activity.start_time?.slice(0, 5) || '-'}</p>
+          </CardContent>
+        </Card>
+        <Card className="rounded-xl border bg-card p-6 shadow-card">
+          <CardContent className="p-0">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Kuota</p>
+            <p className="mt-2 text-lg font-bold text-foreground">{activity.quota ?? 'Tanpa batas'}</p>
+          </CardContent>
+        </Card>
+        <Card className="rounded-xl border bg-card p-6 shadow-card">
+          <CardContent className="p-0">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total pendaftar</p>
+            <p className="mt-2 text-lg font-bold text-primary">{registrations.length}</p>
+          </CardContent>
+        </Card>
+        <Card className="rounded-xl border bg-card p-6 shadow-card">
+          <CardContent className="p-0">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Drive Link</p>
+            {activity.drive_link ? (
+              <a href={activity.drive_link} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 text-lg font-bold text-primary hover:underline">
+                Buka
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+              </a>
+            ) : (
+              <p className="mt-2 text-lg font-bold text-foreground">-</p>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="card">
-        <h2 className="font-display text-lg font-bold text-slate-900 dark:text-white">Informasi activity</h2>
-        <p className="mt-3 whitespace-pre-line text-sm leading-7 text-slate-600 dark:text-slate-400">{activity.description || 'Deskripsi activity belum diisi.'}</p>
-      </div>
+      <Card className="rounded-xl border bg-card p-6 shadow-card">
+        <CardHeader className="p-0 pb-4">
+          <CardTitle>Informasi kegiatan</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <p className="whitespace-pre-line text-sm leading-7 text-muted-foreground">{activity.description || 'Deskripsi kegiatan belum diisi.'}</p>
+        </CardContent>
+      </Card>
 
-      <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div className="border-b border-slate-200 px-5 py-4 dark:border-slate-800">
-          <h2 className="font-display text-lg font-bold text-slate-900 dark:text-white">Hasil form pendaftaran</h2>
-          <p className="mt-1 text-sm text-slate-500">Data diperbarui otomatis setiap 5 detik.</p>
-        </div>
-        <table className="min-w-[900px] w-full text-left text-sm">
-          <thead className="border-b border-slate-200 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-800/50">
-            <tr>
-              <th className="table-heading">No</th>
-              <th className="table-heading">No. registrasi</th>
-              <th className="table-heading">Nama lengkap</th>
-              <th className="table-heading">No. HP</th>
-              <th className="table-heading">Email</th>
-              <th className="table-heading">Jumlah yang hadir</th>
-              <th className="table-heading">Status</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {registrations.map((registration, index) => (
-              <tr key={registration.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/60">
-                <td className="table-cell text-slate-500">{index + 1}</td>
-                <td className="table-cell font-mono text-xs">{registration.nomor_registrasi}</td>
-                <td className="table-cell font-medium text-slate-900 dark:text-white">{registration.name}</td>
-                <td className="table-cell">{registration.phone}</td>
-                <td className="table-cell">{registration.email || '-'}</td>
-                <td className="table-cell font-semibold">{registration.jumlah_hadir}</td>
-                <td className="table-cell">
-                  <span className={`rounded-full px-2 py-1 text-xs font-semibold ${registration.hadir ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
-                    {registration.hadir ? 'Telah hadir' : 'Belum hadir'}
-                  </span>
-                </td>
-              </tr>
-            ))}
-            {!registrations.length && <tr><td colSpan={7} className="px-4 py-10 text-center text-sm text-slate-500">Belum ada hasil form pendaftaran.</td></tr>}
-          </tbody>
-        </table>
-      </div>
-    </div>
+      <Card className="rounded-xl border bg-card p-6 shadow-card">
+        <CardHeader className="p-0 pb-4">
+          <CardTitle>Hasil form pendaftaran</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto rounded-xl border border-border/60">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="table-heading w-12">No</TableHead>
+                  <TableHead className="table-heading">No. registrasi</TableHead>
+                  <TableHead className="table-heading">Nama lengkap</TableHead>
+                  <TableHead className="table-heading">No. HP</TableHead>
+                  <TableHead className="table-heading">Email</TableHead>
+                  <TableHead className="table-heading">Jumlah yang hadir</TableHead>
+                  <TableHead className="table-heading">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {registrations.map((registration, index) => (
+                  <TableRow key={registration.id}>
+                    <TableCell className="table-cell text-muted-foreground">{index + 1}</TableCell>
+                    <TableCell className="table-cell font-mono text-xs">{registration.nomor_registrasi}</TableCell>
+                    <TableCell className="table-cell font-medium text-foreground">{registration.name}</TableCell>
+                    <TableCell className="table-cell">{registration.phone}</TableCell>
+                    <TableCell className="table-cell">{registration.email || '-'}</TableCell>
+                    <TableCell className="table-cell font-semibold">{registration.jumlah_hadir}</TableCell>
+                    <TableCell className="table-cell">
+                      {registration.hadir ? (
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-2.5 py-1 text-xs font-semibold text-success">Telah hadir</span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground">Belum hadir</span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          {!registrations.length && (
+            <p className="py-10 text-center text-sm text-muted-foreground">Belum ada hasil form pendaftaran.</p>
+          )}
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }
