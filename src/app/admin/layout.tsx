@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { useTheme } from '@/lib/use-theme';
+import { useAdminTheme as useTheme } from '@/components/ThemeToggle';
 import {
   LayoutDashboard,
   CalendarDays,
@@ -160,6 +160,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? 'hidden' : '';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileOpen]);
 
   /* Early returns for standalone routes */
   if (STANDALONE_ROUTES.includes(pathname)) {
@@ -320,7 +327,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-black/45 backdrop-blur-md [backdrop-filter:blur(10px)] lg:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}

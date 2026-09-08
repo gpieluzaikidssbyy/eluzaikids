@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase';
+import { strictActivitySchema } from '@/lib/validations-strict';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,25 +23,21 @@ export async function POST(request: NextRequest) {
   const supabase = createServiceClient();
   const body = await request.json();
 
-  const title = String(body.title || '').trim();
-  const description = String(body.description || '').trim();
-  const activityDate = String(body.activity_date || '');
-  const startTime = String(body.start_time || '');
-  const location = String(body.location || '').trim();
-  const mapEmbedUrl = String(body.map_embed_url || '').trim();
-  const driveLink = String(body.drive_link || '').trim();
-  const quotaValue = body.quota;
-  const emailEnabled = body.email_enabled !== false;
+  // Strict server-side validation with Zod
+  const validated = strictActivitySchema.safeParse(body);
+  if (!validated.success) {
+    const errors: Record<string, string> = {};
+    validated.error.issues.forEach((issue) => {
+      errors[issue.path.join('.')] = issue.message;
+    });
+    return NextResponse.json({ errors, message: 'Validasi gagal: data tidak valid.' }, { status: 422 });
+  }
 
-  if (!title || !description || !activityDate || !startTime || !location || !mapEmbedUrl || !driveLink || quotaValue === null || quotaValue === undefined || quotaValue === '') {
+  const { title, description, image, drive_link, activity_date, start_time, location, map_embed_url, quota, email_enabled } = validated.data;
+
+  // Required field checks (post-validation)
+  if (!title || !description || !activity_date || !start_time || !location || !map_embed_url || !drive_link || quota === null || quota === undefined) {
     return NextResponse.json({ message: 'Semua field wajib diisi.' }, { status: 422 });
-  }
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(activityDate)) {
-    return NextResponse.json({ message: 'Tanggal activity tidak valid.' }, { status: 422 });
-  }
-  const quota = Number(quotaValue);
-  if (!Number.isInteger(quota) || quota < 1) {
-    return NextResponse.json({ message: 'Kuota harus berupa angka bulat minimal 1.' }, { status: 422 });
   }
 
   const { data, error } = await supabase
@@ -48,14 +45,14 @@ export async function POST(request: NextRequest) {
     .insert({
       title,
       description,
-      image: body.image || null,
-      drive_link: driveLink,
-      activity_date: activityDate,
-      start_time: startTime,
+      image: image || null,
+      drive_link,
+      activity_date,
+      start_time: start_time || null,
       location,
-      map_embed_url: mapEmbedUrl,
+      map_embed_url,
       quota,
-      email_enabled: emailEnabled,
+      email_enabled,
     })
     .select()
     .single();

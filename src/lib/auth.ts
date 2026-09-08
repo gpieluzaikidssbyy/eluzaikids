@@ -37,7 +37,7 @@ export function verifySession(value: string | undefined) {
 export function setSessionCookie(value: string, remember: boolean) {
   cookies().set(COOKIE_NAME, value, {
     httpOnly: true,
-    sameSite: 'lax',
+    sameSite: 'strict',
     secure: process.env.NODE_ENV === 'production',
     path: '/',
     maxAge: remember ? 60 * 60 * 24 * 30 : SESSION_TTL,

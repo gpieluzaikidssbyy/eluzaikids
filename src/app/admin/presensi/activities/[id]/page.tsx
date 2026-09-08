@@ -183,7 +183,7 @@ export default function AdminPresensiActivityDetailPage() {
                 type="text"
                 value={quickCode}
                 onChange={(e) => setQuickCode(e.target.value)}
-                placeholder="Nomor registrasi"
+                placeholder="ELZ-YYMMDD-KXXX"
                 className="flex-1"
               />
               <Button onClick={quickMark}>Mark</Button>
@@ -193,6 +193,7 @@ export default function AdminPresensiActivityDetailPage() {
                 {quickResult.message} {quickResult.name ? `(${quickResult.name})` : ''}
               </p>
             )}
+            <p className="text-xs text-muted-foreground">Masukkan 3 angka terakhir pada bagian XXX.</p>
           </div>
         </div>
       </motion.div>

@@ -14,7 +14,10 @@ export function ScrollToSection() {
 
     const scrollTo = () => {
       const el = document.getElementById(section);
-      if (el) {
+      if (!el) return;
+      if (window.__lenis) {
+        window.__lenis.scrollTo(el, { offset: -80 });
+      } else {
         el.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     };

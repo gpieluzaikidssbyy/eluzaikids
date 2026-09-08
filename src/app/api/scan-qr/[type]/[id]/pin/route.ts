@@ -20,15 +20,9 @@ export async function POST(
     current.count++;
   }
 
-  const body = await request.json().catch(() => ({}));
-  const pin = body?.pin;
-  if (typeof pin !== 'string' || !/^\d{6}$/.test(pin)) {
-    return NextResponse.json({ success: false, message: 'PIN harus terdiri dari 6 angka.' }, { status: 400 });
-  }
   const table = params.type === 'event' ? 'events' : params.type === 'activity' ? 'activities' : null;
-
   if (!table) {
-    return NextResponse.json({ success: false, message: 'PIN harus terdiri dari 6 angka.' }, { status: 400 });
+    return NextResponse.json({ success: false, message: 'Event tidak ditemukan.' }, { status: 404 });
   }
 
   const { data, error } = await createServiceClient()
@@ -42,7 +36,13 @@ export async function POST(
   }
 
   if (!data.scan_active) {
-    return NextResponse.json({ success: false, message: 'Scan belum diaktifkan.' }, { status: 403 });
+    return NextResponse.json({ success: false, message: 'Scan belum diaktifkan.', title: data.title }, { status: 403 });
+  }
+
+  const body = await request.json().catch(() => ({}));
+  const pin = body?.pin;
+  if (typeof pin !== 'string' || !/^\d{6}$/.test(pin)) {
+    return NextResponse.json({ success: false, message: 'PIN harus terdiri dari 6 angka.' }, { status: 400 });
   }
 
   if (typeof data.scan_pin !== 'string' || !/^\d{6}$/.test(data.scan_pin)) {

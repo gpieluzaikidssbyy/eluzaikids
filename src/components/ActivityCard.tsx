@@ -2,6 +2,7 @@ import { formatDateIndo, remainingQuota } from '@/lib/helpers';
 import type { Activity } from '@/lib/types';
 import { RegistrationForm } from './RegistrationForm';
 import { PreserveFromLink } from './PreserveFromLink';
+import { ImageReveal } from './ImageReveal';
 
 interface ActivityCardProps {
   activity: Activity;
@@ -14,17 +15,19 @@ export function ActivityCard({ activity, registrationsCount = 0, section }: Acti
   const isFull = remaining !== null && remaining <= 0;
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md dark:border-slate-700 dark:bg-slate-800">
+    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md dark:border-slate-700 dark:bg-slate-800">
       {activity.image ? (
         <PreserveFromLink section={section} href={`/activities/${activity.id}`} className="block">
-          <div className="aspect-[4/5] w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
-            <img
-              src={activity.image}
-              alt={activity.title}
-              loading="lazy"
-              className="h-full w-full object-cover transition duration-300 hover:scale-105"
-            />
-          </div>
+          <ImageReveal>
+            <div className="aspect-[4/5] w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
+              <img
+                src={activity.image}
+                alt={activity.title}
+                loading="lazy"
+                className="h-full w-full object-cover transition duration-300 hover:scale-105"
+              />
+            </div>
+          </ImageReveal>
         </PreserveFromLink>
       ) : (
         <div className="bg-gradient-to-br from-amber-400 to-orange-500 p-5 text-white">

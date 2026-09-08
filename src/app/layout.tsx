@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
+import { SmoothScroll } from '@/components/SmoothScroll';
 
 export const metadata: Metadata = {
   title: 'GPI Eluzai Kids',
@@ -12,10 +13,9 @@ export const metadata: Metadata = {
 const themeScript = `
 (function () {
   try {
-    var stored = window.localStorage.getItem('theme');
-    if (stored === 'dark') {
-      document.documentElement.classList.add('dark');
-    }
+    var key = window.location.pathname.indexOf('/admin') === 0 ? 'admin-theme' : 'theme';
+    var stored = window.localStorage.getItem(key);
+    document.documentElement.classList.toggle('dark', stored === 'dark');
   } catch (e) {}
 })();
 `;
@@ -31,6 +31,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="flex min-h-screen flex-col bg-slate-50 dark:bg-slate-900">
+        <SmoothScroll />
         <Navbar />
         <main className="flex-1">{children}</main>
         <Footer />

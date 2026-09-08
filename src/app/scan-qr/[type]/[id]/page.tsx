@@ -365,7 +365,7 @@ export default function ScanQrPage() {
               type="text"
               value={manualCode}
               onChange={(e) => setManualCode(e.target.value)}
-              placeholder="0001"
+              placeholder="ELZ-YYMMDD-KXXX"
               className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3.5 text-sm text-white placeholder:text-slate-500 focus:border-brand-500/60 focus:ring-2 focus:ring-brand-500/20 focus:outline-none"
             />
             <button
@@ -377,7 +377,7 @@ export default function ScanQrPage() {
           </form>
           <p className="mt-3 flex items-center gap-1.5 text-xs text-slate-500">
             <Lock className="h-3 w-3" />
-            Masukkan 4 angka terakhir nomor registrasi, misalnya 0001 atau 0120.
+            Masukkan nomor registrasi lengkap dengan format ELZ-YYMMDD-KXXX.
           </p>
         </div>
       </div>

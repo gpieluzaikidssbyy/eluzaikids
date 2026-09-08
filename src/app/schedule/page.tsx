@@ -10,6 +10,7 @@ interface ScheduleItem {
   time: string;
   type: string;
   description: string | null;
+  updated_at?: string;
 }
 
 interface WeekDay {
@@ -19,6 +20,7 @@ interface WeekDay {
 
 export default function SchedulePage() {
   const [weekSchedule, setWeekSchedule] = useState<WeekDay[]>([]);
+  const [updatedAt, setUpdatedAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,6 +28,7 @@ export default function SchedulePage() {
       .then((r) => r.json())
       .then((data) => {
         setWeekSchedule(data.schedule || []);
+        setUpdatedAt(data.updatedAt || null);
         setLoading(false);
       });
   }, []);
@@ -45,6 +48,12 @@ export default function SchedulePage() {
       </section>
 
       <section className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
+        {updatedAt && (
+          <p className="mb-6 inline-flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+            <span className="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_0_3px_rgba(34,197,94,0.15)]" aria-hidden="true" />
+            Terakhir diperbarui {new Intl.DateTimeFormat('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(updatedAt))}
+          </p>
+        )}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {weekSchedule.map((day) => (
             <div

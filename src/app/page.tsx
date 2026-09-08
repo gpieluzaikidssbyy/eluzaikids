@@ -2,6 +2,9 @@ import Link from 'next/link';
 import { EventCard } from '@/components/EventCard';
 import { ActivityCard } from '@/components/ActivityCard';
 import { HeroSlider } from '@/components/HeroSlider';
+import { GalleryMarquee } from '@/components/GalleryMarquee';
+import { Parallax } from '@/components/Parallax';
+import { ScrollReveal } from '@/components/ScrollReveal';
 import { ScrollToSection } from '@/components/ScrollToSection';
 import { fetchHomeData } from '@/lib/home-data';
 
@@ -21,8 +24,18 @@ function formatDate(dateStr: string) {
   return `${day} ${month} ${year}`;
 }
 
+function formatUpdatedDate(dateStr: string | null) {
+  if (!dateStr) return null;
+  return new Intl.DateTimeFormat('id-ID', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(new Date(dateStr));
+}
+
 export default async function HomePage() {
   const data = await fetchHomeData();
+  const scheduleUpdatedDate = formatUpdatedDate(data.scheduleUpdatedAt);
 
   return (
     <>
@@ -57,12 +70,20 @@ export default async function HomePage() {
       {/* Jadwal */}
       <section id="jadwal" className="bg-white py-12 sm:py-16 dark:bg-slate-900">
         <div className="mx-auto max-w-5xl px-4 sm:px-6">
+          <Parallax offset={14}>
           <div className="text-center">
             <h2 className="font-display text-2xl font-bold text-slate-900 sm:text-3xl dark:text-slate-100">
               Jadwal Ibadah
             </h2>
             <div className="mx-auto mt-3 h-1 w-16 rounded gradient-primary" />
+            {scheduleUpdatedDate && (
+              <p className="mt-3 inline-flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                <span className="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_0_3px_rgba(34,197,94,0.15)]" aria-hidden="true" />
+                Terakhir diperbarui {scheduleUpdatedDate}
+              </p>
+            )}
           </div>
+          </Parallax>
 
           {data.schedules.length === 0 || data.schedules.every((s) => !s.schedule) ? (
             <div className="mt-8 rounded-2xl bg-slate-50 p-8 text-center text-slate-600 dark:bg-slate-800 dark:text-slate-400">
@@ -70,10 +91,10 @@ export default async function HomePage() {
             </div>
           ) : (
             <div className="mt-6 grid gap-5 md:grid-cols-2">
-              {data.schedules.map((slot) => (
+              {data.schedules.map((slot, index) => (
+                <ScrollReveal key={slot.type} delay={index * 80} className="h-full">
                 <div
-                  key={slot.type}
-                  className={`rounded-2xl border-2 p-6 shadow-sm transition hover:shadow-md ${
+                  className={`h-full rounded-2xl border-2 p-6 shadow-sm transition hover:shadow-md ${
                     slot.schedule
                       ? 'border-green-500 bg-green-50 dark:bg-green-950/30'
                       : 'border-red-400 bg-red-50 dark:bg-red-950/30'
@@ -128,6 +149,7 @@ export default async function HomePage() {
                     </>
                   )}
                 </div>
+                </ScrollReveal>
               ))}
             </div>
           )}
@@ -146,12 +168,14 @@ export default async function HomePage() {
       {/* Events */}
       <section id="event" className="py-12 sm:py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <Parallax offset={14}>
           <div className="text-center">
             <h2 className="font-display text-2xl font-bold text-slate-900 sm:text-3xl dark:text-slate-100">
               Event Mendatang
             </h2>
             <div className="mx-auto mt-3 h-1 w-16 rounded gradient-primary" />
           </div>
+          </Parallax>
 
           {data.events.length === 0 ? (
             <div className="mt-8 rounded-2xl bg-white p-8 text-center text-slate-600 shadow-sm dark:bg-slate-800 dark:text-slate-400">
@@ -159,8 +183,10 @@ export default async function HomePage() {
             </div>
           ) : (
             <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {data.events.map((event) => (
-                <EventCard key={event.id} event={event} registrationsCount={event.registrations_count} section="event" />
+              {data.events.map((event, index) => (
+                <ScrollReveal key={event.id} delay={Math.min(index, 4) * 80} className="h-full">
+                  <EventCard event={event} registrationsCount={event.registrations_count} section="event" />
+                </ScrollReveal>
               ))}
             </div>
           )}
@@ -179,12 +205,14 @@ export default async function HomePage() {
       {/* Activities */}
       <section id="kegiatan" className="bg-white py-12 sm:py-16 dark:bg-slate-900">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <Parallax offset={14}>
           <div className="text-center">
             <h2 className="font-display text-2xl font-bold text-slate-900 sm:text-3xl dark:text-slate-100">
               Kegiatan
             </h2>
             <div className="mx-auto mt-3 h-1 w-16 rounded gradient-primary" />
           </div>
+          </Parallax>
 
           {data.activities.length === 0 ? (
             <div className="mt-8 rounded-2xl bg-white p-8 text-center text-slate-600 shadow-sm dark:bg-slate-800 dark:text-slate-400">
@@ -192,8 +220,10 @@ export default async function HomePage() {
             </div>
           ) : (
             <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {data.activities.map((activity) => (
-                <ActivityCard key={activity.id} activity={activity} registrationsCount={activity.registrations_count} section="kegiatan" />
+              {data.activities.map((activity, index) => (
+                <ScrollReveal key={activity.id} delay={Math.min(index, 4) * 80} className="h-full">
+                  <ActivityCard activity={activity} registrationsCount={activity.registrations_count} section="kegiatan" />
+                </ScrollReveal>
               ))}
             </div>
           )}
@@ -209,15 +239,20 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* Gallery */}
+      <GalleryMarquee />
+
       {/* Location */}
       <section id="lokasi" className="py-12 sm:py-16">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <Parallax offset={14}>
           <div className="text-center">
             <h2 className="font-display text-2xl font-bold text-slate-900 sm:text-3xl dark:text-slate-100">
               Lokasi Kami
             </h2>
             <div className="mx-auto mt-3 h-1 w-16 rounded gradient-primary" />
           </div>
+          </Parallax>
 
           {data.churchInfo?.map_embed_url ? (
             <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200 shadow-md dark:border-slate-700">
@@ -268,12 +303,14 @@ export default async function HomePage() {
       {/* Contacts */}
       <section id="kontak" className="bg-slate-50 py-12 sm:py-16 dark:bg-slate-800/40">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <Parallax offset={14}>
           <div className="text-center">
             <h2 className="font-display text-2xl font-bold text-slate-900 sm:text-3xl dark:text-slate-100">
               Kontak Kami
             </h2>
             <div className="mx-auto mt-3 h-1 w-16 rounded gradient-primary" />
           </div>
+          </Parallax>
 
           {data.churchInfo && (
             <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

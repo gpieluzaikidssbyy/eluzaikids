@@ -201,7 +201,7 @@ export function CalendarGrid({ events, loading, viewDate, onViewDateChange, onSe
         {WEEKDAYS.map((day) => (
           <div
             key={day}
-            className="px-2 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+            className="px-1 py-2 text-center text-[10px] font-semibold uppercase tracking-wide text-muted-foreground sm:px-2 sm:py-2.5 sm:text-xs"
           >
             {day}
           </div>
@@ -236,7 +236,7 @@ export function CalendarGrid({ events, loading, viewDate, onViewDateChange, onSe
                   }
                 }}
                 className={cn(
-                  'min-h-[5.5rem] border-b border-r border-border/60 p-1.5 last:border-r-0 sm:min-h-[6.5rem] sm:p-2',
+                  'min-h-[4.25rem] border-b border-r border-border/60 p-1 last:border-r-0 sm:min-h-[6.5rem] sm:p-2',
                   (i + 1) % 7 === 0 && 'border-r-0',
                   !cell.inMonth && 'bg-muted/30',
                   clickable && 'cursor-pointer transition-colors hover:bg-muted/40'

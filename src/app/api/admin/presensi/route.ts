@@ -68,36 +68,42 @@ export async function POST(request: NextRequest) {
 
   if (action === 'quick-mark') {
     const { code } = body;
-    if (!code) {
+    if (typeof code !== 'string' || !code.trim()) {
       return NextResponse.json({ message: 'Code required' }, { status: 400 });
     }
 
-    const { data: reg } = await supabase
-      .from(table)
-      .select('*')
-      .eq(foreignKey, id)
-      .like('nomor_registrasi', `%${code}%`)
-      .single();
+    const normalizedCode = code.trim().toUpperCase();
+    const registrationQuery = /^ELZ-\d{6}-K\d{3}$/.test(normalizedCode)
+      ? supabase.from(table).select('*').eq(foreignKey, id).eq('nomor_registrasi', normalizedCode).single()
+      : /^\d{1,3}$/.test(normalizedCode)
+        ? supabase.from(table).select('*').eq(foreignKey, id).like('nomor_registrasi', `%-K${normalizedCode.padStart(3, '0')}`).single()
+        : null;
 
-    if (!reg) {
+    if (!registrationQuery) {
+      return NextResponse.json({ success: false, message: 'Masukkan 3 angka pada bagian XXX nomor registrasi.' });
+    }
+
+    const { data: registration } = await registrationQuery;
+
+    if (!registration) {
       return NextResponse.json({ success: false, message: 'Nomor registrasi tidak ditemukan.' });
     }
 
-    if (reg.hadir) {
+    if (registration.hadir) {
       return NextResponse.json({
         success: false,
-        message: `${reg.name} sudah tercatat hadir.`,
-        name: reg.name,
-        nomor_registrasi: reg.nomor_registrasi,
+        message: `${registration.name} sudah tercatat hadir.`,
+        name: registration.name,
+        nomor_registrasi: registration.nomor_registrasi,
       });
     }
 
     await supabase
       .from(table)
       .update({ hadir: true, scanned_at: new Date().toISOString(), qr_token: null })
-      .eq('id', reg.id);
+      .eq('id', registration.id);
 
-    return NextResponse.json({ success: true, message: 'Berhasil!', name: reg.name });
+    return NextResponse.json({ success: true, message: 'Berhasil!', name: registration.name });
   }
 
   if (action === 'toggle-scan') {

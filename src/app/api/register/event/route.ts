@@ -13,6 +13,7 @@ import {
   appBaseUrl,
 } from '@/lib/helpers';
 import { sendConfirmationEmail } from '@/lib/email';
+import { RequireCsrf } from '@/lib/csrf';
 
 // Simple in-memory rate limiter
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -37,6 +38,16 @@ function checkRateLimit(ip: string): boolean {
 }
 
 export async function POST(request: NextRequest) {
+  // CSRF protection: validate token from header or cookie
+  try {
+    await RequireCsrf(request);
+  } catch {
+    return NextResponse.json(
+      { message: 'Validasi CSRF gagal. Silakan refresh halaman dan coba lagi.' },
+      { status: 403 }
+    );
+  }
+
   const ip = (request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown')
     .split(',')[0]
     .trim();

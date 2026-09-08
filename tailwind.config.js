@@ -137,6 +137,27 @@ export default {
           from: { transform: "translateX(0)" },
           to: { transform: "translateX(-25%)" },
         },
+        "sheet-up": {
+          from: { transform: "translateY(100%)" },
+          to: { transform: "translateY(0)" },
+        },
+        pop: {
+          "0%": { transform: "scale(0) rotate(-8deg)", opacity: "0" },
+          "70%": { transform: "scale(1.12) rotate(2deg)" },
+          "100%": { transform: "scale(1) rotate(0)", opacity: "1" },
+        },
+        float: {
+          "0%, 100%": { transform: "translate(0, 0) scale(1)" },
+          "50%": { transform: "translate(6px, -10px) scale(1.06)" },
+        },
+        "marquee-slow": {
+          from: { transform: "translateX(0)" },
+          to: { transform: "translateX(-25%)" },
+        },
+        "marquee-slow-reverse": {
+          from: { transform: "translateX(-25%)" },
+          to: { transform: "translateX(0)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -147,6 +168,11 @@ export default {
         "scale-in": "scale-in 0.3s ease-out both",
         shimmer: "shimmer 1.5s infinite",
         marquee: "marquee 7s linear infinite",
+        "sheet-up": "sheet-up 0.45s cubic-bezier(0.16, 1, 0.3, 1) both",
+        pop: "pop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both",
+        float: "float 7s ease-in-out infinite",
+        "marquee-slow": "marquee-slow 45s linear infinite",
+        "marquee-slow-reverse": "marquee-slow-reverse 45s linear infinite",
       },
     },
   },

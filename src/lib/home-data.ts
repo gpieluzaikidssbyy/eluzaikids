@@ -14,6 +14,7 @@ export interface ScheduleSlot {
 
 export interface HomeData {
   schedules: ScheduleSlot[];
+  scheduleUpdatedAt: string | null;
   events: (Event & { registrations_count: number })[];
   activities: (Activity & { registrations_count: number })[];
   churchInfo: ChurchInfo | null;
@@ -40,6 +41,9 @@ export async function fetchHomeData(): Promise<HomeData> {
     .order('time');
 
   const visibleSchedules = schedulesData || [];
+  const scheduleUpdatedAt = visibleSchedules
+    .filter((s) => s.show_schedule !== false && s.updated_at)
+    .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0]?.updated_at || null;
 
   const scheduleTypes = ['Ibadah', 'Latihan'];
   const schedules: ScheduleSlot[] = scheduleTypes.map((type) => {
@@ -84,6 +88,7 @@ export async function fetchHomeData(): Promise<HomeData> {
 
   return {
     schedules,
+    scheduleUpdatedAt,
     events: (events || []).map((e) => ({
       ...e,
       registrations_count: e.event_registrations?.[0]?.count || 0,

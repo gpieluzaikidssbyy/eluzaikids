@@ -426,11 +426,11 @@ export default function AdminCalendarPage() {
               ))
             )}
           </div>
-          <AlertDialogFooter className="sm:justify-between">
+          <AlertDialogFooter className="flex-col gap-3 sm:flex-row sm:justify-between">
             <span />
-            <div className="flex gap-2">
+            <div className="flex w-full gap-2 sm:w-auto">
               <AlertDialogCancel disabled={agendaSaving}>Tutup</AlertDialogCancel>
-              <Button type="button" className="rounded-lg" onClick={openCreateFromDay}>
+              <Button type="button" className="w-full justify-center rounded-lg sm:w-auto" onClick={openCreateFromDay}>
                 <NotepadText className="h-4 w-4" />
                 Tambah Agenda
               </Button>

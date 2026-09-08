@@ -172,10 +172,20 @@ export default function ChildsAttendanceFormPage() {
             {classMembers.map((member, index) => (
               <li
                 key={member.id}
-                className="flex items-center gap-4 px-6 py-3.5 transition-colors hover:bg-accent/50"
+                className={cn(
+                  'flex items-center gap-4 px-6 py-3.5 transition-colors',
+                  member.is_present ? 'bg-success/10 hover:bg-success/15' : 'bg-destructive/10 hover:bg-destructive/15'
+                )}
               >
                 <span className="w-6 shrink-0 text-center text-sm text-muted-foreground">{index + 1}</span>
-                <span className="min-w-0 flex-1 font-medium text-foreground">{member.name}</span>
+                <span
+                  className={cn(
+                    'min-w-0 flex-1 rounded-lg px-2 py-1 font-medium text-foreground',
+                    member.is_present ? 'bg-success/15' : 'bg-destructive/15'
+                  )}
+                >
+                  {member.name}
+                </span>
                 <div className="flex items-center gap-2">
                   <Button
                     type="button"

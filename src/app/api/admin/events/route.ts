@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase';
 import { randomUUID } from 'node:crypto';
+import { strictEventSchema } from '@/lib/validations-strict';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,38 +23,46 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const supabase = createServiceClient();
   const form = await request.formData();
-  const title = String(form.get('title') || '').trim();
-  const tema = String(form.get('tema') || '').trim() || null;
-  const description = String(form.get('description') || '').trim();
-  const eventDate = String(form.get('event_date') || '');
-  const openGate = String(form.get('open_gate') || '');
-  const startTime = String(form.get('start_time') || '');
-  const location = String(form.get('location') || '').trim();
-  const quotaValue = String(form.get('quota') || '').trim();
-  const mapEmbedUrl = String(form.get('map_embed_url') || '').trim();
-  const driveLink = String(form.get('drive_link') || '').trim();
-  const registrationDeadline = String(form.get('registration_deadline') || '');
-  const emailEnabled = form.get('email_enabled') === 'on';
+
+  // Collect form data into a plain object for Zod validation
+  const formDataObj = {
+    title: String(form.get('title') || ''),
+    tema: String(form.get('tema') || ''),
+    description: String(form.get('description') || ''),
+    event_date: String(form.get('event_date') || ''),
+    open_gate: String(form.get('open_gate') || ''),
+    start_time: String(form.get('start_time') || ''),
+    location: String(form.get('location') || ''),
+    quota: String(form.get('quota') || ''),
+    map_embed_url: String(form.get('map_embed_url') || ''),
+    drive_link: String(form.get('drive_link') || ''),
+    registration_deadline: String(form.get('registration_deadline') || ''),
+    email_enabled: form.get('email_enabled') === 'on',
+  };
+
+  // Strict server-side validation with Zod
+  const validated = strictEventSchema.safeParse(formDataObj);
+  if (!validated.success) {
+    const errors: Record<string, string> = {};
+    validated.error.issues.forEach((issue) => {
+      errors[issue.path.join('.')] = issue.message;
+    });
+    return NextResponse.json({ errors, message: 'Validasi gagal: data tidak valid.' }, { status: 422 });
+  }
+
+  const { title, tema, description, event_date, open_gate, start_time, location, quota, map_embed_url, drive_link, registration_deadline, email_enabled } = validated.data;
+
+  // Required field checks (post-validation)
+  if (!title || !description || !event_date || !open_gate || !start_time || !location || !registration_deadline) {
+    return NextResponse.json({ message: 'Semua field wajib diisi.' }, { status: 422 });
+  }
+
   const poster = form.get('poster');
-
-  if (!title || !description || !eventDate || !openGate || !startTime || !location || !registrationDeadline || !(poster instanceof File) || poster.size === 0) {
-    return NextResponse.json({ message: 'Semua field wajib diisi, termasuk poster event.' }, { status: 422 });
-  }
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(eventDate)) {
-    return NextResponse.json({ message: 'Tanggal event tidak valid.' }, { status: 422 });
-  }
-  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(registrationDeadline)) {
-    return NextResponse.json({ message: 'Batas pendaftaran tidak valid.' }, { status: 422 });
+  if (!(poster instanceof File) || poster.size === 0) {
+    return NextResponse.json({ message: 'Poster event wajib diunggah.' }, { status: 422 });
   }
 
-  let quota: number | null = null;
-  if (quotaValue) {
-    quota = Number(quotaValue);
-    if (!Number.isInteger(quota) || quota < 1 || quota > 500) {
-      return NextResponse.json({ message: 'Kuota harus berupa angka bulat antara 1 sampai 500.' }, { status: 422 });
-    }
-  }
-
+  // File validation
   const extension = poster.name.toLowerCase().split('.').pop();
   const allowedExtensions = ['jpg', 'png', 'webp'];
   if (!extension || !allowedExtensions.includes(extension) || poster.size > 2 * 1024 * 1024) {
@@ -79,18 +88,18 @@ export async function POST(request: NextRequest) {
     .from('events')
     .insert({
       title,
-      tema,
+      tema: tema || null,
       description,
-      event_date: `${eventDate}T00:00:00+07:00`,
-      open_gate: openGate,
-      start_time: startTime,
+      event_date: `${event_date}T00:00:00+07:00`,
+      open_gate: open_gate,
+      start_time: start_time || null,
       location,
-      quota,
+      quota: quota || null,
       image: publicUrl.publicUrl,
-      map_embed_url: mapEmbedUrl || null,
-      drive_link: driveLink || null,
-      registration_deadline: `${registrationDeadline}:00+07:00`,
-      email_enabled: emailEnabled,
+      map_embed_url: map_embed_url || null,
+      drive_link: drive_link || null,
+      registration_deadline: `${registration_deadline}:00+07:00`,
+      email_enabled,
     })
     .select()
     .single();

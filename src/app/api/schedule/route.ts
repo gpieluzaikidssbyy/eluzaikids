@@ -20,5 +20,9 @@ export async function GET() {
     schedules: visibleSchedules.filter((s) => s.day === day),
   }));
 
-  return NextResponse.json({ schedule });
+  const updatedAt = visibleSchedules
+    .filter((item) => item.updated_at)
+    .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0]?.updated_at || null;
+
+  return NextResponse.json({ schedule, updatedAt });
 }

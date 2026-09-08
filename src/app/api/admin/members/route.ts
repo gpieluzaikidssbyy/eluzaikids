@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase';
+import { memberSchema } from '@/lib/validations';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,9 +14,19 @@ export async function POST(request: NextRequest) {
   const supabase = createServiceClient();
   const body = await request.json();
 
+  // Validate with Zod schema to prevent mass assignment
+  const validated = memberSchema.safeParse(body);
+  if (!validated.success) {
+    const errors: Record<string, string> = {};
+    validated.error.issues.forEach((issue) => {
+      errors[issue.path.join('.')] = issue.message;
+    });
+    return NextResponse.json({ errors, message: 'Validasi gagal.' }, { status: 422 });
+  }
+
   const { data, error } = await supabase
     .from('members')
-    .insert({ name: body.name, class: body.class })
+    .insert({ name: validated.data.name, class: validated.data.class })
     .select()
     .single();
 
