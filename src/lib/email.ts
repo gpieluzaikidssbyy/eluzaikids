@@ -59,7 +59,7 @@ function formatEmailDate(value: string | Date, includeTime = false): string {
 export async function generateQrPng(data: string): Promise<Buffer> {
   return QRCode.toBuffer(data, {
     width: 300,
-    margin: 2,
+    margin: 4,
     color: { dark: '#000000', light: '#ffffff' },
   });
 }
@@ -125,7 +125,7 @@ const emailStyles = `
     .label { display: block; margin-bottom: 3px; color: #64748b; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
     .value { color: #0f172a; font-size: 14px; font-weight: 600; line-height: 1.5; }
     .qr { padding: 6px 0 16px; text-align: center; }
-    .qr img { width: 200px; height: 200px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; }
+    .qr img { width: 200px; height: 200px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff; }
     .qr p { margin: 10px 0 0; color: #94a3b8; font-size: 12px; }
     .link { color: #2563eb; text-decoration: underline; word-break: break-all; }
     .buttonspace { margin: 22px 0 8px; }
@@ -236,7 +236,7 @@ export async function sendPasswordResetEmail(email: string, resetUrl: string): P
 /**
  * Build the confirmation email HTML content.
  */
-function buildEmailHtml(name: string, info: EmailInfo, logoSrc: string): string {
+export function buildEmailHtml(name: string, info: EmailInfo, logoSrc: string): string {
   const dateStr = info.date ? formatEmailDate(info.date) : '-';
   const timeStr = info.time ? `${info.time.slice(0, 5)} WIB` : '-';
   const openGateStr = info.open_gate ? formatTimeWib(info.open_gate) : null;
@@ -251,7 +251,7 @@ function buildEmailHtml(name: string, info: EmailInfo, logoSrc: string): string 
   const safeTime = escapeHtml(timeStr);
   const safeOpenGate = escapeHtml(openGateStr);
   const mapsButton = info.maps_link
-    ? `<div class="row"><span class="label">Lokasi</span><span class="value">${safeLocation}</span><a class="maps-button" href="${escapeHtml(info.maps_link)}">Buka lokasi di Google Maps</a></div>`
+    ? `<div class="row"><span class="label">Lokasi</span><span class="value">${safeLocation}</span><div style="margin-top:10px;"><a class="maps-button" href="${escapeHtml(info.maps_link)}">Buka lokasi di Google Maps</a></div></div>`
     : '';
 
   return `
@@ -283,7 +283,7 @@ function buildEmailHtml(name: string, info: EmailInfo, logoSrc: string): string 
         <div class="row"><span class="label">Registration Code</span><span class="value">${safeRegistration}</span></div>
         <div class="row"><span class="label">Jumlah yang Hadir</span><span class="value">${escapeHtml(info.jumlah_hadir)} orang</span></div>
         <div class="row"><span class="label">QR Code Presensi</span><div class="qr"><img src="cid:qr-presensi" alt="QR Code Presensi"><p>Tunjukkan QR ini saat presensi di lokasi</p></div></div>
-        <div className="row"><span class="label">${kindLabel}</span><span class="value">${safeTitle}</span></div>
+        <div class="row"><span class="label">${kindLabel}</span><span class="value">${safeTitle}</span></div>
         ${info.tema ? `<div class="row"><span class="label">Tema ${kindLabel}</span><span class="value">${escapeHtml(info.tema)}</span></div>` : ''}
         <div class="row"><span class="label">Tanggal ${kindLabel}</span><span class="value">${safeDate}</span></div>
         ${openGateStr ? `<div class="row"><span class="label">Open Gate</span><span class="value">${safeOpenGate}</span></div>` : ''}

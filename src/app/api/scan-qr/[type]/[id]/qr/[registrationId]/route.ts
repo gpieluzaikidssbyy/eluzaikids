@@ -35,7 +35,7 @@ export async function GET(
 
     const pngBuffer = await QRCode.toBuffer(qrData, {
       width: 300,
-      margin: 2,
+      margin: 4,
       color: { dark: '#000000', light: '#ffffff' },
     });
 

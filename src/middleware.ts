@@ -11,7 +11,9 @@ function decodeBase64Url(value: string): Uint8Array {
 
 async function isValidSession(value: string | undefined): Promise<boolean> {
   if (!value) return false;
-  const secret = process.env.AUTH_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const secret =
+    process.env.AUTH_SECRET ||
+    (process.env.NODE_ENV === 'production' ? undefined : process.env.SUPABASE_SERVICE_ROLE_KEY);
   if (!secret) return false;
   const [encoded, signature] = value.split('.');
   if (!encoded || !signature) return false;
@@ -62,6 +64,17 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
+  // Admin page routes: require a valid session (client-side guard is not enough).
+  const pathname = request.nextUrl.pathname;
+  if (pathname === '/admin' || pathname.startsWith('/admin/')) {
+    if (pathname === '/admin/login' || pathname.startsWith('/admin/reset-password')) {
+      return NextResponse.next();
+    }
+    if (!(await isValidSession(request.cookies.get(SESSION_COOKIE)?.value))) {
+      return NextResponse.redirect(new URL('/admin/login', request.url));
+    }
+  }
+
   // Admin API protection
   if (!request.nextUrl.pathname.startsWith('/api/admin/')) {
     return NextResponse.next();
@@ -94,5 +107,6 @@ export const config = {
     '/register/:path*',
     '/activities/:path*',
     '/events/:path*',
+    '/admin/:path*',
   ],
 };

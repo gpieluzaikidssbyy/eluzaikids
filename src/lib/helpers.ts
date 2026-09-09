@@ -222,7 +222,11 @@ export function getWhatsAppLink(phone: string | null): string | null {
  */
 export async function verifyRecaptcha(token: string): Promise<boolean> {
   const secretKey = process.env.RECAPTCHA_SECRET_KEY;
-  if (!secretKey) return true; // Skip in dev if not configured
+  if (!secretKey) {
+    // Dev: skip if not configured. Production: fail closed so bot protection
+    // cannot be silently disabled.
+    return process.env.NODE_ENV !== 'production';
+  }
 
   try {
     const response = await fetch('https://www.google.com/recaptcha/api/siteverify', {

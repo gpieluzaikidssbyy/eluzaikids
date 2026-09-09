@@ -12,31 +12,14 @@ import {
   appBaseUrl,
 } from '@/lib/helpers';
 import { sendConfirmationEmail } from '@/lib/email';
-import { RequireCsrf } from '@/lib/csrf';
+import { checkCsrf } from '@/lib/csrf';
+import { RateLimiter } from '@/lib/rateLimit';
 
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT_WINDOW = 60 * 1000;
-const RATE_LIMIT_MAX = 10;
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip);
-
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW });
-    return true;
-  }
-
-  if (entry.count >= RATE_LIMIT_MAX) return false;
-  entry.count++;
-  return true;
-}
+const registrationLimiter = new RateLimiter(10, 60 * 1000);
 
 export async function POST(request: NextRequest) {
-  // CSRF protection: validate token from header or cookie
-  try {
-    await RequireCsrf(request);
-  } catch {
+  // CSRF protection: validate token from header against cookie
+  if (!(await checkCsrf(request))) {
     return NextResponse.json(
       { message: 'Validasi CSRF gagal. Silakan refresh halaman dan coba lagi.' },
       { status: 403 }
@@ -47,7 +30,7 @@ export async function POST(request: NextRequest) {
     .split(',')[0]
     .trim();
 
-  if (!checkRateLimit(ip)) {
+  if (!registrationLimiter.check(ip)) {
     return NextResponse.json(
       { message: 'Terlalu banyak permintaan. Silakan coba lagi nanti.' },
       { status: 429 }

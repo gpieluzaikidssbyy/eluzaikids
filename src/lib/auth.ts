@@ -7,7 +7,9 @@ const COOKIE_NAME = 'eluzai_admin_session';
 const SESSION_TTL = 60 * 60 * 8;
 
 function secret() {
-  const value = process.env.AUTH_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const value =
+    process.env.AUTH_SECRET ||
+    (process.env.NODE_ENV === 'production' ? '' : process.env.SUPABASE_SERVICE_ROLE_KEY);
   if (!value) throw new Error('AUTH_SECRET must be configured.');
   return value;
 }

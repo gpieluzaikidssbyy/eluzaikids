@@ -201,7 +201,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     .toUpperCase();
 
   const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' });
+    const csrfResponse = await fetch('/api/csrf-token');
+    const csrfData = await csrfResponse.json();
+    await fetch('/api/auth/logout', {
+      method: 'POST',
+      headers: { ...(typeof csrfData.token === 'string' ? { 'x-csrf-token': csrfData.token } : {}) },
+    });
     router.replace('/admin/login');
   };
 

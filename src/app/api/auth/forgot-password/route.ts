@@ -3,12 +3,33 @@ import { createHash, randomBytes } from 'node:crypto';
 import { createServiceClient } from '@/lib/supabase';
 import { sendPasswordResetEmail } from '@/lib/email';
 import { appBaseUrl } from '@/lib/helpers';
+import { RateLimiter } from '@/lib/rateLimit';
+import { checkCsrf } from '@/lib/csrf';
+
+// Prevent email-spam DoS: 3 requests per minute per IP+email, 10 per IP.
+const emailLimiter = new RateLimiter(3, 60 * 1000);
+const ipLimiter = new RateLimiter(10, 60 * 1000);
 
 export async function POST(request: NextRequest) {
+  if (!(await checkCsrf(request))) {
+    return NextResponse.json(
+      { message: 'Validasi CSRF gagal. Silakan refresh halaman dan coba lagi.' },
+      { status: 403 }
+    );
+  }
+
   const { email } = await request.json();
   if (!email) return NextResponse.json({ message: 'Email wajib diisi.' }, { status: 422 });
 
+  const ip = (request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown')
+    .split(',')[0]
+    .trim();
   const normalizedEmail = String(email).trim().toLowerCase();
+
+  if (!ipLimiter.check(ip) || !emailLimiter.check(`${ip}:${normalizedEmail}`)) {
+    return NextResponse.json({ message: 'Terlalu banyak permintaan. Silakan coba lagi nanti.' }, { status: 429 });
+  }
+
   const supabase = createServiceClient();
   const { data: user } = await supabase.from('users').select('id, email').eq('email', normalizedEmail).eq('is_admin', true).maybeSingle();
 

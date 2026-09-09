@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase';
 import { createScanToken } from '@/lib/auth';
+import { RateLimiter } from '@/lib/rateLimit';
 
-const attempts = new Map<string, { count: number; resetAt: number }>();
+const pinLimiter = new RateLimiter(10, 60 * 1000);
 
 export async function POST(
   request: NextRequest,
@@ -10,14 +11,8 @@ export async function POST(
 ) {
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || request.headers.get('x-real-ip') || 'unknown';
   const key = `${ip}:${params.type}:${params.id}`;
-  const now = Date.now();
-  const current = attempts.get(key);
-  if (!current || now > current.resetAt) {
-    attempts.set(key, { count: 1, resetAt: now + 60_000 });
-  } else if (current.count >= 10) {
+  if (!pinLimiter.check(key)) {
     return NextResponse.json({ success: false, message: 'Terlalu banyak percobaan. Silakan coba lagi nanti.' }, { status: 429 });
-  } else {
-    current.count++;
   }
 
   const table = params.type === 'event' ? 'events' : params.type === 'activity' ? 'activities' : null;

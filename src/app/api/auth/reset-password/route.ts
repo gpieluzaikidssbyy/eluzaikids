@@ -2,8 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createHash } from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import { createServiceClient } from '@/lib/supabase';
+import { RateLimiter } from '@/lib/rateLimit';
+
+const attemptLimiter = new RateLimiter(10, 60 * 1000);
 
 export async function POST(request: NextRequest) {
+  const ip = (request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown')
+    .split(',')[0]
+    .trim();
+  if (!attemptLimiter.check(ip)) {
+    return NextResponse.json({ message: 'Terlalu banyak permintaan. Silakan coba lagi nanti.' }, { status: 429 });
+  }
+
   const { token, password } = await request.json();
   if (typeof token !== 'string' || token.length !== 64 || typeof password !== 'string' || password.length < 8) {
     return NextResponse.json({ message: 'Token atau password tidak valid.' }, { status: 422 });

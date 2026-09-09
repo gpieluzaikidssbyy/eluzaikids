@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers';
-import { randomBytes } from 'node:crypto';
+import { randomBytes, timingSafeEqual } from 'node:crypto';
 
 const CSRF_COOKIE_NAME = 'eluzai_csrf_token';
 const CSRF_HEADER_NAME = 'x-csrf-token';
@@ -12,10 +12,10 @@ export function generateCsrfToken(): string {
 }
 
 /**
- * Set CSRF token cookie
- * Cookie di-set sebagai HTTP-only untuk keamanan tambahan, namun ini berarti
- * client-side JavaScript TIDAK BISA membacanya.
- * Untuk solusi hybrid: gunakan token kedua yang bisa diakses client via endpoint khusus.
+ * Set CSRF token cookie.
+ * Cookie di-set sebagai HTTP-only sehingga client-side JavaScript tidak bisa
+ * membacanya langsung. Client mendapat token yang sama melalui GET /api/csrf-token
+ * dan mengirimnya kembali lewat header x-csrf-token.
  */
 export async function setCsrfTokenCookie(): Promise<string> {
   const token = generateCsrfToken();
@@ -37,6 +37,17 @@ export function getCsrfTokenFromCookie(): string | undefined {
 }
 
 /**
+ * Ensure a CSRF cookie exists and return its value (creating one if missing).
+ * Digunakan oleh GET /api/csrf-token agar token yang dikembalikan ke client
+ * selalu VALID dan cocok dengan cookie yang diverifikasi server.
+ */
+export async function ensureCsrfToken(): Promise<string> {
+  const existing = getCsrfTokenFromCookie();
+  if (existing) return existing;
+  return setCsrfTokenCookie();
+}
+
+/**
  * Validate CSRF token from request header against cookie (server-side verification)
  */
 export async function validateCsrfToken(request: Request): Promise<boolean> {
@@ -47,71 +58,16 @@ export async function validateCsrfToken(request: Request): Promise<boolean> {
     return false;
   }
 
-  // Use constant-time comparison to prevent timing attacks
-  return cookieToken === headerToken;
+  // Constant-time comparison to prevent timing attacks
+  const a = Buffer.from(cookieToken);
+  const b = Buffer.from(headerToken);
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(a, b);
 }
 
 /**
- * Require CSRF protection - throws if validation fails
+ * Require CSRF protection - returns false if validation fails
  */
-export async function RequireCsrf(request: Request): Promise<void> {
-  const isValid = await validateCsrfToken(request);
-  if (!isValid) {
-    throw new Error('CSRF validation failed');
-  }
-}
-
-/**
- * Store CSRF token in memory for demo/testing purposes
- * In production, gunakan pendekatan yang lebih aman seperti:
- * - Server-side session storage
- * - Database-backed token storage
- * - Hidden form fields yang di-render oleh server
- */
-const csrfTokenStore = new Map<string, { token: string; expiresAt: number }>();
-
-/**
- * Generate and store CSRF token for client-side use
- * Token ini bisa diakses oleh JavaScript melalui endpoint /api/csrf-token
- * dan harus dikirim kembali dalam header x-csrf-token
- */
-export async function generateClientCsrfToken(sessionId: string = 'default'): Promise<string> {
-  const token = generateCsrfToken();
-  const expiresAt = Date.now() + 60 * 60 * 1000; // 1 hour
-  csrfTokenStore.set(sessionId, { token, expiresAt });
-  return token;
-}
-
-/**
- * Verify client-side CSRF token
- * Token diambil dari header x-csrf-token and dibandingkan dengan yang tersimpan
- */
-export async function verifyClientCsrfToken(token: string, sessionId: string = 'default'): Promise<boolean> {
-  const stored = csrfTokenStore.get(sessionId);
-  if (!stored) return false;
-  
-  // Check if token expired
-  if (Date.now() > stored.expiresAt) {
-    csrfTokenStore.delete(sessionId);
-    return false;
-  }
-  
-  // Use constant-time comparison
-  if (stored.token.length !== token.length) return false;
-  
-  // Simple comparison for demo (gunakan timing-safe di production)
-  return stored.token === token;
-}
-
-/**
- * Get valid client-side token for testing
- * In production, token harus di-generate per-session dan disimpan di server
- */
-export function getStoredClientToken(sessionId: string = 'default'): string | undefined {
-  const stored = csrfTokenStore.get(sessionId);
-  if (!stored || Date.now() > stored.expiresAt) {
-    csrfTokenStore.delete(sessionId);
-    return undefined;
-  }
-  return stored.token;
+export async function checkCsrf(request: Request): Promise<boolean> {
+  return validateCsrfToken(request);
 }

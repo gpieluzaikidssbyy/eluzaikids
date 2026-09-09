@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react';
@@ -20,12 +20,20 @@ export default function AdminLoginPage() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [csrfToken, setCsrfToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/csrf-token')
+      .then((response) => response.json())
+      .then((data) => setCsrfToken(typeof data.token === 'string' ? data.token : null))
+      .catch(() => setCsrfToken(null));
+  }, []);
 
   const login = async (event: React.FormEvent) => {
     event.preventDefault();
     setLoading(true); setError('');
     const formData = new FormData(event.currentTarget as HTMLFormElement);
-    const response = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: username.slice(0, 64), password, remember: formData.get('remember') === 'on' }) });
+    const response = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(csrfToken ? { 'x-csrf-token': csrfToken } : {}) }, body: JSON.stringify({ username: username.slice(0, 64), password, remember: formData.get('remember') === 'on' }) });
     const data = await response.json();
     setLoading(false);
     if (!response.ok) { setError(data.message || 'Login gagal.'); return; }
@@ -34,7 +42,7 @@ export default function AdminLoginPage() {
 
   const forgotPassword = async (event: React.FormEvent) => {
     event.preventDefault(); setLoading(true); setError(''); setMessage('');
-    const response = await fetch('/api/auth/forgot-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
+    const response = await fetch('/api/auth/forgot-password', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(csrfToken ? { 'x-csrf-token': csrfToken } : {}) }, body: JSON.stringify({ email }) });
     const data = await response.json(); setLoading(false);
     if (!response.ok) { setError(data.message || 'Permintaan gagal.'); return; }
     setMessage(data.message);

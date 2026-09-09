@@ -15,7 +15,13 @@ export default function ActivityDetailPage() {
   useEffect(() => {
     const load = () => fetch(`/api/activities/${params.id}`).then((r) => r.json()).then(setActivity);
     void load();
-    const interval = window.setInterval(load, 5000);
+    // Poll less aggressively and only while the tab is visible to reduce overhead.
+    const POLL_MS = 15000;
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        void load();
+      }
+    }, POLL_MS);
     return () => window.clearInterval(interval);
   }, [params.id]);
 

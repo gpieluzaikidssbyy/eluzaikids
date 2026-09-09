@@ -294,7 +294,7 @@ export default function ScanQrPage() {
           </h1>
           {eventTitle && <p className="mt-1 truncate text-sm text-slate-400">{eventTitle}</p>}
           <p className="mt-3 text-sm text-slate-400">
-            Arahkan kamera ke QR Code atau masukkan kode manual
+            Arahkan kamera ke QR Code atau masukkan nomor registrasi manual
           </p>
         </div>
 

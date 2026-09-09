@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { createPortal } from 'react-dom';
 import { registrationSchema } from '@/lib/validations';
 
 interface RegistrationFormProps {
@@ -22,10 +22,14 @@ declare global {
   }
 }
 
-const stagger = (delay: number) => ({ animationDelay: `${delay}ms` });
-
 const inputClass =
-  'mt-2 h-12 w-full rounded-xl border border-white/70 bg-white/45 px-4 text-base text-slate-900 outline-none shadow-inner shadow-white/30 backdrop-blur-md transition-all duration-300 placeholder:text-slate-400 hover:bg-white/60 focus:-translate-y-0.5 focus:border-brand-400 focus:bg-white/70 focus:ring-4 focus:ring-brand-500/15 dark:border-white/15 dark:bg-white/10 dark:text-slate-100 dark:placeholder:text-slate-500 dark:hover:bg-white/15 dark:focus:bg-white/15 sm:text-sm';
+  'mt-1.5 h-12 w-full rounded-xl border border-slate-300 bg-white px-4 text-base text-slate-900 outline-none transition-all duration-200 placeholder:text-slate-400 hover:border-slate-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 dark:hover:border-slate-500 dark:focus:border-brand-500 sm:text-sm';
+
+const labelClass =
+  'block text-sm font-medium text-slate-700 dark:text-slate-300';
+
+const errorClass =
+  'animate-fade-in-down mt-1.5 text-xs text-red-600 dark:text-red-400';
 
 export function RegistrationForm({
   registrableType,
@@ -36,6 +40,7 @@ export function RegistrationForm({
 }: RegistrationFormProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [qrUrl, setQrUrl] = useState('');
   const [nomorRegistrasi, setNomorRegistrasi] = useState('');
@@ -45,7 +50,54 @@ export function RegistrationForm({
   const formRef = useRef<HTMLFormElement>(null);
   const recaptchaRef = useRef<HTMLDivElement>(null);
   const recaptchaWidgetId = useRef<number | null>(null);
-  const router = useRouter();
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const htmlEl = document.documentElement;
+    const bodyEl = document.body;
+    const originalHtmlOverflow = htmlEl.style.overflow;
+    const originalBodyOverflow = bodyEl.style.overflow;
+    htmlEl.style.overflow = 'hidden';
+    bodyEl.style.overflow = 'hidden';
+
+    // Pause Lenis (smooth scroll) so wheel/trackpad events no longer scroll the
+    // underlying page; the modal content scrolls independently inside the portal.
+    const lenis = window.__lenis;
+    const lenisPaused = lenis?.isStopped === true;
+    lenis?.stop();
+
+    // Block wheel/touch scrolling that does not originate inside the scrollable
+    // modal content, so trackpad scrolls only the form and not the page behind.
+    const isInsideModal = (target: EventTarget | null): boolean => {
+      if (!(target instanceof Node) || !modalRef.current) return false;
+      return modalRef.current.contains(target);
+    };
+
+    const preventBackgroundScroll = (e: WheelEvent) => {
+      if (!isInsideModal(e.target)) {
+        e.preventDefault();
+      }
+    };
+
+    const preventBackgroundTouch = (e: TouchEvent) => {
+      if (!isInsideModal(e.target)) {
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener('wheel', preventBackgroundScroll, { passive: false });
+    window.addEventListener('touchmove', preventBackgroundTouch, { passive: false });
+
+    return () => {
+      htmlEl.style.overflow = originalHtmlOverflow;
+      bodyEl.style.overflow = originalBodyOverflow;
+      if (lenis && !lenisPaused) lenis.start();
+      window.removeEventListener('wheel', preventBackgroundScroll);
+      window.removeEventListener('touchmove', preventBackgroundTouch);
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     // Reset widget state when the modal closes so it re-renders on next open.
@@ -210,218 +262,327 @@ export function RegistrationForm({
     setQrUrl('');
     setNomorRegistrasi('');
     setConfirmationEmailEnabled(emailEnabled);
-    router.push('/');
   };
 
-  if (success) {
-    return (
-      <div className="animate-fade-in-up rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-xl shadow-slate-200/60 dark:border-slate-700 dark:bg-slate-800">
-        {/* Stamp-style badge */}
-        <div className="relative mx-auto h-16 w-16">
-          <div className="absolute -inset-1.5 rounded-full border-2 border-dashed border-brand-300 dark:border-brand-500/40" />
-          <div className="animate-pop relative flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-blue-600 shadow-lg shadow-brand-500/30">
-            <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-        </div>
-        <h3 className="mt-4 font-display text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-          SUCCESS!
-        </h3>
-        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-          {confirmationEmailEnabled
-            ? 'Registration successful! Please check your email.'
-            : 'Registration successful!'}
-        </p>
-        <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
-          {registrableTitle}
-        </p>
-        {qrUrl && (
-          <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              QR Code Presensi
-            </p>
-            {nomorRegistrasi && (
-              <p className="mt-1 font-mono text-xs font-semibold text-brand-600">{nomorRegistrasi}</p>
-            )}
-            <img
-              src={qrUrl}
-              alt="QR Code Presensi"
-              className="mx-auto mt-3 h-44 w-44 border border-slate-200 p-2 dark:border-slate-700"
-            />
-            <p className="mt-2 text-xs text-slate-500">
-              Simpan atau tunjukkan barcode ini saat presensi di lokasi.
-            </p>
-          </div>
-        )}
-        <button
-          onClick={handleBackHome}
-          className="mt-5 rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition-all duration-300 hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-brand-500/30 active:scale-95 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-slate-500 dark:hover:bg-slate-700"
-        >
-          Back to Home Page
-        </button>
-      </div>
-    );
-  }
+  const downloadQrTicket = async () => {
+    if (!qrUrl || !nomorRegistrasi || isDownloading) return;
+    setIsDownloading(true);
+    try {
+      const qrImg = new Image();
+      qrImg.src = qrUrl;
+      await qrImg.decode();
+
+      const W = 600;
+      const H = 820;
+      const canvas = document.createElement('canvas');
+      canvas.width = W;
+      canvas.height = H;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      const roundRect = (x: number, y: number, w: number, h: number, r: number) => {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+      };
+
+      const centerText = (
+        text: string,
+        y: number,
+        font: string,
+        color: string,
+        maxWidth = W - 120
+      ) => {
+        ctx.font = font;
+        ctx.fillStyle = color;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        let shown = text;
+        if (ctx.measureText(shown).width > maxWidth) {
+          while (ctx.measureText(`${shown}…`).width > maxWidth && shown.length > 0) {
+            shown = shown.slice(0, -1);
+          }
+          shown = `${shown}…`;
+        }
+        ctx.fillText(shown, W / 2, y, maxWidth);
+      };
+
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(0, 0, W, H);
+
+      roundRect(24, 24, W - 48, H - 48, 28);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      const mono = '"JetBrains Mono", ui-monospace, Consolas, monospace';
+
+      centerText('GPI ELUZAI KIDS', 96, '800 22px Inter, system-ui, sans-serif', '#7c3aed');
+      centerText('QR CODE PRESENSI', 140, '800 36px Inter, system-ui, sans-serif', '#0f172a');
+      centerText(registrableTitle, 172, '600 20px Inter, system-ui, sans-serif', '#64748b');
+
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(80, 206);
+      ctx.lineTo(W - 80, 206);
+      ctx.stroke();
+
+      const qrSize = 320;
+      const qrX = (W - qrSize) / 2;
+      const qrY = 232;
+      ctx.fillStyle = '#ffffff';
+      roundRect(qrX - 16, qrY - 16, qrSize + 32, qrSize + 32, 20);
+      ctx.fill();
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.stroke();
+      ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+
+      centerText('NO. REGISTRASI', 612, '700 18px Inter, system-ui, sans-serif', '#475569');
+
+      let numSize = 44;
+      const setNumFont = () => {
+        ctx.font = `800 ${numSize}px ${mono}`;
+      };
+      setNumFont();
+      while (ctx.measureText(nomorRegistrasi).width > W - 120 && numSize > 24) {
+        numSize -= 2;
+        setNumFont();
+      }
+      centerText(nomorRegistrasi, 668, `800 ${numSize}px ${mono}`, '#7c3aed');
+
+      centerText('Simpan gambar ini sebagai bukti pendaftaran.', 748, '500 16px Inter, system-ui, sans-serif', '#94a3b8');
+
+      const link = document.createElement('a');
+      link.download = `qr-presensi-${nomorRegistrasi}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (error) {
+      console.error('Failed to generate QR ticket:', error);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   return (
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className={`group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-brand-600 via-brand-500 to-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-500/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand-500/35 focus:outline-none focus:ring-2 focus:ring-brand-500/40 active:translate-y-0 active:scale-95 ${buttonClass}`}
+        className={`inline-flex items-center justify-center gap-2 rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500/40 active:scale-[0.98] ${buttonClass}`}
       >
-        <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-hover:animate-shimmer motion-reduce:animate-none" />
-        <span className="relative">Daftar</span>
+        Daftar
       </button>
 
-      {isOpen && (
-        <div className="animate-fade-in fixed inset-0 z-50 flex items-end justify-center overflow-hidden bg-slate-950/55 p-0 backdrop-blur-xl sm:items-center sm:p-4 motion-reduce:animate-none">
-          <div className="animate-sheet-up sm:animate-scale-in my-0 flex max-h-[calc(100dvh-0.5rem)] w-full max-w-lg flex-col overflow-hidden rounded-t-[2rem] rounded-b-none border border-white/60 bg-white/35 shadow-2xl shadow-slate-950/20 backdrop-blur-2xl dark:border-white/15 dark:bg-slate-900/45 sm:my-auto sm:max-h-[calc(100dvh-2rem)] sm:rounded-[2rem] motion-reduce:animate-none">
-            <div className="relative shrink-0 overflow-hidden border-b border-white/15 bg-gradient-to-br from-brand-600 via-brand-700 to-blue-700 px-5 py-5 text-white dark:from-navy-900 dark:via-brand-900 dark:to-navy-950 sm:px-6 sm:py-7">
-              <div className="animate-float pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-cyan-300/30 blur-2xl" />
-              <div className="animate-float pointer-events-none absolute -bottom-20 left-16 h-36 w-36 rounded-full bg-blue-300/30 blur-2xl [animation-delay:-3.5s]" />
-              <div className="relative flex items-start justify-between gap-4">
-                <div className="animate-fade-in-up">
-                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/30 backdrop-blur-sm sm:mb-4 sm:h-11 sm:w-11">
-                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2m6-8a4 4 0 100-8 4 4 0 000 8zm8-3v6m3-3h-6" />
+      {isOpen &&
+        createPortal(
+        <div ref={modalRef} className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-950/50 p-0 sm:items-center sm:p-4">
+          <div className="animate-sheet-up sm:animate-scale-in flex max-h-[94dvh] w-full flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:max-h-[90dvh] sm:max-w-md sm:rounded-2xl dark:bg-slate-900">
+            {success ? (
+              <div className="min-h-0 flex-1 overflow-y-auto px-5 py-8 pb-[calc(2rem+env(safe-area-inset-bottom))] sm:px-8" data-lenis-prevent>
+                <div className="text-center">
+                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/40">
+                    <svg className="h-8 w-8 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-100">
-                    Pendaftaran online
-                  </p>
-                  <h3 className="mt-1 font-display text-xl font-bold tracking-tight sm:text-2xl">
-                    Formulir Pendaftaran
+                  <h3 className="mt-4 font-display text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                    Pendaftaran Berhasil
                   </h3>
-                  <p className="mt-1 line-clamp-2 text-xs text-blue-100 sm:mt-2 sm:text-sm">
+                  <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                    {confirmationEmailEnabled
+                      ? 'Pendaftaran berhasil. Silakan cek email Anda untuk konfirmasi.'
+                      : 'Pendaftaran Anda telah diterima.'}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
                     {registrableTitle}
                   </p>
+
+                  {qrUrl && (
+                    <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-700 dark:bg-slate-800">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                        QR Code Presensi
+                      </p>
+                      {nomorRegistrasi && (
+                        <p className="mt-2 font-mono text-base font-bold text-brand-600 dark:text-brand-400">
+                          {nomorRegistrasi}
+                        </p>
+                      )}
+                      <img
+                        src={qrUrl}
+                        alt="QR Code Presensi"
+                        className="mx-auto mt-4 h-48 w-48 rounded-xl border border-slate-200 bg-white p-2 dark:border-slate-600"
+                      />
+                      <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+                        Simpan dan tunjukkan kode ini saat tiba di lokasi.
+                      </p>
+                    </div>
+                  )}
+
+                  {qrUrl && nomorRegistrasi && (
+                    <button
+                      onClick={() => void downloadQrTicket()}
+                      disabled={isDownloading}
+                      className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v12m0 0l-4-4m4 4l4-4M4 19h16" />
+                      </svg>
+                      {isDownloading ? 'Menyiapkan...' : 'Download QR Code Presensi'}
+                    </button>
+                  )}
+
+                  <button
+                    onClick={handleBackHome}
+                    className="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-slate-700 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
+                  >
+                    Tutup
+                  </button>
                 </div>
-                <button
-                  onClick={() => setIsOpen(false)}
-                  aria-label="Tutup formulir"
-                  className="relative shrink-0 rounded-full border border-white/25 bg-white/10 p-2 text-white/80 transition-all duration-300 hover:rotate-90 hover:bg-white/25 hover:text-white active:scale-90"
-                >
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
               </div>
-            </div>
-
-            <form ref={formRef} onSubmit={handleSubmit} className="min-h-0 space-y-4 overflow-y-auto bg-white/20 px-5 py-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] backdrop-blur-xl sm:space-y-5 sm:p-7 dark:bg-slate-950/20">
-              {/* Honeypot field */}
-              <div style={{ position: 'absolute', left: '-9999px' }} aria-hidden="true">
-                <input type="text" name="honeypot" tabIndex={-1} autoComplete="off" />
-              </div>
-
-              {errors.general && (
-                <div className="animate-fade-in-down rounded-2xl border border-red-200/70 bg-red-50/65 px-4 py-3 text-sm text-red-600 backdrop-blur-md dark:border-red-400/20 dark:bg-red-950/30 dark:text-red-300">
-                  {errors.general}
+            ) : (
+              <>
+                <div className="relative shrink-0 border-b border-slate-200 px-5 py-4 sm:px-6">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-900/40 dark:text-brand-400">
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 17h6m-3-3v3m-9 3h18V9l-9-6-9 6v11z" />
+                        </svg>
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="font-display text-base font-bold text-slate-900 sm:text-lg dark:text-slate-100">
+                          Formulir Pendaftaran
+                        </h3>
+                        <p className="truncate text-xs text-slate-500 sm:text-sm dark:text-slate-400">
+                          {registrableTitle}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setIsOpen(false)}
+                      aria-label="Tutup formulir"
+                      className="shrink-0 rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                    >
+                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
-              )}
 
-              <div className="animate-fade-in-up" style={stagger(40)}>
-                <label className="block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  Nama Lengkap <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  required
-                  className={inputClass}
-                  placeholder="Nama pendaftar"
-                />
-                {errors.name && (
-                  <p className="animate-fade-in-down mt-1 text-xs text-red-500">{errors.name}</p>
-                )}
-              </div>
-
-              <div className="animate-fade-in-up" style={stagger(100)}>
-                <label className="block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  Nomor HP <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="tel"
-                  name="phone"
-                  required
-                  className={inputClass}
-                  placeholder="0812xxxxxxx"
-                />
-                {errors.phone && (
-                  <p className="animate-fade-in-down mt-1 text-xs text-red-500">{errors.phone}</p>
-                )}
-              </div>
-
-              <div className="animate-fade-in-up" style={stagger(160)}>
-                <label className="block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  Email <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  required
-                  className={inputClass}
-                  placeholder="email@contoh.com"
-                />
-                {errors.email && (
-                  <p className="animate-fade-in-down mt-1 text-xs text-red-500">{errors.email}</p>
-                )}
-              </div>
-
-              <div className="animate-fade-in-up" style={stagger(220)}>
-                <label className="block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  Jumlah yang Hadir <span className="text-red-500">*</span>
-                </label>
-                <select name="jumlah_hadir" required className={inputClass}>
-                  <option value="">Pilih jumlah</option>
-                  {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
-                    <option key={n} value={n}>
-                      {n} orang
-                    </option>
-                  ))}
-                </select>
-                {errors.jumlah_hadir && (
-                  <p className="animate-fade-in-down mt-1 text-xs text-red-500">{errors.jumlah_hadir}</p>
-                )}
-              </div>
-
-              <div
-                className="animate-fade-in-up rounded-2xl border border-white/60 bg-white/35 p-4 shadow-inner shadow-white/20 backdrop-blur-md dark:border-white/10 dark:bg-white/10"
-                style={stagger(280)}
-              >
-                <label className="flex items-start gap-2">
-                  <input
-                    type="checkbox"
-                    name="consent"
-                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
-                  />
-                  <span className="text-xs leading-relaxed text-slate-600 dark:text-slate-300">
-                    Saya menyetujui data ini akan digunakan untuk keperluan pendaftaran{' '}
-                    <span className="text-red-500">*</span>
-                  </span>
-                </label>
-                {errors.consent && (
-                  <p className="animate-fade-in-down mt-1 text-xs text-red-500">{errors.consent}</p>
-                )}
-              </div>
-
-              {/* reCAPTCHA */}
-              <div ref={recaptchaRef} className="animate-fade-in-up flex justify-center" style={stagger(340)} />
-
-              <div className="animate-fade-in-up" style={stagger(400)}>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="group relative min-h-12 w-full overflow-hidden rounded-2xl bg-gradient-to-r from-brand-600 via-brand-500 to-blue-600 py-3.5 text-sm font-bold text-white shadow-xl shadow-brand-500/30 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-2xl hover:shadow-brand-500/40 focus:outline-none focus:ring-4 focus:ring-brand-500/30 active:translate-y-0 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-xl"
+                <form
+                  ref={formRef}
+                  onSubmit={handleSubmit}
+                  className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] sm:space-y-5 sm:px-6"
+                  data-lenis-prevent
                 >
-                  <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-hover:animate-shimmer motion-reduce:animate-none" />
-                  <span className="relative">{isSubmitting ? 'Mengirim...' : 'Kirim Pendaftaran'}</span>
-                </button>
-              </div>
-            </form>
+                  {/* Honeypot field */}
+                  <div style={{ position: 'absolute', left: '-9999px' }} aria-hidden="true">
+                    <input type="text" name="honeypot" tabIndex={-1} autoComplete="off" />
+                  </div>
+
+                  {errors.general && (
+                    <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-500/30 dark:bg-red-950/40 dark:text-red-400">
+                      {errors.general}
+                    </div>
+                  )}
+
+                  <div>
+                    <label className={labelClass}>
+                      Nama Lengkap <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      required
+                      className={inputClass}
+                      placeholder="Nama Lengkap Anak"
+                    />
+                    {errors.name && <p className={errorClass}>{errors.name}</p>}
+                  </div>
+
+                  <div>
+                    <label className={labelClass}>
+                      Nomor HP Aktif <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      inputMode="tel"
+                      required
+                      className={inputClass}
+                      placeholder="0812xxxxxxx"
+                    />
+                    {errors.phone && <p className={errorClass}>{errors.phone}</p>}
+                  </div>
+
+                  <div>
+                    <label className={labelClass}>
+                      Email Aktif <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      inputMode="email"
+                      required
+                      className={inputClass}
+                      placeholder="email@contoh.com"
+                    />
+                    {errors.email && <p className={errorClass}>{errors.email}</p>}
+                  </div>
+
+                  <div>
+                    <label className={labelClass}>
+                      Jumlah yang akan hadir (termasuk anak)<span className="text-red-500">*</span>
+                    </label>
+                    <select name="jumlah_hadir" required defaultValue="" className={inputClass}>
+                      <option value="" disabled>
+                        Pilih jumlah
+                      </option>
+                      {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                        <option key={n} value={n}>
+                          {n} orang
+                        </option>
+                      ))}
+                    </select>
+                    {errors.jumlah_hadir && <p className={errorClass}>{errors.jumlah_hadir}</p>}
+                  </div>
+
+                  <div className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 dark:border-slate-700 dark:bg-slate-800">
+                    <input
+                      type="checkbox"
+                      name="consent"
+                      className="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 dark:border-slate-500"
+                    />
+                    <label className="text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+                      Saya menyetujui data ini akan digunakan untuk keperluan pendaftaran{' '}
+                      <span className="text-red-500">*</span>
+                    </label>
+                  </div>
+                  {errors.consent && <p className={errorClass}>{errors.consent}</p>}
+
+                  {/* reCAPTCHA */}
+                  <div ref={recaptchaRef} className="flex justify-center" />
+
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-brand-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-700 focus:outline-none focus:ring-4 focus:ring-brand-500/30 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-brand-600 dark:hover:bg-brand-500"
+                  >
+                    {isSubmitting ? 'Mengirim...' : 'Kirim Pendaftaran'}
+                  </button>
+                </form>
+              </>
+            )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

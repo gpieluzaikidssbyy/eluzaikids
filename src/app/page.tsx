@@ -3,7 +3,6 @@ import { EventCard } from '@/components/EventCard';
 import { ActivityCard } from '@/components/ActivityCard';
 import { HeroSlider } from '@/components/HeroSlider';
 import { GalleryMarquee } from '@/components/GalleryMarquee';
-import { Parallax } from '@/components/Parallax';
 import { ScrollReveal } from '@/components/ScrollReveal';
 import { ScrollToSection } from '@/components/ScrollToSection';
 import { fetchHomeData } from '@/lib/home-data';
@@ -70,7 +69,7 @@ export default async function HomePage() {
       {/* Jadwal */}
       <section id="jadwal" className="bg-white py-12 sm:py-16 dark:bg-slate-900">
         <div className="mx-auto max-w-5xl px-4 sm:px-6">
-          <Parallax offset={14}>
+
           <div className="text-center">
             <h2 className="font-display text-2xl font-bold text-slate-900 sm:text-3xl dark:text-slate-100">
               Jadwal Ibadah
@@ -83,7 +82,7 @@ export default async function HomePage() {
               </p>
             )}
           </div>
-          </Parallax>
+
 
           {data.schedules.length === 0 || data.schedules.every((s) => !s.schedule) ? (
             <div className="mt-8 rounded-2xl bg-slate-50 p-8 text-center text-slate-600 dark:bg-slate-800 dark:text-slate-400">
@@ -91,7 +90,7 @@ export default async function HomePage() {
             </div>
           ) : (
             <div className="mt-6 grid gap-5 md:grid-cols-2">
-              {data.schedules.map((slot, index) => (
+              {data.schedules.slice(0, 2).map((slot, index) => (
                 <ScrollReveal key={slot.type} delay={index * 80} className="h-full">
                 <div
                   className={`h-full rounded-2xl border-2 p-6 shadow-sm transition hover:shadow-md ${
@@ -168,14 +167,14 @@ export default async function HomePage() {
       {/* Events */}
       <section id="event" className="py-12 sm:py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <Parallax offset={14}>
+
           <div className="text-center">
             <h2 className="font-display text-2xl font-bold text-slate-900 sm:text-3xl dark:text-slate-100">
               Event Mendatang
             </h2>
             <div className="mx-auto mt-3 h-1 w-16 rounded gradient-primary" />
           </div>
-          </Parallax>
+
 
           {data.events.length === 0 ? (
             <div className="mt-8 rounded-2xl bg-white p-8 text-center text-slate-600 shadow-sm dark:bg-slate-800 dark:text-slate-400">
@@ -183,7 +182,7 @@ export default async function HomePage() {
             </div>
           ) : (
             <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {data.events.map((event, index) => (
+              {data.events.slice(0, 3).map((event, index) => (
                 <ScrollReveal key={event.id} delay={Math.min(index, 4) * 80} className="h-full">
                   <EventCard event={event} registrationsCount={event.registrations_count} section="event" />
                 </ScrollReveal>
@@ -205,14 +204,14 @@ export default async function HomePage() {
       {/* Activities */}
       <section id="kegiatan" className="bg-white py-12 sm:py-16 dark:bg-slate-900">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <Parallax offset={14}>
+
           <div className="text-center">
             <h2 className="font-display text-2xl font-bold text-slate-900 sm:text-3xl dark:text-slate-100">
               Kegiatan
             </h2>
             <div className="mx-auto mt-3 h-1 w-16 rounded gradient-primary" />
           </div>
-          </Parallax>
+
 
           {data.activities.length === 0 ? (
             <div className="mt-8 rounded-2xl bg-white p-8 text-center text-slate-600 shadow-sm dark:bg-slate-800 dark:text-slate-400">
@@ -220,7 +219,7 @@ export default async function HomePage() {
             </div>
           ) : (
             <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {data.activities.map((activity, index) => (
+              {data.activities.slice(0, 3).map((activity, index) => (
                 <ScrollReveal key={activity.id} delay={Math.min(index, 4) * 80} className="h-full">
                   <ActivityCard activity={activity} registrationsCount={activity.registrations_count} section="kegiatan" />
                 </ScrollReveal>
@@ -245,14 +244,14 @@ export default async function HomePage() {
       {/* Location */}
       <section id="lokasi" className="py-12 sm:py-16">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <Parallax offset={14}>
+
           <div className="text-center">
             <h2 className="font-display text-2xl font-bold text-slate-900 sm:text-3xl dark:text-slate-100">
               Lokasi Kami
             </h2>
             <div className="mx-auto mt-3 h-1 w-16 rounded gradient-primary" />
           </div>
-          </Parallax>
+
 
           {data.churchInfo?.map_embed_url ? (
             <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200 shadow-md dark:border-slate-700">
@@ -303,14 +302,14 @@ export default async function HomePage() {
       {/* Contacts */}
       <section id="kontak" className="bg-slate-50 py-12 sm:py-16 dark:bg-slate-800/40">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <Parallax offset={14}>
+
           <div className="text-center">
             <h2 className="font-display text-2xl font-bold text-slate-900 sm:text-3xl dark:text-slate-100">
               Kontak Kami
             </h2>
             <div className="mx-auto mt-3 h-1 w-16 rounded gradient-primary" />
           </div>
-          </Parallax>
+
 
           {data.churchInfo && (
             <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
