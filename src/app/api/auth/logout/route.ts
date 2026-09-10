@@ -10,6 +10,6 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  clearSessionCookie();
+  await clearSessionCookie();
   return NextResponse.json({ success: true });
 }

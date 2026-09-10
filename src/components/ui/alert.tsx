@@ -88,8 +88,6 @@ function Alert({
 
 /* Convenience exports for cleaner usage in pages */
 const AlertSuccess = (props: Omit<AlertProps, "variant">) => <Alert variant="success" {...props} />
-const AlertWarning = (props: Omit<AlertProps, "variant">) => <Alert variant="warning" {...props} />
 const AlertError = (props: Omit<AlertProps, "variant">) => <Alert variant="error" {...props} />
-const AlertInfo = (props: Omit<AlertProps, "variant">) => <Alert variant="info" {...props} />
 
-export { Alert, AlertSuccess, AlertWarning, AlertError, AlertInfo, alertVariants }
+export { Alert, AlertSuccess, AlertError }

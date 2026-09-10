@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { Resend } from 'resend';
 import { appBaseUrl, formatTimeWib } from './helpers';
+import { escapeHtml } from './sanitize';
 
 interface EmailInfo {
   type: 'Event' | 'Activity';
@@ -20,15 +21,6 @@ interface EmailInfo {
   location: string | null;
   maps_link: string | null;
   registered_at: string;
-}
-
-function escapeHtml(value: string | number | null | undefined): string {
-  return String(value ?? '-')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
 }
 
 function formatEmailDate(value: string | Date, includeTime = false): string {
@@ -56,7 +48,7 @@ function formatEmailDate(value: string | Date, includeTime = false): string {
 /**
  * Generate QR code as PNG buffer.
  */
-export async function generateQrPng(data: string): Promise<Buffer> {
+async function generateQrPng(data: string): Promise<Buffer> {
   return QRCode.toBuffer(data, {
     width: 300,
     margin: 4,
@@ -236,7 +228,7 @@ export async function sendPasswordResetEmail(email: string, resetUrl: string): P
 /**
  * Build the confirmation email HTML content.
  */
-export function buildEmailHtml(name: string, info: EmailInfo, logoSrc: string): string {
+function buildEmailHtml(name: string, info: EmailInfo, logoSrc: string): string {
   const dateStr = info.date ? formatEmailDate(info.date) : '-';
   const timeStr = info.time ? `${info.time.slice(0, 5)} WIB` : '-';
   const openGateStr = info.open_gate ? formatTimeWib(info.open_gate) : null;

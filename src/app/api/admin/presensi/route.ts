@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase';
 import { randomBytes } from 'node:crypto';
+import { requireAdmin } from '@/lib/guards';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
+  const guard = await requireAdmin();
+  if (guard.denied) return guard.response;
+
   const body = await request.json();
   const { action, type, id, registrationId } = body;
 
@@ -32,6 +36,7 @@ export async function POST(request: NextRequest) {
         hadir: !reg.hadir,
         scanned_at: !reg.hadir ? new Date().toISOString() : null,
         qr_token: !reg.hadir ? null : randomBytes(16).toString('hex'),
+        verified_manually: !reg.hadir,
       })
       .eq('id', registrationId);
 
@@ -100,7 +105,7 @@ export async function POST(request: NextRequest) {
 
     await supabase
       .from(table)
-      .update({ hadir: true, scanned_at: new Date().toISOString(), qr_token: null })
+      .update({ hadir: true, scanned_at: new Date().toISOString(), verified_manually: true, qr_token: null })
       .eq('id', registration.id);
 
     return NextResponse.json({ success: true, message: 'Berhasil!', name: registration.name });

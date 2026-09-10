@@ -29,6 +29,7 @@ Thumbs.db
 
 # Supabase local storage (if any)
 /supabase/.local/
+/supabase/.temp/
 
 # Ai Agent
 .ai-agent/

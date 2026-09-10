@@ -26,7 +26,7 @@ export function normalizePhone(phone: string): string {
   return digits;
 }
 
-export function normalizeIdentity(value: string): string {
+function normalizeIdentity(value: string): string {
   return value
     .normalize('NFKD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -58,27 +58,35 @@ function similarity(a: string, b: string): number {
  * Generate registration number with format ELZ-YYMMDD-KXXX.
  * YYMMDD is the registration date; K stands for Kids; XXX is a sequential
  * number (001..quota) cumulative per event/activity.
+ * The sequence comes from an atomic, server-side counter (SECURITY DEFINER
+ * function next_registration_seq) so two concurrent requests can never get
+ * the same number, and quota is enforced when the counter is allocated.
  */
 export async function generateNomorRegistrasi(
-  table: 'event_registrations' | 'activity_registrations',
-  foreignKey: 'event_id' | 'activity_id',
-  id: number,
-  quota: number | null
+  type: 'event' | 'activity',
+  id: number
 ): Promise<string> {
   const supabase = createServiceClient();
   const now = new Date();
   const datePrefix = `ELZ-${String(now.getFullYear()).slice(2)}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-K`;
 
-  const { count } = await supabase
-    .from(table)
-    .select('*', { count: 'exact', head: true })
-    .eq(foreignKey, id);
+  const { data, error } = await supabase.rpc('next_registration_seq', {
+    registrable_type: type,
+    registrable_id: id,
+  });
 
-  if (quota !== null && (count ?? 0) >= quota) {
-    throw new Error('Kuota nomor registrasi sudah habis.');
+  if (error) {
+    if (/quota exceeded/i.test(error.message)) {
+      throw new Error('Kuota nomor registrasi sudah habis.');
+    }
+    throw error;
   }
 
-  const sequence = (count ?? 0) + 1;
+  const sequence = Number(data);
+  if (!Number.isInteger(sequence) || sequence < 1) {
+    throw new Error('Gagal membuat nomor registrasi.');
+  }
+
   return datePrefix + String(sequence).padStart(3, '0');
 }
 
@@ -199,22 +207,94 @@ export const WEEKDAYS = [
 ] as const;
 
 /**
- * Schedule types.
- */
-export const SCHEDULE_TYPES = ['Ibadah', 'Latihan'] as const;
-
-/**
  * Member classes.
  */
 export const MEMBER_CLASSES = ['Baby', 'Samuel', 'Yosua', 'Musa'] as const;
 
 /**
- * WhatsApp link from phone number.
+ * Month names in Indonesian.
  */
-export function getWhatsAppLink(phone: string | null): string | null {
-  if (!phone) return null;
-  const digits = phone.replace(/\D/g, '');
-  return `https://wa.me/${digits}`;
+export const MONTH_NAMES = [
+  'Januari',
+  'Februari',
+  'Maret',
+  'April',
+  'Mei',
+  'Juni',
+  'Juli',
+  'Agustus',
+  'September',
+  'Oktober',
+  'November',
+  'Desember',
+] as const;
+
+/**
+ * Day names in Indonesian ordered from Sunday, matching Date#getDay().
+ */
+export const DAY_NAMES = [
+  'Minggu',
+  'Senin',
+  'Selasa',
+  'Rabu',
+  'Kamis',
+  'Jumat',
+  'Sabtu',
+] as const;
+
+/**
+ * Shared Tailwind style tokens per member class.
+ * The three member admin pages each use a subset of these keys.
+ */
+export const CLASS_STYLES: Record<
+  string,
+  { active: string; badge: string; bar: string; gradient: string; hover: string; icon: string }
+> = {
+  Baby: {
+    active: 'border-pink-400 bg-pink-50 dark:bg-pink-950/30',
+    badge: 'bg-pink-100 text-pink-700 dark:bg-pink-950/50 dark:text-pink-300',
+    bar: 'from-pink-400 to-rose-500',
+    gradient: 'from-pink-500 to-rose-600',
+    hover: 'hover:border-pink-400 hover:bg-pink-50 dark:hover:bg-pink-950/30',
+    icon: 'bg-pink-100 text-pink-600 dark:bg-pink-950/40',
+  },
+  Samuel: {
+    active: 'border-sky-400 bg-sky-50 dark:bg-sky-950/30',
+    badge: 'bg-sky-100 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300',
+    bar: 'from-sky-400 to-blue-500',
+    gradient: 'from-sky-500 to-blue-600',
+    hover: 'hover:border-sky-400 hover:bg-sky-50 dark:hover:bg-sky-950/30',
+    icon: 'bg-sky-100 text-sky-600 dark:bg-sky-950/40',
+  },
+  Yosua: {
+    active: 'border-emerald-400 bg-emerald-50 dark:bg-emerald-950/30',
+    badge: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300',
+    bar: 'from-emerald-400 to-teal-500',
+    gradient: 'from-emerald-500 to-teal-600',
+    hover: 'hover:border-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30',
+    icon: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950/40',
+  },
+  Musa: {
+    active: 'border-violet-400 bg-violet-50 dark:bg-violet-950/30',
+    badge: 'bg-violet-100 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300',
+    bar: 'from-violet-400 to-purple-500',
+    gradient: 'from-violet-500 to-purple-600',
+    hover: 'hover:border-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/30',
+    icon: 'bg-violet-100 text-violet-600 dark:bg-violet-950/40',
+  },
+};
+
+/**
+ * Build initials from a display name (max 2 letters, uppercase).
+ */
+export function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0])
+    .join('')
+    .toUpperCase();
 }
 
 /**

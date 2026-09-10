@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase';
+import { requireAdmin } from '@/lib/guards';
 
 export const dynamic = 'force-dynamic';
 
@@ -7,6 +8,9 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const guard = await requireAdmin();
+  if (guard.denied) return guard.response;
+
   const supabase = createServiceClient();
   const { data: event } = await supabase
     .from('events')
@@ -28,6 +32,9 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const guard = await requireAdmin();
+  if (guard.denied) return guard.response;
+
   const supabase = createServiceClient();
   const body = await request.json();
   const quota = body.quota === null || body.quota === undefined || body.quota === '' ? null : Number(body.quota);
@@ -71,6 +78,9 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const guard = await requireAdmin();
+  if (guard.denied) return guard.response;
+
   const body = await request.json();
   const quota = body.quota;
   if (!Number.isInteger(quota) || quota < 1 || quota > 500) {
@@ -102,6 +112,9 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const guard = await requireAdmin();
+  if (guard.denied) return guard.response;
+
   const supabase = createServiceClient();
   const { error } = await supabase.from('events').delete().eq('id', params.id);
 

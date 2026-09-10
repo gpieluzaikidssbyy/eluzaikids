@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase';
+import { requireAdmin } from '@/lib/guards';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
+  const guard = await requireAdmin();
+  if (guard.denied) return guard.response;
+
   const supabase = createServiceClient();
   const { data, error } = await supabase
     .from('calendar_events')
@@ -16,6 +20,9 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const guard = await requireAdmin();
+  if (guard.denied) return guard.response;
+
   const supabase = createServiceClient();
   const body = await request.json();
 

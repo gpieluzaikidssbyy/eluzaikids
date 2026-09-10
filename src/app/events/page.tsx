@@ -5,7 +5,6 @@ import type { Event } from '@/lib/types';
 import { EventCard } from '@/components/EventCard';
 import { BackToHome } from '@/components/BackToHome';
 import { ListPageSkeleton } from '@/components/skeletons';
-import Link from 'next/link';
 
 interface EventsResponse {
   events: (Event & { registrations_count: number })[];

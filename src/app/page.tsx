@@ -6,19 +6,14 @@ import { GalleryMarquee } from '@/components/GalleryMarquee';
 import { ScrollReveal } from '@/components/ScrollReveal';
 import { ScrollToSection } from '@/components/ScrollToSection';
 import { fetchHomeData } from '@/lib/home-data';
+import { MONTH_NAMES } from '@/lib/helpers';
 
 export const dynamic = 'force-dynamic';
-
-const MONTHS: Record<string, string> = {
-  '01': 'Januari', '02': 'Februari', '03': 'Maret', '04': 'April',
-  '05': 'Mei', '06': 'Juni', '07': 'Juli', '08': 'Agustus',
-  '09': 'September', '10': 'Oktober', '11': 'November', '12': 'Desember',
-};
 
 function formatDate(dateStr: string) {
   const d = new Date(dateStr);
   const day = String(d.getDate()).padStart(2, '0');
-  const month = MONTHS[String(d.getMonth() + 1).padStart(2, '0')];
+  const month = MONTH_NAMES[d.getMonth()];
   const year = d.getFullYear();
   return `${day} ${month} ${year}`;
 }
@@ -89,7 +84,7 @@ export default async function HomePage() {
               Belum ada jadwal ibadah yang tersedia.
             </div>
           ) : (
-            <div className="mt-6 grid gap-5 md:grid-cols-2">
+            <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2">
               {data.schedules.slice(0, 2).map((slot, index) => (
                 <ScrollReveal key={slot.type} delay={index * 80} className="h-full">
                 <div
@@ -181,7 +176,7 @@ export default async function HomePage() {
               Belum ada event yang akan datang.
             </div>
           ) : (
-            <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {data.events.slice(0, 3).map((event, index) => (
                 <ScrollReveal key={event.id} delay={Math.min(index, 4) * 80} className="h-full">
                   <EventCard event={event} registrationsCount={event.registrations_count} section="event" />
@@ -218,7 +213,7 @@ export default async function HomePage() {
               Belum ada kegiatan yang tersedia.
             </div>
           ) : (
-            <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {data.activities.slice(0, 3).map((activity, index) => (
                 <ScrollReveal key={activity.id} delay={Math.min(index, 4) * 80} className="h-full">
                   <ActivityCard activity={activity} registrationsCount={activity.registrations_count} section="kegiatan" />

@@ -1,16 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase';
+import { requireAdmin } from '@/lib/guards';
+import { escapeHtml, safeFilename } from '@/lib/sanitize';
 
 export const dynamic = 'force-dynamic';
-
-function escapeHtml(value: unknown) {
-  return String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
 
 function formatDate(date: string) {
   return new Intl.DateTimeFormat('id-ID', {
@@ -21,6 +14,9 @@ function formatDate(date: string) {
 }
 
 export async function GET(request: NextRequest) {
+  const guard = await requireAdmin();
+  if (guard.denied) return guard.response;
+
   const className = request.nextUrl.searchParams.get('class');
   const date = request.nextUrl.searchParams.get('date');
   if (!date) {
@@ -51,7 +47,8 @@ export async function GET(request: NextRequest) {
     isPresent: status.get(member.id) === true,
   }));
   const title = className ? `Rekap Kehadiran ${className}` : 'Rekap Kehadiran';
-  const filename = `${title} ${formatDate(date)}.xls`;
+  const dateLabel = formatDate(date);
+  const filename = `${safeFilename(title)} ${safeFilename(dateLabel)}.xls`;
   const html = `
     <html><head><meta charset="UTF-8"></head><body>
       <h2>${escapeHtml(title)}</h2>

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Users, UserPlus, Pencil, Trash2, Loader2 } from 'lucide-react';
 import type { Member } from '@/lib/types';
-import { MEMBER_CLASSES } from '@/lib/helpers';
+import { MEMBER_CLASSES, CLASS_STYLES, getInitials } from '@/lib/helpers';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -14,23 +14,6 @@ import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/admin/page-header';
 import { Loading } from '@/components/admin/loading';
 import { ConfirmDialog } from '@/components/admin/confirm-dialog';
-
-const CLASS_STYLES: Record<string, { active: string; badge: string; bar: string; gradient: string }> = {
-  Baby: { active: 'border-pink-400 bg-pink-50 dark:bg-pink-950/30', badge: 'bg-pink-100 text-pink-700 dark:bg-pink-950/50 dark:text-pink-300', bar: 'from-pink-400 to-rose-500', gradient: 'from-pink-500 to-rose-600' },
-  Samuel: { active: 'border-sky-400 bg-sky-50 dark:bg-sky-950/30', badge: 'bg-sky-100 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300', bar: 'from-sky-400 to-blue-500', gradient: 'from-sky-500 to-blue-600' },
-  Yosua: { active: 'border-emerald-400 bg-emerald-50 dark:bg-emerald-950/30', badge: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300', bar: 'from-emerald-400 to-teal-500', gradient: 'from-emerald-500 to-teal-600' },
-  Musa: { active: 'border-violet-400 bg-violet-50 dark:bg-violet-950/30', badge: 'bg-violet-100 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300', bar: 'from-violet-400 to-purple-500', gradient: 'from-violet-500 to-purple-600' },
-};
-
-function initials(name: string) {
-  return name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((word) => word[0])
-    .join('')
-    .toUpperCase();
-}
 
 export default function AdminChildsPage() {
   const [members, setMembers] = useState<Member[]>([]);
@@ -159,7 +142,7 @@ export default function AdminChildsPage() {
               <li key={member.id} className="flex items-center gap-3 px-6 py-3.5 transition-colors hover:bg-accent/50">
                 <span className="w-6 shrink-0 text-center text-sm text-muted-foreground">{index + 1}</span>
                 <span className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white bg-gradient-to-br', CLASS_STYLES[member.class].bar)}>
-                  {initials(member.name)}
+                  {getInitials(member.name)}
                 </span>
                 <span className="min-w-0 flex-1 truncate font-medium text-foreground">{member.name}</span>
                 <span className="flex shrink-0 gap-2">

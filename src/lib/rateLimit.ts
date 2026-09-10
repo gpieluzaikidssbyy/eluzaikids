@@ -2,9 +2,12 @@ type Entry = { count: number; resetAt: number };
 
 /**
  * In-memory sliding fixed-window rate limiter.
- * Note: one instance lives per serverless instance; adequate for a small
- * app, not a distributed rate limit.
+ * Bounded and self-pruning to avoid unbounded memory growth.
+ * Note: one instance lives per serverless instance; for a hard, distributed
+ * limit this must be backed by shared storage (e.g. Postgres/Redis).
  */
+const MAX_ENTRIES = 10_000;
+
 export class RateLimiter {
   private readonly map = new Map<string, Entry>();
 
@@ -15,6 +18,8 @@ export class RateLimiter {
 
   check(key: string, max: number = this.defaultMax, windowMs: number = this.defaultWindowMs): boolean {
     const now = Date.now();
+    if (this.map.size >= MAX_ENTRIES) this.prune(now);
+
     const entry = this.map.get(key);
 
     if (!entry || now > entry.resetAt) {

@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase';
+import { requireAdmin } from '@/lib/guards';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
+  const guard = await requireAdmin();
+  if (guard.denied) return guard.response;
+
   const supabase = createServiceClient();
 
   const [events, activities, eventRegs, activityRegs, members] = await Promise.all([

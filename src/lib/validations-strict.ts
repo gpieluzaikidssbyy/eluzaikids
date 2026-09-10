@@ -87,8 +87,6 @@ export const strictEventSchema = z.object({
   email_enabled: z.boolean().optional().default(true),
 });
 
-export type StrictEventFormData = z.infer<typeof strictEventSchema>;
-
 /**
  * Strict activity admin form validation schema for server-side use.
  */
@@ -153,5 +151,3 @@ export const strictActivitySchema = z.object({
     }),
   email_enabled: z.boolean().optional().default(true),
 });
-
-export type StrictActivityFormData = z.infer<typeof strictActivitySchema>;

@@ -14,6 +14,7 @@ import {
 import { sendConfirmationEmail } from '@/lib/email';
 import { checkCsrf } from '@/lib/csrf';
 import { RateLimiter } from '@/lib/rateLimit';
+import { getClientIp } from '@/lib/ip';
 
 const registrationLimiter = new RateLimiter(10, 60 * 1000);
 
@@ -26,9 +27,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const ip = (request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown')
-    .split(',')[0]
-    .trim();
+  const ip = getClientIp(request);
 
   if (!registrationLimiter.check(ip)) {
     return NextResponse.json(
@@ -49,7 +48,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ errors }, { status: 422 });
     }
 
-    const { name, phone, email, jumlah_hadir, honeypot, 'g-recaptcha-response': recaptchaToken } = result.data;
+    const { name, phone, email, jumlah_hadir, honeypot, id: activityId, 'g-recaptcha-response': recaptchaToken } = result.data;
 
     if (honeypot) {
       return NextResponse.json({ message: 'Pendaftaran berhasil.' });
@@ -64,7 +63,6 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = createServiceClient();
-    const activityId = body.id;
 
     const { data: activity } = await supabase
       .from('activities')
@@ -107,7 +105,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const nomorRegistrasi = await generateNomorRegistrasi('activity_registrations', 'activity_id', activityId, activity.quota);
+    const nomorRegistrasi = await generateNomorRegistrasi('activity', activityId);
     const qrToken = generateQrToken();
     const qrData = `${nomorRegistrasi}.${qrToken}`;
 
@@ -128,7 +126,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (insertError) {
-      console.error('Registration insert error:', insertError);
+      console.error('Registration insert error:', insertError.message ?? insertError.code ?? 'unknown error');
       return NextResponse.json({ message: 'Gagal menyimpan pendaftaran.' }, { status: 500 });
     }
 
@@ -162,7 +160,7 @@ export async function POST(request: NextRequest) {
       nomor_registrasi: nomorRegistrasi,
     });
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('Registration error:', error instanceof Error ? error.message : 'unknown error');
     return NextResponse.json(
       { message: 'Terjadi kesalahan saat memproses pendaftaran.' },
       { status: 500 }

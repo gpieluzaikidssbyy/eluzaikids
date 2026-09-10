@@ -5,6 +5,7 @@ import { sendPasswordResetEmail } from '@/lib/email';
 import { appBaseUrl } from '@/lib/helpers';
 import { RateLimiter } from '@/lib/rateLimit';
 import { checkCsrf } from '@/lib/csrf';
+import { getClientIp } from '@/lib/ip';
 
 // Prevent email-spam DoS: 3 requests per minute per IP+email, 10 per IP.
 const emailLimiter = new RateLimiter(3, 60 * 1000);
@@ -21,9 +22,7 @@ export async function POST(request: NextRequest) {
   const { email } = await request.json();
   if (!email) return NextResponse.json({ message: 'Email wajib diisi.' }, { status: 422 });
 
-  const ip = (request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown')
-    .split(',')[0]
-    .trim();
+  const ip = getClientIp(request);
   const normalizedEmail = String(email).trim().toLowerCase();
 
   if (!ipLimiter.check(ip) || !emailLimiter.check(`${ip}:${normalizedEmail}`)) {

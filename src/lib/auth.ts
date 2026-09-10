@@ -1,10 +1,11 @@
-import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
 import { createServiceClient } from '@/lib/supabase';
 
 const COOKIE_NAME = 'eluzai_admin_session';
 const SESSION_TTL = 60 * 60 * 8;
+const REMEMBER_TTL = 60 * 60 * 24 * 30;
 
 function secret() {
   const value =
@@ -18,22 +19,39 @@ function sign(payload: string) {
   return createHmac('sha256', secret()).update(payload).digest('base64url');
 }
 
-export function createSession(userId: string, remember: boolean) {
-  const expiresAt = Math.floor(Date.now() / 1000) + (remember ? 60 * 60 * 24 * 30 : SESSION_TTL);
-  const payload = `${userId}.${expiresAt}`;
-  return `${Buffer.from(payload).toString('base64url')}.${sign(payload)}`;
+function hashToken(token: string) {
+  return createHash('sha256').update(token).digest('hex');
 }
 
-export function verifySession(value: string | undefined) {
+/**
+ * Create a server-side revocable session. The cookie holds an opaque random
+ * token; the DB stores only its SHA-256 hash, so a leaked cookie can be
+ * revoked and a token hash leak can never be replayed.
+ */
+export async function createSession(userId: string, remember: boolean) {
+  const token = randomBytes(32).toString('base64url');
+  const expiresAt = new Date(Date.now() + (remember ? REMEMBER_TTL : SESSION_TTL) * 1000);
+  const { error } = await createServiceClient()
+    .from('sessions')
+    .insert({
+      user_id: userId,
+      token_hash: hashToken(token),
+      expires_at: expiresAt.toISOString(),
+    });
+  if (error) throw error;
+  return token;
+}
+
+async function verifySession(value: string | undefined) {
   if (!value) return null;
-  const [encoded, signature] = value.split('.');
-  if (!encoded || !signature) return null;
-  const payload = Buffer.from(encoded, 'base64url').toString();
-  const expected = sign(payload);
-  if (signature.length !== expected.length || !timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) return null;
-  const [userId, expiresAt] = payload.split('.');
-  if (!userId || Number(expiresAt) < Math.floor(Date.now() / 1000)) return null;
-  return userId;
+  const { data } = await createServiceClient()
+    .from('sessions')
+    .select('user_id')
+    .eq('token_hash', hashToken(value))
+    .is('revoked_at', null)
+    .gt('expires_at', new Date().toISOString())
+    .maybeSingle();
+  return data?.user_id || null;
 }
 
 export function setSessionCookie(value: string, remember: boolean) {
@@ -42,16 +60,28 @@ export function setSessionCookie(value: string, remember: boolean) {
     sameSite: 'strict',
     secure: process.env.NODE_ENV === 'production',
     path: '/',
-    maxAge: remember ? 60 * 60 * 24 * 30 : SESSION_TTL,
+    maxAge: remember ? REMEMBER_TTL : SESSION_TTL,
   });
 }
 
-export function clearSessionCookie() {
+/**
+ * Clear the session: revoke the server-side session row first (so the cookie
+ * can no longer authenticate anywhere), then expire the cookie client-side.
+ */
+export async function clearSessionCookie() {
+  const value = cookies().get(COOKIE_NAME)?.value;
+  if (value) {
+    await createServiceClient()
+      .from('sessions')
+      .update({ revoked_at: new Date().toISOString() })
+      .eq('token_hash', hashToken(value))
+      .is('revoked_at', null);
+  }
   cookies().set(COOKIE_NAME, '', { httpOnly: true, expires: new Date(0), path: '/' });
 }
 
 export async function getSessionUser() {
-  const userId = verifySession(cookies().get(COOKIE_NAME)?.value);
+  const userId = await verifySession(cookies().get(COOKIE_NAME)?.value);
   if (!userId) return null;
   const { data } = await createServiceClient().from('users').select('id, name, email, username, is_admin').eq('id', userId).eq('is_admin', true).single();
   return data || null;
@@ -59,10 +89,6 @@ export async function getSessionUser() {
 
 export async function verifyPassword(password: string, hash: string) {
   return bcrypt.compare(password, hash);
-}
-
-export function createResetToken() {
-  return randomBytes(32).toString('hex');
 }
 
 export function createScanToken(type: 'event' | 'activity', id: string): string {
@@ -82,4 +108,4 @@ export function verifyScanToken(value: string | undefined, type: string, id: str
   return tokenType === type && tokenId === id && Number(expiresAt) >= Math.floor(Date.now() / 1000);
 }
 
-export { COOKIE_NAME };
+

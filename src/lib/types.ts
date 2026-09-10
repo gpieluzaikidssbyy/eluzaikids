@@ -95,16 +95,6 @@ export interface Member {
   updated_at: string;
 }
 
-export interface Attendance {
-  id: number;
-  member_id: number;
-  attendance_date: string;
-  is_present: boolean;
-  created_at: string;
-  updated_at: string;
-  member?: Member;
-}
-
 export interface ChurchInfo {
   id: number;
   address: string;
@@ -116,12 +106,4 @@ export interface ChurchInfo {
   youtube_url: string | null;
   created_at: string;
   updated_at: string;
-}
-
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  is_admin: boolean;
-  username: string | null;
 }

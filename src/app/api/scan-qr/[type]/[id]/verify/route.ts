@@ -9,7 +9,7 @@ export async function POST(
   try {
     const { type, id } = params;
     const body = await request.json();
-    const { qr_data, scan_token } = body;
+    const { qr_data, scan_token, manual } = body;
 
     if (!qr_data) {
       return NextResponse.json(
@@ -40,9 +40,10 @@ export async function POST(
     }
 
     let registration = null;
+    const isManual = String(qr_data).trim().split('.').length !== 2;
     const parts = String(qr_data).trim().split('.');
 
-    if (parts.length === 2) {
+    if (!isManual) {
       // QR Code format: nomor_registrasi.qr_token
       const [nomorRegistrasi, token] = parts;
       const { data } = await supabase
@@ -78,6 +79,14 @@ export async function POST(
         }
       }
     } else {
+      // Manual input requires an explicit opt-in flag so QR scanning can never
+      // be silently downgraded to a "type the registration number" attack.
+      if (manual !== true) {
+        return NextResponse.json(
+          { success: false, message: 'Data pendaftaran tidak ditemukan.' },
+          { status: 400 }
+        );
+      }
       // Manual input requires the full registration number to prevent enumeration.
       const nomorRegistrasi = String(qr_data).trim().slice(0, 50);
       const { data: matches } = await supabase
@@ -105,10 +114,16 @@ export async function POST(
       });
     }
 
-    // Mark as present and consume the QR token so the QR cannot be reused
+    // Mark as present and consume the QR token so the QR cannot be reused.
+    // Do not null the QR token on manual entry, so a legitimate QR remains valid.
     const { error } = await supabase
       .from(table)
-      .update({ hadir: true, scanned_at: new Date().toISOString(), qr_token: null })
+      .update({
+        hadir: true,
+        scanned_at: new Date().toISOString(),
+        verified_manually: isManual,
+        ...(isManual ? {} : { qr_token: null }),
+      })
       .eq('id', registration.id)
       .eq('hadir', false);
 

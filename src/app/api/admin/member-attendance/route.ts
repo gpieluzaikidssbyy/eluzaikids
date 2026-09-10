@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase';
+import { requireAdmin } from '@/lib/guards';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
+  const guard = await requireAdmin();
+  if (guard.denied) return guard.response;
+
   const className = request.nextUrl.searchParams.get('class');
   const date = request.nextUrl.searchParams.get('date');
   if (!className || !date) {
@@ -41,6 +45,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const guard = await requireAdmin();
+  if (guard.denied) return guard.response;
+
   const body = await request.json();
   if (!body.attendance_date || !Array.isArray(body.attendances)) {
     return NextResponse.json({ message: 'Invalid attendance data.' }, { status: 400 });

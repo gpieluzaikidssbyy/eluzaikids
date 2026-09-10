@@ -15,6 +15,7 @@ import {
 import { sendConfirmationEmail } from '@/lib/email';
 import { checkCsrf } from '@/lib/csrf';
 import { RateLimiter } from '@/lib/rateLimit';
+import { getClientIp } from '@/lib/ip';
 
 const registrationLimiter = new RateLimiter(10, 60 * 1000);
 
@@ -27,9 +28,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const ip = (request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown')
-    .split(',')[0]
-    .trim();
+  const ip = getClientIp(request);
 
   // Rate limiting
   if (!registrationLimiter.check(ip)) {
@@ -53,7 +52,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ errors }, { status: 422 });
     }
 
-    const { name, phone, email, jumlah_hadir, honeypot, 'g-recaptcha-response': recaptchaToken } = result.data;
+    const { name, phone, email, jumlah_hadir, honeypot, id: eventId, 'g-recaptcha-response': recaptchaToken } = result.data;
 
     // Honeypot check
     if (honeypot) {
@@ -70,7 +69,6 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = createServiceClient();
-    const eventId = body.id;
 
     // Fetch event
     const { data: event } = await supabase
@@ -118,7 +116,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate registration number and QR token
-    const nomorRegistrasi = await generateNomorRegistrasi('event_registrations', 'event_id', eventId, event.quota);
+    const nomorRegistrasi = await generateNomorRegistrasi('event', eventId);
     const qrToken = generateQrToken();
     const qrData = `${nomorRegistrasi}.${qrToken}`;
 
@@ -140,7 +138,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (insertError) {
-      console.error('Registration insert error:', insertError);
+      console.error('Registration insert error:', insertError.message ?? insertError.code ?? 'unknown error');
       return NextResponse.json({ message: 'Gagal menyimpan pendaftaran.' }, { status: 500 });
     }
 
@@ -175,7 +173,7 @@ export async function POST(request: NextRequest) {
       nomor_registrasi: nomorRegistrasi,
     });
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('Registration error:', error instanceof Error ? error.message : 'unknown error');
     return NextResponse.json(
       { message: 'Terjadi kesalahan saat memproses pendaftaran.' },
       { status: 500 }

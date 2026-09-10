@@ -1,26 +1,10 @@
 /** @type {import('next').NextConfig} */
 const isDev = process.env.NODE_ENV !== 'production';
 
-// Content-Security-Policy covering: Next.js inline scripts/styles, the inline
-// theme script, Google Fonts, Google Maps embeds, and reCAPTCHA v2.
-const contentSecurityPolicy = [
-  "default-src 'self'",
-  "base-uri 'self'",
-  "form-action 'self'",
-  "frame-ancestors 'self'",
-  "object-src 'none'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.google.com https://www.gstatic.com",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "img-src 'self' data: blob: https:",
-  "font-src 'self' data: https://fonts.gstatic.com",
-  "media-src 'self' data: blob:",
-  "connect-src 'self' https://www.google.com https://www.gstatic.com",
-  "frame-src 'self' https://www.google.com https://maps.google.com https://www.gstatic.com",
-  "worker-src 'self' blob:",
-  // Only upgrade http -> https in production; keep localhost dev working.
-  ...(!isDev ? ['upgrade-insecure-requests'] : []),
-].join('; ');
-
+// Content-Security-Policy is now emitted per-request from middleware.ts with
+// a per-request nonce (production) so inline scripts are only allowed when
+// stamped with that nonce. Keeping the header only in the middleware source
+// prevents a duplicate header (browsers enforce the intersection of both).
 const nextConfig = {
   poweredByHeader: false,
   // Keep production artifacts separate from the development cache. This
@@ -29,10 +13,13 @@ const nextConfig = {
   // production artifacts separate from the development cache.
   distDir: process.env.VERCEL ? '.next' : process.env.NODE_ENV === 'production' ? '.next-build' : '.next',
   images: {
+    // Only Supabase Storage is allowlisted for next/image. Poster images stored
+    // in the DB (events/activities) are rendered with plain <img>, which is
+    // not affected by remotePatterns.
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '**',
+        hostname: '*.supabase.co',
       },
     ],
   },
@@ -45,7 +32,12 @@ const nextConfig = {
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
           { key: 'Permissions-Policy', value: 'camera=(self), microphone=()' },
-          { key: 'Content-Security-Policy', value: contentSecurityPolicy },
+          // Enforce HTTPS (browsers ignore this header over plain HTTP, so it
+          // is safe to emit in dev too). Add `preload` only after submitting
+          // the domain to https://hstspreload.org/.
+          ...(!isDev
+            ? [{ key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' }]
+            : []),
         ],
       },
     ];

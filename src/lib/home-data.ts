@@ -1,7 +1,7 @@
-import { createServiceClient } from '@/lib/supabase';
+import { createPublicClient } from '@/lib/supabase';
 import type { Activity, ChurchInfo, Event } from '@/lib/types';
 
-export interface ScheduleSlot {
+interface ScheduleSlot {
   type: string;
   schedule: {
     day: string;
@@ -12,7 +12,7 @@ export interface ScheduleSlot {
   } | null;
 }
 
-export interface HomeData {
+interface HomeData {
   schedules: ScheduleSlot[];
   scheduleUpdatedAt: string | null;
   events: (Event & { registrations_count: number })[];
@@ -33,7 +33,8 @@ function getNextDate(day: string): string {
 }
 
 export async function fetchHomeData(): Promise<HomeData> {
-  const supabase = createServiceClient();
+  // Public client + RLS: public content only, nothing admin can be reached.
+  const supabase = createPublicClient();
 
   const { data: schedulesData } = await supabase
     .from('schedules')
@@ -69,14 +70,14 @@ export async function fetchHomeData(): Promise<HomeData> {
 
   const { data: events } = await supabase
     .from('events')
-    .select('id, title, tema, description, event_date, open_gate, start_time, location, quota, email_enabled, image, map_embed_url, drive_link, registration_deadline, event_registrations(count)')
+    .select('id, title, tema, description, event_date, open_gate, start_time, location, quota, email_enabled, image, map_embed_url, drive_link, registration_deadline')
     .gte('event_date', new Date().toISOString())
     .order('event_date', { ascending: true })
     .limit(3);
 
   const { data: activities } = await supabase
     .from('activities')
-    .select('id, title, description, image, drive_link, activity_date, start_time, location, map_embed_url, quota, email_enabled, activity_registrations(count)')
+    .select('id, title, description, image, drive_link, activity_date, start_time, location, map_embed_url, quota, email_enabled')
     .order('activity_date', { ascending: false })
     .limit(3);
 
@@ -86,16 +87,27 @@ export async function fetchHomeData(): Promise<HomeData> {
     .limit(1)
     .single();
 
+  const eventCounts = new Map<number, number>();
+  for (const event of events || []) {
+    const { data } = await supabase.rpc('count_registrations', { registrable_type: 'event', registrable_id: event.id });
+    eventCounts.set(event.id, Number(data) || 0);
+  }
+  const activityCounts = new Map<number, number>();
+  for (const activity of activities || []) {
+    const { data } = await supabase.rpc('count_registrations', { registrable_type: 'activity', registrable_id: activity.id });
+    activityCounts.set(activity.id, Number(data) || 0);
+  }
+
   return {
     schedules,
     scheduleUpdatedAt,
     events: (events || []).map((e) => ({
       ...e,
-      registrations_count: e.event_registrations?.[0]?.count || 0,
+      registrations_count: eventCounts.get(e.id) || 0,
     })),
     activities: (activities || []).map((a) => ({
       ...a,
-      registrations_count: a.activity_registrations?.[0]?.count || 0,
+      registrations_count: activityCounts.get(a.id) || 0,
     })),
     churchInfo,
   };

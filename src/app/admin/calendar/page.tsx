@@ -2,25 +2,20 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { CalendarDays, MapPin, Clock, Loader2, Link2, Pencil, Trash2, NotepadText } from 'lucide-react';
+import { CalendarDays, MapPin, Clock, Loader2, Link2, Pencil, NotepadText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogDescription,
-AlertDialogFooter,
+  AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { CalendarGrid, fetchCalendarItems, MONTH_NAMES, colorStyles, type CalendarEventItem, type EventColor } from '@/components/admin/calendar-grid';
-import { toast } from 'sonner';
+import { CalendarAgendaDialog } from '@/components/admin/calendar-agenda-dialog';
 
 function toDateInput(date: Date) {
   const y = date.getFullYear();
@@ -63,12 +58,7 @@ export default function AdminCalendarPage() {
   /* Agenda dialog state */
   const [agendaOpen, setAgendaOpen] = useState(false);
   const [agendaEditId, setAgendaEditId] = useState<number | null>(null);
-  const [agendaTitle, setAgendaTitle] = useState('');
-  const [agendaDescription, setAgendaDescription] = useState('');
-  const [agendaDate, setAgendaDate] = useState(toDateInput(today));
-  const [agendaTime, setAgendaTime] = useState('');
-  const [agendaSaving, setAgendaSaving] = useState(false);
-  const [agendaDeleting, setAgendaDeleting] = useState(false);
+  const [agendaInitial, setAgendaInitial] = useState({ title: '', date: toDateInput(today), time: '' });
 
   const load = useCallback(() => {
     fetchCalendarItems()
@@ -105,20 +95,14 @@ export default function AdminCalendarPage() {
 
   const openCreate = (year: number, month: number, day: number) => {
     setAgendaEditId(null);
-    setAgendaTitle('');
-    setAgendaDescription('');
-    setAgendaDate(toDateInput(new Date(year, month, day)));
-    setAgendaTime('');
+    setAgendaInitial({ title: '', date: toDateInput(new Date(year, month, day)), time: '' });
     setAgendaOpen(true);
   };
 
   const openEdit = (e: CalendarEventItem) => {
     if (e.type !== 'internal' || e.rawId == null) return;
     setAgendaEditId(e.rawId);
-    setAgendaTitle(e.title);
-    setAgendaDescription('');
-    setAgendaDate(toDateInput(e.date));
-    setAgendaTime(e.time || '');
+    setAgendaInitial({ title: e.title, date: toDateInput(e.date), time: e.time || '' });
     setAgendaOpen(true);
   };
 
@@ -153,57 +137,7 @@ export default function AdminCalendarPage() {
       });
   }, [events, selectedDay]);
 
-  const handleSave = async () => {
-    const trimmed = agendaTitle.trim();
-    if (!trimmed) {
-      toast.error('Judul agenda wajib diisi.');
-      return;
-    }
-    if (!agendaDate) {
-      toast.error('Tanggal wajib diisi.');
-      return;
-    }
-    setAgendaSaving(true);
-    const res = await fetch(
-      agendaEditId != null ? `/api/admin/calendar-events/${agendaEditId}` : '/api/admin/calendar-events',
-      {
-        method: agendaEditId != null ? 'PUT' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: trimmed,
-          description: agendaDescription.trim() || null,
-          event_date: agendaDate,
-          start_time: agendaTime || null,
-        }),
-      }
-    );
-    const data = await res.json();
-    setAgendaSaving(false);
-    if (!res.ok) {
-      toast.error(data.message || 'Gagal menyimpan agenda.');
-      return;
-    }
-    toast.success(agendaEditId != null ? 'Agenda berhasil diperbarui.' : 'Agenda berhasil ditambahkan.');
-    setAgendaOpen(false);
-    load();
-  };
-
-  const handleDelete = async () => {
-    if (agendaEditId == null) return;
-    setAgendaDeleting(true);
-    const res = await fetch(`/api/admin/calendar-events/${agendaEditId}`, { method: 'DELETE' });
-    setAgendaDeleting(false);
-    if (!res.ok) {
-      toast.error('Gagal menghapus agenda.');
-      return;
-    }
-    toast.success('Agenda berhasil dihapus.');
-    setAgendaOpen(false);
-    load();
-  };
-
   const closeAgenda = () => {
-    if (agendaSaving) return;
     setAgendaOpen(false);
     setAgendaEditId(null);
   };
@@ -228,7 +162,7 @@ export default function AdminCalendarPage() {
         </div>
       </motion.div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-4 lg:grid-cols-3 lg:gap-6">
         {/* ─── Month grid ─── */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -429,7 +363,7 @@ export default function AdminCalendarPage() {
           <AlertDialogFooter className="flex-col gap-3 sm:flex-row sm:justify-between">
             <span />
             <div className="flex w-full gap-2 sm:w-auto">
-              <AlertDialogCancel disabled={agendaSaving}>Tutup</AlertDialogCancel>
+              <AlertDialogCancel>Tutup</AlertDialogCancel>
               <Button type="button" className="w-full justify-center rounded-lg sm:w-auto" onClick={openCreateFromDay}>
                 <NotepadText className="h-4 w-4" />
                 Tambah Agenda
@@ -440,87 +374,13 @@ export default function AdminCalendarPage() {
       </AlertDialog>
 
       {/* ─── Agenda dialog ─── */}
-      <AlertDialog open={agendaOpen} onOpenChange={(open) => !open && closeAgenda()}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{agendaEditId != null ? 'Edit Agenda' : 'Tambah Agenda'}</AlertDialogTitle>
-          </AlertDialogHeader>
-          <form
-            id="agenda-form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              void handleSave();
-            }}
-            className="space-y-4"
-          >
-            <div className="space-y-1.5">
-              <Label htmlFor="agenda-title">Judul <span className="text-destructive">*</span></Label>
-              <Input
-                id="agenda-title"
-                value={agendaTitle}
-                onChange={(e) => setAgendaTitle(e.target.value.slice(0, 255))}
-                maxLength={255}
-                required
-                placeholder="Contoh: Rapat Panitia Natal 2026, Doa Bersama"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="agenda-date">Tanggal <span className="text-destructive">*</span></Label>
-              <Input
-                id="agenda-date"
-                type="date"
-                value={agendaDate}
-                onChange={(e) => setAgendaDate(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="agenda-time">Jam <span className="text-destructive">*</span></Label>
-              <Input
-                id="agenda-time"
-                type="time"
-                value={agendaTime}
-                onChange={(e) => setAgendaTime(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="agenda-desc">Catatan (opsional)</Label>
-              <Textarea
-                id="agenda-desc"
-                value={agendaDescription}
-                onChange={(e) => setAgendaDescription(e.target.value)}
-                rows={3}
-                placeholder="Detail acara, agenda pembahasan, dsb."
-                className="rounded-lg"
-              />
-            </div>
-          </form>
-          <AlertDialogFooter className="sm:justify-between">
-            {agendaEditId != null ? (
-              <Button
-                type="button"
-                variant="ghost"
-                className="text-destructive hover:text-destructive"
-                onClick={() => void handleDelete()}
-                disabled={agendaDeleting}
-              >
-                {agendaDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
-                Hapus
-              </Button>
-            ) : (
-              <span />
-            )}
-            <div className="flex gap-2">
-              <AlertDialogCancel disabled={agendaSaving}>Batal</AlertDialogCancel>
-              <AlertDialogAction type="submit" form="agenda-form" disabled={agendaSaving}>
-                {agendaSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Simpan
-              </AlertDialogAction>
-            </div>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <CalendarAgendaDialog
+        open={agendaOpen}
+        editId={agendaEditId}
+        initial={agendaInitial}
+        onClose={closeAgenda}
+        onSaved={load}
+      />
     </div>
   );
 }

@@ -1,25 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase';
+import { requireAdmin } from '@/lib/guards';
+import { escapeHtml, safeFilename } from '@/lib/sanitize';
 
 export const dynamic = 'force-dynamic';
-
-function escapeHtml(value: unknown) {
-  return String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
-
-function safeFilename(value: string) {
-  return value.replace(/[\\/:*?"<>|]+/g, '').replace(/\s+/g, ' ').trim();
-}
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const guard = await requireAdmin();
+  if (guard.denied) return guard.response;
+
   const supabase = createServiceClient();
 
   const { data: event } = await supabase

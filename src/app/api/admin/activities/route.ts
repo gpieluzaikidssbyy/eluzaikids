@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase';
 import { strictActivitySchema } from '@/lib/validations-strict';
+import { requireAdmin } from '@/lib/guards';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
+  const guard = await requireAdmin();
+  if (guard.denied) return guard.response;
+
   const supabase = createServiceClient();
   const { data: activities } = await supabase
     .from('activities')
@@ -20,6 +24,9 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const guard = await requireAdmin();
+  if (guard.denied) return guard.response;
+
   const supabase = createServiceClient();
   const body = await request.json();
 

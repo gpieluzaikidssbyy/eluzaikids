@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loading } from '@/components/admin/loading';
 import { EmptyState } from '@/components/admin/empty-state';
 import { CalendarGrid, fetchCalendarItems, type CalendarEventItem } from '@/components/admin/calendar-grid';
+import { DAY_NAMES, MONTH_NAMES } from '@/lib/helpers';
 
 interface DashboardStats {
   events: number;
@@ -28,13 +29,10 @@ interface EventItem {
   registrations_count?: number | null;
 }
 
-const DAYS = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-const MONTHS = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-
 function formatDate(dateStr: string) {
   const date = new Date(`${dateStr.slice(0, 10)}T00:00:00`);
   if (Number.isNaN(date.getTime())) return dateStr;
-  return `${DAYS[date.getDay()]}, ${date.getDate()} ${MONTHS[date.getMonth()]} ${date.getFullYear()}`;
+  return `${DAY_NAMES[date.getDay()]}, ${date.getDate()} ${MONTH_NAMES[date.getMonth()]} ${date.getFullYear()}`;
 }
 
 export default function AdminDashboard() {

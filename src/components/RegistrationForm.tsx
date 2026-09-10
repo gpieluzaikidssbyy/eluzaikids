@@ -3,6 +3,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { registrationSchema } from '@/lib/validations';
+import { fetchCsrfToken } from '@/lib/csrf-client';
+import { useRecaptchaV2 } from '@/components/registration/use-recaptcha';
+import { downloadQrTicket as saveQrTicket } from '@/components/registration/download-qr-ticket';
 
 interface RegistrationFormProps {
   registrableType: 'event' | 'activity';
@@ -10,16 +13,6 @@ interface RegistrationFormProps {
   registrableTitle: string;
   emailEnabled?: boolean;
   buttonClass?: string;
-}
-
-declare global {
-  interface Window {
-    grecaptcha: {
-      render?: (container: string | HTMLElement, options: Record<string, unknown>) => number;
-      reset?: (widgetId?: number) => void;
-      ready?: (callback: () => void) => void;
-    };
-  }
 }
 
 const inputClass =
@@ -46,11 +39,9 @@ export function RegistrationForm({
   const [nomorRegistrasi, setNomorRegistrasi] = useState('');
   const [confirmationEmailEnabled, setConfirmationEmailEnabled] = useState(emailEnabled);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [recaptchaReady, setRecaptchaReady] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
-  const recaptchaRef = useRef<HTMLDivElement>(null);
-  const recaptchaWidgetId = useRef<number | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
+  const { recaptchaReady, recaptchaRef } = useRecaptchaV2(isOpen, setErrors);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -99,72 +90,10 @@ export function RegistrationForm({
     };
   }, [isOpen]);
 
-  useEffect(() => {
-    // Reset widget state when the modal closes so it re-renders on next open.
-    if (!isOpen) {
-      recaptchaWidgetId.current = null;
-      setRecaptchaReady(false);
-      return;
-    }
-
-    if (!recaptchaRef.current || recaptchaWidgetId.current) return;
-
-    // Load reCAPTCHA script
-    const existingScript = document.querySelector<HTMLScriptElement>('script[data-recaptcha-v2]');
-    const script = existingScript || document.createElement('script');
-    script.src = 'https://www.google.com/recaptcha/api.js?render=explicit';
-    script.setAttribute('data-recaptcha-v2', 'true');
-    script.async = true;
-    const initialize = () => {
-      const grecaptcha = window.grecaptcha;
-      const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
-      if (!grecaptcha || !siteKey) return;
-
-      if (typeof grecaptcha.render !== 'function' || !recaptchaRef.current) {
-        setErrors({ general: 'reCAPTCHA v2 gagal dimuat. Silakan refresh halaman.' });
-        return;
-      }
-      recaptchaWidgetId.current = grecaptcha.render(recaptchaRef.current, {
-        sitekey: siteKey,
-        theme: document.documentElement.classList.contains('dark') ? 'dark' : 'light',
-        callback: () => setRecaptchaReady(true),
-        'expired-callback': () => setRecaptchaReady(false),
-        'error-callback': () => {
-          setRecaptchaReady(false);
-          setErrors({ general: 'reCAPTCHA gagal dimuat. Silakan coba lagi.' });
-        },
-      });
-    };
-
-    if (existingScript && window.grecaptcha) {
-      if (window.grecaptcha.ready) window.grecaptcha.ready(initialize);
-      else initialize();
-    } else {
-      script.onload = () => {
-        if (window.grecaptcha?.ready) window.grecaptcha.ready(initialize);
-        else initialize();
-      };
-      if (!existingScript) document.head.appendChild(script);
-    }
-  }, [isOpen]);
-
   // Map reCAPTCHA errors (no visible field) to the general message so users see them.
-  // Helper function to get CSRF token from API endpoint
   // Cookie eluzai_csrf_token adalah HTTP-only sehingga tidak bisa diakses oleh JavaScript.
-  // Sebagai gantinya, kita menggunakan endpoint /api/csrf-token untuk mendapatkan token.
+  // Sebagai gantinya, client mengambil token dari /api/csrf-token (lihat lib/csrf-client).
   let csrfToken: string | null = null;
-
-  const fetchCsrfToken = async (): Promise<void> => {
-    try {
-      const response = await fetch('/api/csrf-token');
-      const data = await response.json();
-      if (data.token) {
-        csrfToken = data.token;
-      }
-    } catch (error) {
-      console.error('Failed to fetch CSRF token:', error);
-    }
-  };
 
   const normalizeErrors = (raw: Record<string, string>): Record<string, string> => {
     const next: Record<string, string> = { ...raw };
@@ -218,7 +147,7 @@ export function RegistrationForm({
       // Get CSRF token from API endpoint and include in request
       // Jika csrfToken belum di-fetch, kita fetch sekarang
       if (!csrfToken) {
-        await fetchCsrfToken();
+        csrfToken = await fetchCsrfToken();
       }
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (csrfToken) {
@@ -268,101 +197,7 @@ export function RegistrationForm({
     if (!qrUrl || !nomorRegistrasi || isDownloading) return;
     setIsDownloading(true);
     try {
-      const qrImg = new Image();
-      qrImg.src = qrUrl;
-      await qrImg.decode();
-
-      const W = 600;
-      const H = 820;
-      const canvas = document.createElement('canvas');
-      canvas.width = W;
-      canvas.height = H;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-
-      const roundRect = (x: number, y: number, w: number, h: number, r: number) => {
-        ctx.beginPath();
-        ctx.moveTo(x + r, y);
-        ctx.arcTo(x + w, y, x + w, y + h, r);
-        ctx.arcTo(x + w, y + h, x, y + h, r);
-        ctx.arcTo(x, y + h, x, y, r);
-        ctx.arcTo(x, y, x + w, y, r);
-        ctx.closePath();
-      };
-
-      const centerText = (
-        text: string,
-        y: number,
-        font: string,
-        color: string,
-        maxWidth = W - 120
-      ) => {
-        ctx.font = font;
-        ctx.fillStyle = color;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        let shown = text;
-        if (ctx.measureText(shown).width > maxWidth) {
-          while (ctx.measureText(`${shown}…`).width > maxWidth && shown.length > 0) {
-            shown = shown.slice(0, -1);
-          }
-          shown = `${shown}…`;
-        }
-        ctx.fillText(shown, W / 2, y, maxWidth);
-      };
-
-      ctx.fillStyle = '#f8fafc';
-      ctx.fillRect(0, 0, W, H);
-
-      roundRect(24, 24, W - 48, H - 48, 28);
-      ctx.fillStyle = '#ffffff';
-      ctx.fill();
-      ctx.strokeStyle = '#e2e8f0';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      const mono = '"JetBrains Mono", ui-monospace, Consolas, monospace';
-
-      centerText('GPI ELUZAI KIDS', 96, '800 22px Inter, system-ui, sans-serif', '#7c3aed');
-      centerText('QR CODE PRESENSI', 140, '800 36px Inter, system-ui, sans-serif', '#0f172a');
-      centerText(registrableTitle, 172, '600 20px Inter, system-ui, sans-serif', '#64748b');
-
-      ctx.strokeStyle = '#e2e8f0';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(80, 206);
-      ctx.lineTo(W - 80, 206);
-      ctx.stroke();
-
-      const qrSize = 320;
-      const qrX = (W - qrSize) / 2;
-      const qrY = 232;
-      ctx.fillStyle = '#ffffff';
-      roundRect(qrX - 16, qrY - 16, qrSize + 32, qrSize + 32, 20);
-      ctx.fill();
-      ctx.strokeStyle = '#e2e8f0';
-      ctx.stroke();
-      ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
-
-      centerText('NO. REGISTRASI', 612, '700 18px Inter, system-ui, sans-serif', '#475569');
-
-      let numSize = 44;
-      const setNumFont = () => {
-        ctx.font = `800 ${numSize}px ${mono}`;
-      };
-      setNumFont();
-      while (ctx.measureText(nomorRegistrasi).width > W - 120 && numSize > 24) {
-        numSize -= 2;
-        setNumFont();
-      }
-      centerText(nomorRegistrasi, 668, `800 ${numSize}px ${mono}`, '#7c3aed');
-
-      centerText('Simpan gambar ini sebagai bukti pendaftaran.', 748, '500 16px Inter, system-ui, sans-serif', '#94a3b8');
-
-      const link = document.createElement('a');
-      link.download = `qr-presensi-${nomorRegistrasi}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
+      await saveQrTicket(qrUrl, nomorRegistrasi, registrableTitle);
     } catch (error) {
       console.error('Failed to generate QR ticket:', error);
     } finally {

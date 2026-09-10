@@ -1,16 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase';
 import { memberSchema } from '@/lib/validations';
+import { requireAdmin } from '@/lib/guards';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
+  const guard = await requireAdmin();
+  if (guard.denied) return guard.response;
+
   const supabase = createServiceClient();
   const { data } = await supabase.from('members').select('id, name, class, created_at').order('class').order('name');
   return NextResponse.json(data || []);
 }
 
 export async function POST(request: NextRequest) {
+  const guard = await requireAdmin();
+  if (guard.denied) return guard.response;
+
   const supabase = createServiceClient();
   const body = await request.json();
 

@@ -22,15 +22,13 @@ export default function ScanQrPage() {
 
   const checkStatus = useCallback(async () => {
     try {
-      const response = await fetch(`/api/scan-qr/${type}/${id}/pin`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pin: '' }),
-      });
+      const response = await fetch(`/api/scan-qr/${type}/${id}/status`);
       const data = await response.json();
-      setScanActive(response.status !== 403);
-      setEventTitle(data.title || '');
-      if (response.status === 403) setIsAuthorized(false);
+      if (response.ok) {
+        setScanActive(data.scan_active === true);
+        setEventTitle(data.title || '');
+        if (data.scan_active !== true) setIsAuthorized(false);
+      }
       setLoading(false);
     } catch {
       setLoading(false);
@@ -41,10 +39,15 @@ export default function ScanQrPage() {
 
   const handleScan = useCallback(async (qrData: string) => {
     try {
+      const isManual = String(qrData).trim().split('.').length !== 2;
       const response = await fetch(`/api/scan-qr/${type}/${id}/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ qr_data: qrData, scan_token: scanToken }),
+        body: JSON.stringify({
+          qr_data: qrData,
+          scan_token: scanToken,
+          manual: isManual,
+        }),
       });
 
       const data = await response.json();

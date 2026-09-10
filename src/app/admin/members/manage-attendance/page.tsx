@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ListChecks, Download, Loader2, Users } from 'lucide-react';
-import { MEMBER_CLASSES } from '@/lib/helpers';
+import { MEMBER_CLASSES, CLASS_STYLES, formatDateIndo } from '@/lib/helpers';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -19,22 +19,6 @@ interface AttendanceSummary {
   total: number;
   present: number;
   hasAttendance: boolean;
-}
-
-const CLASS_STYLES: Record<string, { badge: string; bar: string; gradient: string }> = {
-  Baby: { badge: 'bg-pink-100 text-pink-700 dark:bg-pink-950/50 dark:text-pink-300', bar: 'from-pink-400 to-rose-500', gradient: 'from-pink-500 to-rose-600' },
-  Samuel: { badge: 'bg-sky-100 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300', bar: 'from-sky-400 to-blue-500', gradient: 'from-sky-500 to-blue-600' },
-  Yosua: { badge: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300', bar: 'from-emerald-400 to-teal-500', gradient: 'from-emerald-500 to-teal-600' },
-  Musa: { badge: 'bg-violet-100 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300', bar: 'from-violet-400 to-purple-500', gradient: 'from-violet-500 to-purple-600' },
-};
-
-function formatDate(date: string) {
-  return new Intl.DateTimeFormat('id-ID', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  }).format(new Date(`${date}T00:00:00`));
 }
 
 export default function ManageAttendancePage() {
@@ -115,7 +99,7 @@ export default function ManageAttendancePage() {
                 <div className="flex items-center gap-2 rounded-xl bg-primary/10 px-4 py-3 text-sm text-primary">
                   <Users className="h-4 w-4 shrink-0" />
                   <span>
-                    <span className="font-bold">{totalPresent}</span> dari <span className="font-bold">{totalMembers}</span> anak hadir pada {formatDate(date)}
+                    <span className="font-bold">{totalPresent}</span> dari <span className="font-bold">{totalMembers}</span> anak hadir pada {formatDateIndo(date)}
                   </span>
                 </div>
               )}
@@ -154,7 +138,7 @@ export default function ManageAttendancePage() {
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="font-display text-lg font-bold text-foreground">{memberClass}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">{formatDate(date)}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{formatDateIndo(date)}</p>
                   </div>
                   <button
                     type="button"

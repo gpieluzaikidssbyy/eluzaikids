@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase';
+import { requireAdmin } from '@/lib/guards';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
+  const guard = await requireAdmin();
+  if (guard.denied) return guard.response;
+
   const searchParams = request.nextUrl.searchParams;
   const type = searchParams.get('type'); // 'event' or 'activity'
   const id = searchParams.get('id');
@@ -69,6 +73,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
+  const guard = await requireAdmin();
+  if (guard.denied) return guard.response;
+
   const searchParams = request.nextUrl.searchParams;
   const type = searchParams.get('type'); // 'event' or 'activity'
   const id = searchParams.get('id');
@@ -109,6 +116,9 @@ export async function PATCH(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const guard = await requireAdmin();
+  if (guard.denied) return guard.response;
+
   const searchParams = request.nextUrl.searchParams;
   const type = searchParams.get('type'); // 'event' or 'activity'
   const id = searchParams.get('id');

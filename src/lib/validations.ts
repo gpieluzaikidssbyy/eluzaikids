@@ -41,49 +41,14 @@ export const registrationSchema = z.object({
     errorMap: () => ({ message: 'Anda harus menyetujui data digunakan untuk keperluan pendaftaran.' }),
   }),
   honeypot: z.string().max(0, 'Terdeteksi sebagai bot.').optional().or(z.literal('')),
+  id: z.coerce
+    .number({ invalid_type_error: 'Data registrasi tidak valid.' })
+    .int('Data registrasi tidak valid.')
+    .positive('Data registrasi tidak valid.'),
   'g-recaptcha-response': z
     .string()
     .min(1, 'Verifikasi captcha wajib diselesaikan.'),
 });
-
-export type RegistrationFormData = z.infer<typeof registrationSchema>;
-
-/**
- * Event admin form validation schema.
- */
-export const eventSchema = z.object({
-  title: z.string().min(1, 'Judul wajib diisi.').max(255),
-  tema: z.string().optional().nullable(),
-  description: z.string().optional().nullable(),
-  event_date: z.string().min(1, 'Tanggal event wajib diisi.'),
-  open_gate: z.string().optional().nullable(),
-  start_time: z.string().optional().nullable(),
-  location: z.string().optional().nullable(),
-  quota: z.coerce.number().int().positive().optional().nullable(),
-  image: z.string().optional().nullable(),
-  map_embed_url: z.string().url('URL tidak valid.').optional().nullable(),
-  drive_link: z.string().url('URL tidak valid.').optional().nullable(),
-  registration_deadline: z.string().optional().nullable(),
-});
-
-export type EventFormData = z.infer<typeof eventSchema>;
-
-/**
- * Activity admin form validation schema.
- */
-export const activitySchema = z.object({
-  title: z.string().min(1, 'Judul wajib diisi.').max(255),
-  description: z.string().optional().nullable(),
-  image: z.string().optional().nullable(),
-  drive_link: z.string().url('URL tidak valid.').optional().nullable(),
-  activity_date: z.string().optional().nullable(),
-  start_time: z.string().optional().nullable(),
-  location: z.string().optional().nullable(),
-  map_embed_url: z.string().url('URL tidak valid.').optional().nullable(),
-  quota: z.coerce.number().int().positive().optional().nullable(),
-});
-
-export type ActivityFormData = z.infer<typeof activitySchema>;
 
 /**
  * Schedule admin form validation schema.
@@ -109,27 +74,3 @@ export const memberSchema = z.object({
 });
 
 export type MemberFormData = z.infer<typeof memberSchema>;
-
-/**
- * Church info form validation schema.
- */
-export const churchInfoSchema = z.object({
-  address: z.string().min(1, 'Alamat wajib diisi.'),
-  map_embed_url: z.string().optional().nullable(),
-  phone: z.string().optional().nullable(),
-  whatsapp: z.string().optional().nullable(),
-  email: z.string().email('Format email tidak valid.').optional().nullable(),
-  instagram_url: z.string().url('URL tidak valid.').optional().nullable(),
-  youtube_url: z.string().url('URL tidak valid.').optional().nullable(),
-});
-
-export type ChurchInfoFormData = z.infer<typeof churchInfoSchema>;
-
-/**
- * PIN verification schema for QR scan.
- */
-export const pinSchema = z.object({
-  pin: z.string().length(6, 'PIN harus 6 digit.'),
-});
-
-export type PinFormData = z.infer<typeof pinSchema>;

@@ -7,7 +7,7 @@ const CSRF_HEADER_NAME = 'x-csrf-token';
 /**
  * Generate a cryptographically secure CSRF token
  */
-export function generateCsrfToken(): string {
+function generateCsrfToken(): string {
   return randomBytes(32).toString('hex');
 }
 
@@ -17,7 +17,7 @@ export function generateCsrfToken(): string {
  * membacanya langsung. Client mendapat token yang sama melalui GET /api/csrf-token
  * dan mengirimnya kembali lewat header x-csrf-token.
  */
-export async function setCsrfTokenCookie(): Promise<string> {
+async function setCsrfTokenCookie(): Promise<string> {
   const token = generateCsrfToken();
   cookies().set(CSRF_COOKIE_NAME, token, {
     httpOnly: true,
@@ -50,7 +50,7 @@ export async function ensureCsrfToken(): Promise<string> {
 /**
  * Validate CSRF token from request header against cookie (server-side verification)
  */
-export async function validateCsrfToken(request: Request): Promise<boolean> {
+async function validateCsrfToken(request: Request): Promise<boolean> {
   const cookieToken = getCsrfTokenFromCookie();
   const headerToken = request.headers.get(CSRF_HEADER_NAME);
 

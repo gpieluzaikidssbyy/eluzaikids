@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { createServiceClient } from '@/lib/supabase';
+import { createPublicClient } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const supabase = createServiceClient();
+  const supabase = createPublicClient();
 
   const { data: churchInfo } = await supabase
     .from('church_info')

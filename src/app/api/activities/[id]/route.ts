@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServiceClient } from '@/lib/supabase';
+import { createPublicClient } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
@@ -7,11 +7,11 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const supabase = createServiceClient();
+  const supabase = createPublicClient();
 
   const { data: activity } = await supabase
     .from('activities')
-    .select('id, title, description, image, drive_link, activity_date, start_time, location, map_embed_url, quota, email_enabled, activity_registrations(count)')
+    .select('id, title, description, image, drive_link, activity_date, start_time, location, map_embed_url, quota, email_enabled')
     .eq('id', params.id)
     .single();
 
@@ -19,8 +19,10 @@ export async function GET(
     return NextResponse.json({ message: 'Activity not found' }, { status: 404 });
   }
 
+  const { data: countData } = await supabase.rpc('count_registrations', { registrable_type: 'activity', registrable_id: activity.id });
+
   return NextResponse.json({
     ...activity,
-    registrations_count: activity.activity_registrations?.[0]?.count || 0,
+    registrations_count: Number(countData) || 0,
   });
 }

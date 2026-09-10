@@ -1,8 +1,8 @@
-export function SkeletonBlock({ className = '' }: { className?: string }) {
+function SkeletonBlock({ className = '' }: { className?: string }) {
   return <div className={`animate-pulse rounded-md bg-slate-200 dark:bg-slate-700 ${className}`} />;
 }
 
-export function GradientHeroSkeleton() {
+function GradientHeroSkeleton() {
   return (
     <div className="gradient-hero py-12 text-white">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
@@ -10,35 +10,6 @@ export function GradientHeroSkeleton() {
         <SkeletonBlock className="mt-4 h-4 w-40 rounded" />
       </div>
     </div>
-  );
-}
-
-export function HomeSectionSkeleton() {
-  return (
-    <section className="py-12 sm:py-16">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="text-center">
-          <SkeletonBlock className="mx-auto h-8 w-56 rounded-lg" />
-          <SkeletonBlock className="mx-auto mt-3 h-1 w-16 rounded" />
-        </div>
-        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800">
-              <SkeletonBlock className="aspect-[4/5] w-full rounded-none" />
-              <div className="space-y-3 p-5">
-                <SkeletonBlock className="h-5 w-3/4 rounded" />
-                <SkeletonBlock className="h-4 w-1/2 rounded" />
-                <SkeletonBlock className="h-4 w-2/3 rounded" />
-                <div className="flex gap-3 pt-2">
-                  <SkeletonBlock className="h-10 flex-1 rounded-lg" />
-                  <SkeletonBlock className="h-10 flex-1 rounded-lg" />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
   );
 }
 

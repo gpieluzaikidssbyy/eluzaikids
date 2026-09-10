@@ -19,7 +19,7 @@ export interface CalendarEventItem {
   rawId?: number;
 }
 
-export interface ApiEvent {
+interface ApiEvent {
   id: number;
   title: string;
   tema?: string | null;
@@ -28,7 +28,7 @@ export interface ApiEvent {
   location?: string | null;
 }
 
-export interface ApiActivity {
+interface ApiActivity {
   id: number;
   title: string;
   activity_date: string;
@@ -36,7 +36,7 @@ export interface ApiActivity {
   location?: string | null;
 }
 
-export interface ApiInternalEvent {
+interface ApiInternalEvent {
   id: number;
   title: string;
   description?: string | null;
@@ -65,7 +65,7 @@ const WEEKDAYS = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
 
 /* ─── Helpers ─── */
 
-export function parseLocalDate(value: string) {
+function parseLocalDate(value: string) {
   // Values look like "2026-09-07T00:00:00+07:00" or "2026-09-07"
   const datePart = value.slice(0, 10);
   const [y, m, d] = datePart.split('-').map(Number);
@@ -171,25 +171,25 @@ export function CalendarGrid({ events, loading, viewDate, onViewDateChange, onSe
   return (
     <div className="rounded-lg border border-border bg-card shadow-sm">
       {/* Toolbar */}
-      <div className="flex items-center justify-between border-b border-border px-5 py-4">
+      <div className="flex items-center justify-between border-b border-border px-3 py-3 sm:px-5 sm:py-4">
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => navigate(-1)}
             aria-label="Bulan sebelumnya"
-            className="rounded-lg border border-border p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="rounded-lg border border-border p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:p-2"
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </button>
           <button
             type="button"
             onClick={() => navigate(1)}
             aria-label="Bulan berikutnya"
-            className="rounded-lg border border-border p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="rounded-lg border border-border p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:p-2"
           >
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </button>
-          <h2 className="font-display text-base font-bold text-foreground">
+          <h2 className="text-sm font-bold text-foreground sm:text-base md:font-display">
             {MONTH_NAMES[current.month]} {current.year}
           </h2>
         </div>
@@ -201,7 +201,7 @@ export function CalendarGrid({ events, loading, viewDate, onViewDateChange, onSe
         {WEEKDAYS.map((day) => (
           <div
             key={day}
-            className="px-1 py-2 text-center text-[10px] font-semibold uppercase tracking-wide text-muted-foreground sm:px-2 sm:py-2.5 sm:text-xs"
+            className="px-0.5 py-1.5 text-center text-[9px] font-semibold uppercase tracking-wide text-muted-foreground sm:px-2 sm:py-2 sm:text-[10px] md:text-xs"
           >
             {day}
           </div>
@@ -210,7 +210,7 @@ export function CalendarGrid({ events, loading, viewDate, onViewDateChange, onSe
 
       {/* Day cells */}
       {loading ? (
-        <div className="flex h-96 flex-col items-center justify-center gap-3 text-muted-foreground">
+        <div className="flex h-48 flex-col items-center justify-center gap-3 text-muted-foreground sm:h-96">
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
           <p className="text-sm">Memuat jadwal...</p>
         </div>
@@ -236,7 +236,7 @@ export function CalendarGrid({ events, loading, viewDate, onViewDateChange, onSe
                   }
                 }}
                 className={cn(
-                  'min-h-[4.25rem] border-b border-r border-border/60 p-1 last:border-r-0 sm:min-h-[6.5rem] sm:p-2',
+                  'min-h-[3rem] border-b border-r border-border/60 p-0.5 last:border-r-0 sm:min-h-[5.5rem] sm:p-1.5 md:min-h-[6.5rem] md:p-2',
                   (i + 1) % 7 === 0 && 'border-r-0',
                   !cell.inMonth && 'bg-muted/30',
                   clickable && 'cursor-pointer transition-colors hover:bg-muted/40'
@@ -244,7 +244,7 @@ export function CalendarGrid({ events, loading, viewDate, onViewDateChange, onSe
               >
                 <span
                   className={cn(
-                    'flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium',
+                    'flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-medium sm:h-6 sm:w-6 sm:text-xs',
                     isToday
                       ? 'bg-[#465FFF] text-white'
                       : cell.inMonth
@@ -254,7 +254,7 @@ export function CalendarGrid({ events, loading, viewDate, onViewDateChange, onSe
                 >
                   {cell.day}
                 </span>
-                <div className="mt-1 space-y-1">
+                <div className="mt-0.5 space-y-0.5 sm:mt-1 sm:space-y-1">
                   {evts.slice(0, 2).map((e) => (
                     <button
                       key={e.id}
@@ -266,7 +266,7 @@ export function CalendarGrid({ events, loading, viewDate, onViewDateChange, onSe
                         else window.location.href = e.href;
                       }}
                       className={cn(
-                        'block w-full truncate rounded px-1.5 py-0.5 text-[10px] font-medium transition-opacity hover:opacity-80 sm:text-[11px]',
+                        'block w-full truncate rounded px-1 py-px text-[8px] font-medium transition-opacity hover:opacity-80 sm:px-1.5 sm:py-0.5 sm:text-[10px] md:text-[11px]',
                         colorStyles[TYPE_TO_COLOR[e.type]].bg,
                         colorStyles[TYPE_TO_COLOR[e.type]].text
                       )}
@@ -275,7 +275,7 @@ export function CalendarGrid({ events, loading, viewDate, onViewDateChange, onSe
                     </button>
                   ))}
                   {evts.length > 2 && (
-                    <p className="px-1 text-[10px] font-semibold text-muted-foreground">
+                    <p className="px-0.5 text-[8px] font-semibold text-muted-foreground sm:px-1 sm:text-[10px]">
                       +{evts.length - 2} lainnya
                     </p>
                   )}

@@ -1,37 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const SESSION_COOKIE = 'eluzai_admin_session';
 const CSRF_COOKIE_NAME = 'eluzai_csrf_token';
-
-function decodeBase64Url(value: string): Uint8Array {
-  const padded = value.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((value.length + 3) % 4);
-  const binary = atob(padded);
-  return Uint8Array.from(binary, (character) => character.charCodeAt(0));
-}
-
-async function isValidSession(value: string | undefined): Promise<boolean> {
-  if (!value) return false;
-  const secret =
-    process.env.AUTH_SECRET ||
-    (process.env.NODE_ENV === 'production' ? undefined : process.env.SUPABASE_SERVICE_ROLE_KEY);
-  if (!secret) return false;
-  const [encoded, signature] = value.split('.');
-  if (!encoded || !signature) return false;
-
-  const payload = new TextEncoder().encode(new TextDecoder().decode(decodeBase64Url(encoded)));
-  const key = await crypto.subtle.importKey(
-    'raw',
-    new TextEncoder().encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['verify'],
-  );
-  const valid = await crypto.subtle.verify('HMAC', key, decodeBase64Url(signature) as unknown as BufferSource, payload);
-  if (!valid) return false;
-
-  const [, expiresAt] = new TextDecoder().decode(payload).split('.');
-  return Number(expiresAt) >= Math.floor(Date.now() / 1000);
-}
 
 function generateCsrfToken(): string {
   const array = new Uint8Array(32);
@@ -39,16 +8,106 @@ function generateCsrfToken(): string {
   return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
-export async function middleware(request: NextRequest) {
-  // Set CSRF token for public registration pages
-  // Kita set cookie untuk server-side validation, tapi juga perlu endpoint khusus
-  // untuk client-side JavaScript bisa mendapatkan token
-  const isRegistrationPage = request.nextUrl.pathname.startsWith('/register') ||
-    request.nextUrl.pathname.includes('/activities/') ||
-    request.nextUrl.pathname.includes('/events/');
+/**
+ * Per-request nonce for Content-Security-Policy. Generated in the Edge
+ * runtime, so it avoids Node-only APIs such as `Buffer` or `crypto.randomUUID`.
+ */
+function generateNonce(): string {
+  const array = new Uint8Array(16);
+  crypto.getRandomValues(array);
+  return btoa(Array.from(array, (byte) => String.fromCharCode(byte)).join(''));
+}
 
-  if (isRegistrationPage) {
-    const response = NextResponse.next();
+/**
+ * Strict CSP in production: script-src allows 'self' plus reCAPTCHA hosts and
+ * relies on nonces for every inline script. Next.js stamps its own inline
+ * scripts with the nonce from the `x-nonce` request header. Dev mode keeps
+ * the permissive values Next requires for HMR.
+ */
+function buildContentSecurityPolicy(nonce: string): string {
+  const isDev = process.env.NODE_ENV !== 'production';
+  const scriptSrc = isDev
+    ? "'self' 'unsafe-inline' 'unsafe-eval' https://www.google.com https://www.gstatic.com"
+    : `'self' 'nonce-${nonce}' https://www.google.com https://www.gstatic.com`;
+  return [
+    "default-src 'self'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'self'",
+    "object-src 'none'",
+    `script-src ${scriptSrc}`,
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "img-src 'self' data: blob: https:",
+    "font-src 'self' data: https://fonts.gstatic.com",
+    "media-src 'self' data: blob:",
+    "connect-src 'self' https://www.google.com https://www.gstatic.com",
+    "frame-src 'self' https://www.google.com https://maps.google.com https://www.gstatic.com",
+    "worker-src 'self' blob:",
+    ...(!isDev ? ['upgrade-insecure-requests'] : []),
+  ].join('; ');
+}
+
+/**
+ * Sessions are revocable server-side rows (see src/lib/auth.ts), so the
+ * source of truth is the session API. Middleware delegates to it instead of
+ * doing its own cookie verification.
+ */
+async function getAdminSession(request: NextRequest): Promise<{ authenticated: boolean; isAdmin: boolean }> {
+  const sessionUrl = new URL('/api/auth/session', request.url);
+  try {
+    const response = await fetch(sessionUrl, {
+      headers: { cookie: request.headers.get('cookie') || '' },
+      cache: 'no-store',
+    });
+    if (!response.ok) return { authenticated: false, isAdmin: false };
+    const session = (await response.json()) as { authenticated?: boolean; user?: { is_admin?: boolean } | null };
+    return { authenticated: Boolean(session.authenticated), isAdmin: session.user?.is_admin === true };
+  } catch {
+    return { authenticated: false, isAdmin: false };
+  }
+}
+
+export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+  const nonce = generateNonce();
+
+  // Propagate the nonce so Next.js stamps its own inline scripts with it.
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-nonce', nonce);
+  const passThrough = () => NextResponse.next({ request: { headers: requestHeaders } });
+
+  const isAdminPage = pathname === '/admin' || pathname.startsWith('/admin/');
+  const isRegistrationPage = pathname.startsWith('/register') ||
+    pathname.includes('/activities/') ||
+    pathname.includes('/events/');
+
+  let response: NextResponse;
+
+  if (isAdminPage) {
+    if (pathname === '/admin/login' || pathname.startsWith('/admin/reset-password')) {
+      response = passThrough();
+    } else {
+      const session = await getAdminSession(request);
+      if (!session.authenticated) {
+        response = NextResponse.redirect(new URL('/admin/login', request.url));
+      } else {
+        response = passThrough();
+      }
+    }
+  } else if (pathname.startsWith('/api/admin/')) {
+    const session = await getAdminSession(request);
+    if (!session.authenticated) {
+      response = NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    } else if (!session.isAdmin) {
+      response = NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+    } else {
+      response = passThrough();
+    }
+  } else if (isRegistrationPage) {
+    // Set CSRF token for public registration pages
+    // Kita set cookie untuk server-side validation, tapi juga perlu endpoint khusus
+    // untuk client-side JavaScript bisa mendapatkan token
+    response = passThrough();
     const existingCookie = request.cookies.get(CSRF_COOKIE_NAME);
     if (!existingCookie) {
       const token = generateCsrfToken();
@@ -61,52 +120,16 @@ export async function middleware(request: NextRequest) {
         maxAge: 60 * 60 * 24 * 7,
       });
     }
-    return response;
+  } else {
+    response = passThrough();
   }
 
-  // Admin page routes: require a valid session (client-side guard is not enough).
-  const pathname = request.nextUrl.pathname;
-  if (pathname === '/admin' || pathname.startsWith('/admin/')) {
-    if (pathname === '/admin/login' || pathname.startsWith('/admin/reset-password')) {
-      return NextResponse.next();
-    }
-    if (!(await isValidSession(request.cookies.get(SESSION_COOKIE)?.value))) {
-      return NextResponse.redirect(new URL('/admin/login', request.url));
-    }
-  }
-
-  // Admin API protection
-  if (!request.nextUrl.pathname.startsWith('/api/admin/')) {
-    return NextResponse.next();
-  }
-
-  if (!(await isValidSession(request.cookies.get(SESSION_COOKIE)?.value))) {
-    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-  }
-
-  const sessionCheckUrl = new URL('/api/auth/session', request.url);
-  const sessionResponse = await fetch(sessionCheckUrl, {
-    headers: { cookie: request.headers.get('cookie') || '' },
-    cache: 'no-store',
-  });
-  if (!sessionResponse.ok) {
-    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-  }
-
-  const session = await sessionResponse.json() as { authenticated?: boolean; user?: { is_admin?: boolean } | null };
-  if (!session.authenticated || session.user?.is_admin !== true) {
-    return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
-  }
-
-  return NextResponse.next();
+  response.headers.set('Content-Security-Policy', buildContentSecurityPolicy(nonce));
+  return response;
 }
 
 export const config = {
   matcher: [
-    '/api/admin/:path*',
-    '/register/:path*',
-    '/activities/:path*',
-    '/events/:path*',
-    '/admin/:path*',
+    '/((?!_next/static|_next/image|favicon.ico|images/|.*\\.(?:png|jpg|jpeg|webp|svg|ico|gif|avif|woff2?)$).*)',
   ],
 };

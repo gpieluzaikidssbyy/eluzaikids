@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
-import { createServiceClient } from '@/lib/supabase';
+import { createPublicClient } from '@/lib/supabase';
+import { WEEKDAYS } from '@/lib/helpers';
 
 export const dynamic = 'force-dynamic';
 
-const WEEKDAYS = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
-
 export async function GET() {
-  const supabase = createServiceClient();
+  // Public client + RLS: only schedules with show_schedule = true are visible.
+  const supabase = createPublicClient();
 
   const { data: schedules } = await supabase
     .from('schedules')

@@ -11,11 +11,30 @@ CREATE TABLE IF NOT EXISTS users (
   remember_token VARCHAR(100),
   is_admin BOOLEAN DEFAULT FALSE,
   username VARCHAR(255),
+  login_attempts INTEGER DEFAULT 0,
+  locked_until TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users(username) WHERE username IS NOT NULL;
+
+-- Sessions table (server-side revocable admin sessions).
+-- Only the SHA-256 hash of the cookie token is stored; the raw token is
+-- never persisted. Row removal/pruning is done lazily by the app, so keep
+-- the FK with ON DELETE CASCADE so deleting a user revokes all sessions.
+CREATE TABLE IF NOT EXISTS sessions (
+  id BIGSERIAL PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token_hash TEXT NOT NULL UNIQUE,
+  expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  revoked_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_token_hash ON sessions(token_hash);
+ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;
 
 -- Schedules table
 CREATE TABLE IF NOT EXISTS schedules (
@@ -49,6 +68,8 @@ CREATE TABLE IF NOT EXISTS events (
   registration_deadline TIMESTAMP WITH TIME ZONE,
   scan_pin VARCHAR(6),
   scan_active BOOLEAN DEFAULT FALSE,
+  pin_failed_attempts INTEGER NOT NULL DEFAULT 0,
+  pin_locked_until TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -73,6 +94,7 @@ CREATE TABLE IF NOT EXISTS event_registrations (
   scanned_at TIMESTAMP WITH TIME ZONE,
   registered_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   hadir BOOLEAN DEFAULT FALSE,
+  verified_manually BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -81,6 +103,20 @@ CREATE INDEX IF NOT EXISTS idx_event_registrations_event_id ON event_registratio
 CREATE INDEX IF NOT EXISTS idx_event_registrations_name ON event_registrations(name);
 CREATE INDEX IF NOT EXISTS idx_event_registrations_phone ON event_registrations(phone);
 CREATE INDEX IF NOT EXISTS idx_event_registrations_email ON event_registrations(email);
+
+-- Guarantees registration numbers are unique per event (prevents duplicate
+-- numbers from concurrent requests even if the app-level counter is raced).
+-- PostgreSQL has no "ADD CONSTRAINT IF NOT EXISTS", so guard with pg_constraint.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'uq_event_registrations_nomor'
+      AND conrelid = 'event_registrations'::regclass
+  ) THEN
+    ALTER TABLE event_registrations ADD CONSTRAINT uq_event_registrations_nomor UNIQUE (event_id, nomor_registrasi);
+  END IF;
+END $$;
 
 -- Activities table
 CREATE TABLE IF NOT EXISTS activities (
@@ -97,6 +133,8 @@ CREATE TABLE IF NOT EXISTS activities (
   email_enabled BOOLEAN NOT NULL DEFAULT TRUE,
   scan_pin VARCHAR(6),
   scan_active BOOLEAN DEFAULT FALSE,
+  pin_failed_attempts INTEGER NOT NULL DEFAULT 0,
+  pin_locked_until TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -115,6 +153,7 @@ CREATE TABLE IF NOT EXISTS activity_registrations (
   scanned_at TIMESTAMP WITH TIME ZONE,
   registered_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   hadir BOOLEAN DEFAULT FALSE,
+  verified_manually BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -123,6 +162,19 @@ CREATE INDEX IF NOT EXISTS idx_activity_registrations_activity_id ON activity_re
 CREATE INDEX IF NOT EXISTS idx_activity_registrations_name ON activity_registrations(name);
 CREATE INDEX IF NOT EXISTS idx_activity_registrations_phone ON activity_registrations(phone);
 CREATE INDEX IF NOT EXISTS idx_activity_registrations_email ON activity_registrations(email);
+
+-- Unique registration numbers per activity (see events above).
+-- Guarantees registration numbers are unique per activity (see above).
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'uq_activity_registrations_nomor'
+      AND conrelid = 'activity_registrations'::regclass
+  ) THEN
+    ALTER TABLE activity_registrations ADD CONSTRAINT uq_activity_registrations_nomor UNIQUE (activity_id, nomor_registrasi);
+  END IF;
+END $$;
 ALTER TABLE event_registrations ADD COLUMN IF NOT EXISTS registration_ip VARCHAR(64);
 ALTER TABLE activity_registrations ADD COLUMN IF NOT EXISTS registration_ip VARCHAR(64);
 ALTER TABLE activities ADD COLUMN IF NOT EXISTS email_enabled BOOLEAN NOT NULL DEFAULT TRUE;
@@ -211,6 +263,86 @@ CREATE POLICY public_schedules_read ON schedules FOR SELECT USING (show_schedule
 DROP POLICY IF EXISTS public_church_info_read ON church_info;
 CREATE POLICY public_church_info_read ON church_info FOR SELECT USING (true);
 
-REVOKE ALL ON users, schedules, events, event_registrations, activities,
+-- Only the app server (service_role) may touch everything else; the anon/RLS
+-- layers get read access to strictly public content below.
+REVOKE ALL ON users, sessions, schedules, events, event_registrations, activities,
   activity_registrations, church_info, members, attendances, calendar_events
   FROM anon, authenticated;
+
+-- ===========================================================================
+-- PUBLIC READ SCOPE (anon role, RLS enforced)
+-- ---------------------------------------------------------------------------
+-- Events/Activities: column-level grants deliberately EXCLUDE scan_pin,
+-- scan_active and the PIN lockout columns, so a public endpoint can never
+-- leak them even if it accidentally selects `*`. Registration counts are
+-- exposed only through the SECURITY DEFINER function below (no PII).
+-- ===========================================================================
+GRANT SELECT (id, title, tema, description, event_date, open_gate, start_time, location, quota, email_enabled, image, map_embed_url, drive_link, registration_deadline, created_at, updated_at) ON events TO anon;
+GRANT SELECT (id, title, description, image, drive_link, activity_date, start_time, location, map_embed_url, quota, email_enabled, created_at, updated_at) ON activities TO anon;
+GRANT SELECT (id, day, time, type, description, show_schedule, created_at, updated_at) ON schedules TO anon;
+GRANT SELECT (id, address, map_embed_url, phone, whatsapp, email, instagram_url, youtube_url, created_at, updated_at) ON church_info TO anon;
+
+-- Registration count without exposing any registration data.
+CREATE OR REPLACE FUNCTION public.count_registrations(registrable_type text, registrable_id bigint)
+RETURNS bigint
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT CASE
+    WHEN registrable_type = 'event' THEN
+      (SELECT COUNT(*) FROM event_registrations WHERE event_id = registrable_id)
+    WHEN registrable_type = 'activity' THEN
+      (SELECT COUNT(*) FROM activity_registrations WHERE activity_id = registrable_id)
+    ELSE 0
+  END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.count_registrations(text, bigint) TO anon;
+
+-- ===========================================================================
+-- ATOMIC SEQUENCE FOR REGISTRATION NUMBERS
+-- ---------------------------------------------------------------------------
+-- SECURITY DEFINER + atomic UPSERT means concurrent requests can never be
+-- issued the same sequence, and quota is enforced server-side at allocation.
+-- ===========================================================================
+CREATE TABLE IF NOT EXISTS registration_counters (
+  registrable_type TEXT NOT NULL CHECK (registrable_type IN ('event', 'activity')),
+  registrable_id BIGINT NOT NULL,
+  last_seq BIGINT NOT NULL DEFAULT 0,
+  PRIMARY KEY (registrable_type, registrable_id)
+);
+
+CREATE OR REPLACE FUNCTION public.next_registration_seq(registrable_type text, registrable_id bigint)
+RETURNS bigint
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_seq bigint;
+  v_quota bigint;
+BEGIN
+  IF registrable_type = 'event' THEN
+    SELECT quota INTO v_quota FROM events WHERE id = registrable_id;
+  ELSIF registrable_type = 'activity' THEN
+    SELECT quota INTO v_quota FROM activities WHERE id = registrable_id;
+  ELSE
+    RAISE EXCEPTION 'invalid type';
+  END IF;
+
+  INSERT INTO registration_counters (registrable_type, registrable_id, last_seq)
+  VALUES (registrable_type, registrable_id, 1)
+  ON CONFLICT (registrable_type, registrable_id)
+  DO UPDATE SET last_seq = registration_counters.last_seq + 1
+  RETURNING last_seq INTO v_seq;
+
+  IF v_quota IS NOT NULL AND v_seq > v_quota THEN
+    RAISE EXCEPTION 'quota exceeded';
+  END IF;
+
+  RETURN v_seq;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.next_registration_seq(text, bigint) TO service_role;
