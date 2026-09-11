@@ -14,9 +14,10 @@ export default (phase, { defaultConfig }) => {
   // also contained VERCEL=1, which Next loads into process.env before this
   // file runs — making local `next build`/`next start` fall through to .next
   // and collide with the running `next dev`. The extra CI check keeps this
-  // robust even if a future `vercel env pull` re-adds VERCEL vars locally
-  // (Vercel sets CI=true only on its own platform, not in .env.local).
-  const onVercel = process.env.VERCEL === '1' && process.env.CI === 'true';
+  // robust even if a future `vercel env pull` re-adds VERCEL vars locally.
+  // Note: Vercel reports CI as either "true" or "1" depending on the runtime,
+  // so accept both values here.
+  const onVercel = process.env.VERCEL === '1' && (process.env.CI === 'true' || process.env.CI === '1');
 
   // Content-Security-Policy is now emitted per-request from middleware.ts with
   // a per-request nonce (production) so inline scripts are only allowed when
