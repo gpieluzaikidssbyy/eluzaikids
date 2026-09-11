@@ -33,7 +33,7 @@ export default function ActivitiesPage() {
       <section className="gradient-hero py-12 text-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <BackToHome />
-          <h1 className="mt-4 font-display text-3xl font-bold sm:text-4xl">Kegiatan</h1>
+          <h1 className="mt-4 font-display text-3xl font-bold sm:text-4xl">Kegiatan Mendatang</h1>
           <p className="mt-2 text-white/80">Daftar kegiatan di GPI Eluzai Kids</p>
         </div>
       </section>

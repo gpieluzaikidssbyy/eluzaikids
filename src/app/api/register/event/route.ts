@@ -1,182 +1,20 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createServiceClient } from '@/lib/supabase';
-import { registrationSchema } from '@/lib/validations';
-import {
-  normalizePhone,
-  generateNomorRegistrasi,
-  generateQrToken,
-  isRegistrationOpen,
-  duplicateExists,
-  verifyRecaptcha,
-  getMapsLink,
-  formatDateIndo,
-  appBaseUrl,
-} from '@/lib/helpers';
-import { sendConfirmationEmail } from '@/lib/email';
-import { checkCsrf } from '@/lib/csrf';
-import { RateLimiter } from '@/lib/rateLimit';
-import { getClientIp } from '@/lib/ip';
+import { NextRequest } from 'next/server';
+import { handleRegistration } from '@/lib/register';
+import type { RegistrationConfig } from '@/lib/register';
 
-const registrationLimiter = new RateLimiter(10, 60 * 1000);
+const config: RegistrationConfig = {
+  entityTable: 'events',
+  registrationTable: 'event_registrations',
+  idColumn: 'event_id',
+  typeParam: 'event',
+  typeLabel: 'Event',
+  dateField: 'event_date',
+  notFoundMessage: 'Event tidak ditemukan.',
+  quotaFullMessage: 'Kuota pendaftaran untuk event ini sudah penuh.',
+  duplicateMessage: 'Data serupa (IP, nama, nomor HP, atau email) sudah terdaftar untuk event tersebut.',
+  hasEventExtras: true,
+};
 
 export async function POST(request: NextRequest) {
-  // CSRF protection: validate token from header against cookie
-  if (!(await checkCsrf(request))) {
-    return NextResponse.json(
-      { message: 'Validasi CSRF gagal. Silakan refresh halaman dan coba lagi.' },
-      { status: 403 }
-    );
-  }
-
-  const ip = getClientIp(request);
-
-  // Rate limiting
-  if (!registrationLimiter.check(ip)) {
-    return NextResponse.json(
-      { message: 'Terlalu banyak permintaan. Silakan coba lagi nanti.' },
-      { status: 429 }
-    );
-  }
-
-  try {
-    const body = await request.json();
-
-    // Validate input
-    const result = registrationSchema.safeParse(body);
-    if (!result.success) {
-      const errors: Record<string, string> = {};
-      result.error.issues.forEach((issue) => {
-        const field = issue.path.join('.');
-        errors[field] = issue.message;
-      });
-      return NextResponse.json({ errors }, { status: 422 });
-    }
-
-    const { name, phone, email, jumlah_hadir, honeypot, id: eventId, 'g-recaptcha-response': recaptchaToken } = result.data;
-
-    // Honeypot check
-    if (honeypot) {
-      return NextResponse.json({ message: 'Pendaftaran berhasil.' });
-    }
-
-    // reCAPTCHA verification
-    const captchaValid = await verifyRecaptcha(recaptchaToken);
-    if (!captchaValid) {
-      return NextResponse.json(
-        { errors: { 'g-recaptcha-response': 'Verifikasi captcha gagal.' } },
-        { status: 422 }
-      );
-    }
-
-    const supabase = createServiceClient();
-
-    // Fetch event
-    const { data: event } = await supabase
-      .from('events')
-      .select('*')
-      .eq('id', eventId)
-      .single();
-
-    if (!event) {
-      return NextResponse.json({ message: 'Event tidak ditemukan.' }, { status: 404 });
-    }
-
-    // Check registration deadline
-    if (!isRegistrationOpen(event.event_date, event.registration_deadline)) {
-      return NextResponse.json({ message: 'Pendaftaran sudah ditutup.' }, { status: 403 });
-    }
-
-    // Check quota
-    const { count: registeredCount } = await supabase
-      .from('event_registrations')
-      .select('*', { count: 'exact', head: true })
-      .eq('event_id', eventId);
-
-    if (event.quota && (registeredCount ?? 0) >= event.quota) {
-      return NextResponse.json({ message: 'Kuota pendaftaran untuk event ini sudah penuh.' }, { status: 403 });
-    }
-
-    // Check duplicate
-    const normalizedPhone = normalizePhone(phone);
-    const isDuplicate = await duplicateExists(
-      'event_registrations',
-      'event_id',
-      eventId,
-      normalizedPhone,
-      email,
-      name,
-      ip
-    );
-
-    if (isDuplicate) {
-      return NextResponse.json(
-        { errors: { phone: 'Data serupa (IP, nama, nomor HP, atau email) sudah terdaftar untuk event tersebut.' } },
-        { status: 422 }
-      );
-    }
-
-    // Generate registration number and QR token
-    const nomorRegistrasi = await generateNomorRegistrasi('event', eventId);
-    const qrToken = generateQrToken();
-    const qrData = `${nomorRegistrasi}.${qrToken}`;
-
-    // Create registration
-    const { data: registration, error: insertError } = await supabase
-      .from('event_registrations')
-      .insert({
-        event_id: eventId,
-        name,
-        phone: normalizedPhone,
-        email,
-        registration_ip: ip,
-        jumlah_hadir,
-        nomor_registrasi: nomorRegistrasi,
-        qr_token: qrToken,
-        registered_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
-
-    if (insertError) {
-      console.error('Registration insert error:', insertError.message ?? insertError.code ?? 'unknown error');
-      return NextResponse.json({ message: 'Gagal menyimpan pendaftaran.' }, { status: 500 });
-    }
-
-    // Send confirmation email
-    const qrUrl = `${appBaseUrl()}/api/scan-qr/event/${eventId}/qr/${registration.id}?access=${encodeURIComponent(qrToken)}`;
-    const mapsLink = getMapsLink(event.location);
-
-    if (event.email_enabled !== false) {
-      await sendConfirmationEmail(name, normalizedPhone, email, {
-        type: 'Event',
-        phone: normalizedPhone,
-        email,
-        nomor_registrasi: nomorRegistrasi,
-        jumlah_hadir,
-        qr_data: qrData,
-        qr_url: qrUrl,
-        title: event.title,
-        tema: event.tema || null,
-        date: event.event_date,
-        open_gate: event.open_gate,
-        time: event.start_time,
-        location: event.location,
-        maps_link: mapsLink,
-        registered_at: registration.registered_at,
-      });
-    }
-
-    return NextResponse.json({
-      message: 'Pendaftaran berhasil!',
-      email_enabled: event.email_enabled !== false,
-      qr_url: qrUrl,
-      nomor_registrasi: nomorRegistrasi,
-    });
-  } catch (error) {
-    console.error('Registration error:', error instanceof Error ? error.message : 'unknown error');
-    return NextResponse.json(
-      { message: 'Terjadi kesalahan saat memproses pendaftaran.' },
-      { status: 500 }
-    );
-  }
+  return handleRegistration(request, config);
 }

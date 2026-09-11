@@ -124,15 +124,13 @@ export function RegistrantsDetail({ type }: { type: 'event' | 'activity' }) {
         description={isEvent && item?.tema ? `Tema: ${item.tema}` : undefined}
         backHref={`/admin/registrants/${plural}`}
         actions={
-          isEvent ? (
-            <a
-              href={`/api/admin/registrants/events/${item.id}/export`}
-              className="inline-flex items-center gap-2 rounded-xl bg-success/10 px-4 py-2 text-sm font-semibold text-success transition hover:bg-success/20"
-            >
-              <Download className="h-4 w-4" />
-              Export as Excel
-            </a>
-          ) : undefined
+          <a
+            href={`/api/admin/registrants/${plural}/${item.id}/export`}
+            className="inline-flex items-center gap-2 rounded-xl bg-success/10 px-4 py-2 text-sm font-semibold text-success transition hover:bg-success/20"
+          >
+            <Download className="h-4 w-4" />
+            Export as Excel
+          </a>
         }
       />
 

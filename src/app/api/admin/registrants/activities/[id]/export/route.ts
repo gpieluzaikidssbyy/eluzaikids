@@ -4,11 +4,11 @@ import type { RekapExportOptions } from '@/lib/export-rekap';
 export const dynamic = 'force-dynamic';
 
 const options: RekapExportOptions = {
-  entityTable: 'events',
-  entityColumns: 'id, title, tema',
-  registrationTable: 'event_registrations',
-  idColumn: 'event_id',
-  notFoundMessage: 'Event tidak ditemukan.',
+  entityTable: 'activities',
+  entityColumns: 'id, title',
+  registrationTable: 'activity_registrations',
+  idColumn: 'activity_id',
+  notFoundMessage: 'Kegiatan tidak ditemukan.',
   registrationColumns: 'name, phone, email, jumlah_hadir, nomor_registrasi, registered_at',
   sheetName: 'Rekap Pendaftar',
   xlsxColumns: [
@@ -27,8 +27,7 @@ const options: RekapExportOptions = {
     email: row.email || '-',
     jumlahHadir: row.jumlah_hadir,
   }),
-  entityTitle: (entity) =>
-    `Rekap Data Pendaftar #${entity.title}${entity.tema ? ` - ${entity.tema}` : ''}`,
+  entityTitle: (entity) => `Rekap Data Pendaftar #${entity.title}`,
 };
 
 export async function GET(

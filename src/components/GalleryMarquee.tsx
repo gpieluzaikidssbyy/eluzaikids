@@ -1,11 +1,11 @@
-// Placeholder photos (picsum.photos) — swap these URLs with real gallery photos later.
-const ROW_1_PHOTOS = Array.from(
-  { length: 5 },
-  (_, i) => `https://picsum.photos/seed/eluzai-gallery-a-${i + 1}/640/360`
+// Gallery photos are served locally from /public/images/gallery. To update the
+// marquee, replace the files there with real gallery photos (same filenames or
+// update the lists below) — the marquee never loads from remote URLs.
+const ROW_1_PHOTOS = ['a-1', 'a-2', 'a-3', 'a-4', 'a-5'].map(
+  (n) => `/images/gallery/gallery-${n}.jpg`
 );
-const ROW_2_PHOTOS = Array.from(
-  { length: 5 },
-  (_, i) => `https://picsum.photos/seed/eluzai-gallery-b-${i + 1}/640/360`
+const ROW_2_PHOTOS = ['b-1', 'b-2', 'b-3', 'b-4', 'b-5'].map(
+  (n) => `/images/gallery/gallery-${n}.jpg`
 );
 
 // Each row's content is repeated 4x so the -25% translate loops seamlessly.
@@ -45,7 +45,7 @@ export function GalleryMarquee() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="text-center">
             <h2 className="font-display text-2xl font-bold text-slate-900 sm:text-3xl dark:text-slate-100">
-              Gallery Kami
+              Galeri Kami
             </h2>
           <div className="mx-auto mt-3 h-1 w-16 rounded gradient-primary" />
         </div>

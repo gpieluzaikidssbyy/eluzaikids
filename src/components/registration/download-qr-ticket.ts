@@ -83,7 +83,7 @@ export async function downloadQrTicket(
   ctx.stroke();
   ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
 
-  centerText('NO. REGISTRASI', 612, '700 18px Inter, system-ui, sans-serif', '#475569');
+  centerText('NOMOR REGISTRASI', 612, '700 18px Inter, system-ui, sans-serif', '#475569');
 
   let numSize = 44;
   const setNumFont = () => {
@@ -99,7 +99,7 @@ export async function downloadQrTicket(
   centerText('Simpan gambar ini sebagai bukti pendaftaran.', 748, '500 16px Inter, system-ui, sans-serif', '#94a3b8');
 
   const link = document.createElement('a');
-  link.download = `qr-presensi-${nomorRegistrasi}.png`;
+  link.download = `qr-code-presensi-${nomorRegistrasi}.png`;
   link.href = canvas.toDataURL('image/png');
   link.click();
 }

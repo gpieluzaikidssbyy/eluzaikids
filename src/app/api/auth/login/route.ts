@@ -14,6 +14,11 @@ const ipLimiter = new RateLimiter(30, 60 * 1000);
 const MAX_LOGIN_ATTEMPTS = 10;
 const LOCKOUT_MS = 15 * 60 * 1000;
 
+// Set once a PostgREST 42703 ("column does not exist") is observed while
+// selecting login_attempts / locked_until, so the fallback select in POST
+// runs instead without repeating the failing query on every request.
+let lockoutColumnsMissing = false;
+
 export async function POST(request: NextRequest) {
   if (!(await checkCsrf(request))) {
     return NextResponse.json(
@@ -33,7 +38,49 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = createServiceClient();
-  const { data: user } = await supabase.from('users').select('id, name, email, username, password, is_admin, login_attempts, locked_until').eq('username', String(username).slice(0, 64)).eq('is_admin', true).single();
+
+  // The persistent lockout columns were added to schema.sql but can be missing
+  // on databases created before that migration. Detect a missing column and
+  // fall back to the base columns so login keeps working; the run-time lockout
+  // below simply degrades until ALTER TABLE ... ADD COLUMN is applied.
+  const baseSelect = 'id, name, email, username, password, is_admin';
+  const fullSelect = `${baseSelect}, login_attempts, locked_until`;
+
+  interface LoginUser {
+    id: string;
+    name: string;
+    email: string | null;
+    username: string;
+    password: string;
+    is_admin: boolean;
+    login_attempts?: number | null;
+    locked_until?: string | null;
+  }
+
+  const match = (select: string) =>
+    supabase
+      .from('users')
+      .select(select)
+      .eq('username', String(username).slice(0, 64))
+      .eq('is_admin', true);
+
+  let user: LoginUser | null = null;
+  let columnsMissing = lockoutColumnsMissing;
+
+  if (!columnsMissing) {
+    const { data, error } = await match(fullSelect).single();
+    if (error && (error.code === '42703' || /does not exist/.test(error.message))) {
+      lockoutColumnsMissing = true;
+      columnsMissing = true;
+    } else {
+      user = (data as unknown as LoginUser) || null;
+    }
+  }
+
+  if (columnsMissing && !user) {
+    const { data } = await match(baseSelect).single();
+    user = (data as unknown as LoginUser) || null;
+  }
 
   if (user?.locked_until && new Date(user.locked_until).getTime() > Date.now()) {
     return NextResponse.json({ message: 'Terlalu banyak percobaan login. Silakan coba lagi nanti.' }, { status: 423 });

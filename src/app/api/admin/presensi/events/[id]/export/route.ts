@@ -5,30 +5,25 @@ export const dynamic = 'force-dynamic';
 
 const options: RekapExportOptions = {
   entityTable: 'events',
-  entityColumns: 'id, title, tema',
+  entityColumns: 'id, title',
   registrationTable: 'event_registrations',
   idColumn: 'event_id',
   notFoundMessage: 'Event tidak ditemukan.',
-  registrationColumns: 'name, phone, email, jumlah_hadir, nomor_registrasi, registered_at',
-  sheetName: 'Rekap Pendaftar',
+  registrationColumns: 'name, nomor_registrasi, hadir, registered_at',
+  sheetName: 'Rekap Kehadiran',
   xlsxColumns: [
     { header: 'No', key: 'no', width: 6 },
     { header: 'No. Registrasi', key: 'nomorRegistrasi', width: 18 },
     { header: 'Nama lengkap', key: 'name', width: 32 },
-    { header: 'No. HP', key: 'phone', width: 18 },
-    { header: 'Email', key: 'email', width: 30 },
-    { header: 'Jumlah hadir', key: 'jumlahHadir', width: 12 },
+    { header: 'Status kehadiran', key: 'status', width: 18 },
   ],
   mapRow: (row, index) => ({
     no: index + 1,
     nomorRegistrasi: row.nomor_registrasi,
     name: row.name,
-    phone: row.phone,
-    email: row.email || '-',
-    jumlahHadir: row.jumlah_hadir,
+    status: row.hadir ? 'Hadir' : 'Tidak hadir',
   }),
-  entityTitle: (entity) =>
-    `Rekap Data Pendaftar #${entity.title}${entity.tema ? ` - ${entity.tema}` : ''}`,
+  entityTitle: (entity) => `Rekap Kehadiran ${entity.title}`,
 };
 
 export async function GET(

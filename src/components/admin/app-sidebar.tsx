@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -31,6 +31,31 @@ export function AppSidebar({
 }: AppSidebarProps) {
   const pathname = usePathname();
   const [isHovered, setIsHovered] = useState(false);
+  const asideRef = useRef<HTMLElement | null>(null);
+  const navRef = useRef<HTMLElement | null>(null);
+  const hoveredRef = useRef(isHovered);
+  const mobileOpenRef = useRef(mobileOpen);
+  hoveredRef.current = isHovered;
+  mobileOpenRef.current = mobileOpen;
+
+  useEffect(() => {
+    const aside = asideRef.current;
+    const nav = navRef.current;
+    if (!aside) return;
+    const onWheel = (event: WheelEvent) => {
+      if (!hoveredRef.current || mobileOpenRef.current) return;
+      // Native scroll already handles wheel rolls that start inside the nav.
+      if (nav && event.target instanceof Node && nav.contains(event.target)) return;
+      event.preventDefault();
+      if (!nav) return;
+      const max = nav.scrollHeight - nav.clientHeight;
+      if (max <= 0) return;
+      const delta = event.deltaMode === 1 ? event.deltaY * 16 : event.deltaY;
+      nav.scrollTop = Math.min(Math.max(nav.scrollTop + delta, 0), max);
+    };
+    aside.addEventListener('wheel', onWheel, { passive: false });
+    return () => aside.removeEventListener('wheel', onWheel);
+  }, []);
 
   /* Hover state: mobile drawer always renders expanded */
   const expanded = mobileOpen || isHovered;
@@ -102,9 +127,9 @@ export function AppSidebar({
   );
 
   const SidebarContent = (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full min-h-0 flex-col">
       {/* ─── Nav ─── */}
-      <nav className={cn('flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin transition-all duration-300', expanded ? 'space-y-5 px-3 py-5' : 'space-y-4 px-2 py-4')}>
+      <nav ref={navRef} className={cn('min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain scrollbar-thin transition-all duration-300', expanded ? 'space-y-5 px-3 py-5' : 'space-y-4 px-2 py-4')}>
         {navGroups.map((group) => (
           <div key={group.label}>
             {renderGroupLabel(group.label)}
@@ -149,6 +174,7 @@ export function AppSidebar({
 
   return (
     <aside
+      ref={asideRef}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className={cn(

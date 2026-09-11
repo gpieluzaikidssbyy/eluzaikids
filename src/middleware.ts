@@ -19,6 +19,17 @@ function generateNonce(): string {
 }
 
 /**
+ * Next.js 14 only reads the nonce for stamping its own inline scripts
+ * (`self.__next_f` hydration chunks) from the *request's*
+ * `Content-Security-Policy` header — the `x-nonce` header is never consulted
+ * by this version. So the CSP must be forwarded as a request header too;
+ * otherwise every inline script is rendered without a nonce while the response
+ * CSP demands `'nonce-...'`, and the browser blocks them all (blank client
+ * pages, e.g. the admin panel).
+ */
+const CSP_HEADER_NAME = 'Content-Security-Policy';
+
+/**
  * Strict CSP in production: script-src allows 'self' plus reCAPTCHA hosts and
  * relies on nonces for every inline script. Next.js stamps its own inline
  * scripts with the nonce from the `x-nonce` request header. Dev mode keeps
@@ -70,10 +81,13 @@ async function getAdminSession(request: NextRequest): Promise<{ authenticated: b
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const nonce = generateNonce();
+  const csp = buildContentSecurityPolicy(nonce);
 
-  // Propagate the nonce so Next.js stamps its own inline scripts with it.
+  // Propagate the nonce AND the CSP so Next.js stamps its own inline scripts
+  // with the same nonce (Next 14 reads the nonce out of the request CSP).
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-nonce', nonce);
+  requestHeaders.set(CSP_HEADER_NAME, csp);
   const passThrough = () => NextResponse.next({ request: { headers: requestHeaders } });
 
   const isAdminPage = pathname === '/admin' || pathname.startsWith('/admin/');
@@ -124,7 +138,7 @@ export async function middleware(request: NextRequest) {
     response = passThrough();
   }
 
-  response.headers.set('Content-Security-Policy', buildContentSecurityPolicy(nonce));
+  response.headers.set(CSP_HEADER_NAME, csp);
   return response;
 }
 

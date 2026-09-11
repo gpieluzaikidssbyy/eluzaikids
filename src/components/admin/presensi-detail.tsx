@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { QrCode, Shield, CheckCircle2, XCircle, ExternalLink, Users, Search } from 'lucide-react';
+import { QrCode, Shield, CheckCircle2, XCircle, ExternalLink, Users, Search, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -103,6 +103,15 @@ export function PresensiDetail({ type }: { type: 'event' | 'activity' }) {
         title={`Presensi: ${item.title}`}
         description={item.location || ''}
         backHref={`/admin/presensi/${plural}`}
+        actions={
+          <a
+            href={`/api/admin/presensi/${type}/${params.id}/export`}
+            className="inline-flex items-center gap-2 rounded-xl bg-success/10 px-4 py-2 text-sm font-semibold text-success transition hover:bg-success/20"
+          >
+            <Download className="h-4 w-4" />
+            Export as Excel
+          </a>
+        }
       />
 
       <motion.div

@@ -1,169 +1,20 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createServiceClient } from '@/lib/supabase';
-import { registrationSchema } from '@/lib/validations';
-import {
-  normalizePhone,
-  generateNomorRegistrasi,
-  generateQrToken,
-  isRegistrationOpen,
-  duplicateExists,
-  verifyRecaptcha,
-  getMapsLink,
-  appBaseUrl,
-} from '@/lib/helpers';
-import { sendConfirmationEmail } from '@/lib/email';
-import { checkCsrf } from '@/lib/csrf';
-import { RateLimiter } from '@/lib/rateLimit';
-import { getClientIp } from '@/lib/ip';
+import { NextRequest } from 'next/server';
+import { handleRegistration } from '@/lib/register';
+import type { RegistrationConfig } from '@/lib/register';
 
-const registrationLimiter = new RateLimiter(10, 60 * 1000);
+const config: RegistrationConfig = {
+  entityTable: 'activities',
+  registrationTable: 'activity_registrations',
+  idColumn: 'activity_id',
+  typeParam: 'activity',
+  typeLabel: 'Activity',
+  dateField: 'activity_date',
+  notFoundMessage: 'Kegiatan tidak ditemukan.',
+  quotaFullMessage: 'Kuota pendaftaran untuk kegiatan ini sudah penuh.',
+  duplicateMessage: 'Data serupa (IP, nama, nomor HP, atau email) sudah terdaftar untuk kegiatan tersebut.',
+  hasEventExtras: false,
+};
 
 export async function POST(request: NextRequest) {
-  // CSRF protection: validate token from header against cookie
-  if (!(await checkCsrf(request))) {
-    return NextResponse.json(
-      { message: 'Validasi CSRF gagal. Silakan refresh halaman dan coba lagi.' },
-      { status: 403 }
-    );
-  }
-
-  const ip = getClientIp(request);
-
-  if (!registrationLimiter.check(ip)) {
-    return NextResponse.json(
-      { message: 'Terlalu banyak permintaan. Silakan coba lagi nanti.' },
-      { status: 429 }
-    );
-  }
-
-  try {
-    const body = await request.json();
-
-    const result = registrationSchema.safeParse(body);
-    if (!result.success) {
-      const errors: Record<string, string> = {};
-      result.error.issues.forEach((issue) => {
-        errors[issue.path.join('.')] = issue.message;
-      });
-      return NextResponse.json({ errors }, { status: 422 });
-    }
-
-    const { name, phone, email, jumlah_hadir, honeypot, id: activityId, 'g-recaptcha-response': recaptchaToken } = result.data;
-
-    if (honeypot) {
-      return NextResponse.json({ message: 'Pendaftaran berhasil.' });
-    }
-
-    const captchaValid = await verifyRecaptcha(recaptchaToken);
-    if (!captchaValid) {
-      return NextResponse.json(
-        { errors: { 'g-recaptcha-response': 'Verifikasi captcha gagal.' } },
-        { status: 422 }
-      );
-    }
-
-    const supabase = createServiceClient();
-
-    const { data: activity } = await supabase
-      .from('activities')
-      .select('*')
-      .eq('id', activityId)
-      .single();
-
-    if (!activity) {
-      return NextResponse.json({ message: 'Kegiatan tidak ditemukan.' }, { status: 404 });
-    }
-
-    if (!isRegistrationOpen(activity.activity_date, null)) {
-      return NextResponse.json({ message: 'Pendaftaran sudah ditutup.' }, { status: 403 });
-    }
-
-    const { count: registeredCount } = await supabase
-      .from('activity_registrations')
-      .select('*', { count: 'exact', head: true })
-      .eq('activity_id', activityId);
-
-    if (activity.quota && (registeredCount ?? 0) >= activity.quota) {
-      return NextResponse.json({ message: 'Kuota pendaftaran untuk kegiatan ini sudah penuh.' }, { status: 403 });
-    }
-
-    const normalizedPhone = normalizePhone(phone);
-    const isDuplicate = await duplicateExists(
-      'activity_registrations',
-      'activity_id',
-      activityId,
-      normalizedPhone,
-      email,
-      name,
-      ip,
-    );
-
-    if (isDuplicate) {
-      return NextResponse.json(
-        { errors: { phone: 'Data serupa (IP, nama, nomor HP, atau email) sudah terdaftar untuk kegiatan tersebut.' } },
-        { status: 422 }
-      );
-    }
-
-    const nomorRegistrasi = await generateNomorRegistrasi('activity', activityId);
-    const qrToken = generateQrToken();
-    const qrData = `${nomorRegistrasi}.${qrToken}`;
-
-    const { data: registration, error: insertError } = await supabase
-      .from('activity_registrations')
-      .insert({
-        activity_id: activityId,
-        name,
-        phone: normalizedPhone,
-        email,
-        registration_ip: ip,
-        jumlah_hadir,
-        nomor_registrasi: nomorRegistrasi,
-        qr_token: qrToken,
-        registered_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
-
-    if (insertError) {
-      console.error('Registration insert error:', insertError.message ?? insertError.code ?? 'unknown error');
-      return NextResponse.json({ message: 'Gagal menyimpan pendaftaran.' }, { status: 500 });
-    }
-
-    const qrUrl = `${appBaseUrl()}/api/scan-qr/activity/${activityId}/qr/${registration.id}?access=${encodeURIComponent(qrToken)}`;
-    const mapsLink = getMapsLink(activity.location);
-
-    if (activity.email_enabled !== false) {
-      await sendConfirmationEmail(name, normalizedPhone, email, {
-        type: 'Activity',
-        phone: normalizedPhone,
-        email,
-        nomor_registrasi: nomorRegistrasi,
-        jumlah_hadir,
-        qr_data: qrData,
-        qr_url: qrUrl,
-        title: activity.title,
-        tema: null,
-        date: activity.activity_date,
-        open_gate: null,
-        time: activity.start_time,
-        location: activity.location,
-        maps_link: mapsLink,
-        registered_at: registration.registered_at,
-      });
-    }
-
-    return NextResponse.json({
-      message: 'Pendaftaran berhasil!',
-      email_enabled: activity.email_enabled !== false,
-      qr_url: qrUrl,
-      nomor_registrasi: nomorRegistrasi,
-    });
-  } catch (error) {
-    console.error('Registration error:', error instanceof Error ? error.message : 'unknown error');
-    return NextResponse.json(
-      { message: 'Terjadi kesalahan saat memproses pendaftaran.' },
-      { status: 500 }
-    );
-  }
+  return handleRegistration(request, config);
 }

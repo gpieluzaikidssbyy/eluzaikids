@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase';
 import { requireAdmin } from '@/lib/guards';
-import { escapeHtml, safeFilename } from '@/lib/sanitize';
+import { safeFilename } from '@/lib/sanitize';
+import { buildXlsxBuffer, xlsxResponse } from '@/lib/xlsx';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,31 +42,28 @@ export async function GET(request: NextRequest) {
 
   const status = new Map((attendance || []).map((row) => [row.member_id, row.is_present]));
   const rows = (members || []).map((member, index) => ({
-    no: index + 1,
     className: member.class,
+    no: index + 1,
     name: member.name,
-    isPresent: status.get(member.id) === true,
+    isPresent: status.get(member.id) === true ? 'Hadir' : 'Tidak hadir',
   }));
+
+  const columns = className
+    ? [
+        { header: 'No', key: 'no', width: 6 },
+        { header: 'Nama anak', key: 'name', width: 32 },
+        { header: 'Status kehadiran', key: 'isPresent', width: 18 },
+      ]
+    : [
+        { header: 'Kelas', key: 'className', width: 16 },
+        { header: 'No', key: 'no', width: 6 },
+        { header: 'Nama anak', key: 'name', width: 32 },
+        { header: 'Status kehadiran', key: 'isPresent', width: 18 },
+      ];
+
+  const buffer = await buildXlsxBuffer('Rekap Kehadiran', columns, rows);
+
   const title = className ? `Rekap Kehadiran ${className}` : 'Rekap Kehadiran';
   const dateLabel = formatDate(date);
-  const filename = `${safeFilename(title)} ${safeFilename(dateLabel)}.xls`;
-  const html = `
-    <html><head><meta charset="UTF-8"></head><body>
-      <h2>${escapeHtml(title)}</h2>
-      <p>${escapeHtml(formatDate(date))}</p>
-      <table border="1">
-        <thead><tr>${className ? '' : '<th>Kelas</th>'}<th>No</th><th>Nama anak</th><th>Status kehadiran</th></tr></thead>
-        <tbody>
-          ${rows.map((row) => `<tr>${className ? '' : `<td>${escapeHtml(row.className)}</td>`}<td>${row.no}</td><td>${escapeHtml(row.name)}</td><td>${row.isPresent ? 'Hadir' : 'Tidak hadir'}</td></tr>`).join('')}
-        </tbody>
-      </table>
-    </body></html>
-  `;
-
-  return new NextResponse(html, {
-    headers: {
-      'Content-Type': 'application/vnd.ms-excel; charset=utf-8',
-      'Content-Disposition': `attachment; filename="${filename}"`,
-    },
-  });
+  return xlsxResponse(buffer, `${safeFilename(title)} ${safeFilename(dateLabel)}.xlsx`);
 }
