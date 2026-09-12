@@ -37,7 +37,7 @@ export default function CreateMemberPage() {
     >
       <PageHeader
         icon={<UserPlus className="h-6 w-6" />}
-        title="Tambah Anak"
+        title="Tambahkan Nama Anak"
         description="Daftarkan anak baru ke dalam sistem."
         backHref="/admin/members"
       />

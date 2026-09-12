@@ -37,7 +37,7 @@ export default function EditSchedulePage() {
         time: form.get('time'),
         type: form.get('type'),
         description: form.get('description') || null,
-        show_schedule: schedule?.show_schedule ?? true,
+        show_schedule: form.get('show_schedule') === 'true',
       }),
     });
     router.push('/admin/schedules');
@@ -87,10 +87,38 @@ export default function EditSchedulePage() {
                 </Select>
               </div>
 
+              <div className="space-y-2">
+                <Label className="field-label">Ada / Tidak ada</Label>
+                <div className="flex items-center gap-4">
+                  <Label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="show_schedule"
+                      value="true"
+                      defaultChecked={schedule.show_schedule !== false}
+                      className="h-4 w-4 border-slate-300 text-primary focus:ring-primary"
+                      onChange={() => {}}
+                    />
+                    <span className="text-sm font-medium">Ada</span>
+                  </Label>
+                  <Label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="show_schedule"
+                      value="false"
+                      defaultChecked={schedule.show_schedule === false}
+                      className="h-4 w-4 border-slate-300 text-primary focus:ring-primary"
+                      onChange={() => {}}
+                    />
+                    <span className="text-sm font-medium">Tidak ada</span>
+                  </Label>
+                </div>
+              </div>
+
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="time" className="field-label">Jam <span className="text-destructive">*</span></Label>
-                  <Input type="time" id="time" name="time" required defaultValue={schedule.time?.slice(0, 5)} className="rounded-lg" />
+                  <Input type="time" id="time" name="time" required defaultValue={schedule.time?.slice(0, 5)} className="rounded-lg" disabled={schedule.show_schedule === false} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="type" className="field-label">Tipe <span className="text-destructive">*</span></Label>
@@ -99,6 +127,23 @@ export default function EditSchedulePage() {
                     <option value="Latihan">Latihan</option>
                   </Select>
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="show_schedule" className="field-label">Tampilkan di Website</Label>
+                <div className="flex items-center gap-4">
+                  <Label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="show_schedule" value="true" defaultChecked={schedule.show_schedule !== false} className="h-4 w-4 border-slate-300 text-primary focus:ring-primary" />
+                    <span>Ada</span>
+                  </Label>
+                  <Label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="show_schedule" value="false" defaultChecked={schedule.show_schedule === false} className="h-4 w-4 border-slate-300 text-primary focus:ring-primary" />
+                    <span>Tidak ada</span>
+                  </Label>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {schedule.show_schedule !== false ? 'Jadwal ini ditampilkan di website.' : 'Jadwal ini disembunyikan dari website.'}
+                </p>
               </div>
 
               <div className="space-y-2">

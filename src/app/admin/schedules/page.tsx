@@ -68,7 +68,7 @@ export default function AdminSchedulesPage() {
               <TableHead className="table-heading">Tanggal</TableHead>
               <TableHead className="table-heading">Kategori</TableHead>
               <TableHead className="table-heading">Pukul</TableHead>
-              <TableHead className="table-heading text-center">Status</TableHead>
+              <TableHead className="table-heading text-center">Tampil</TableHead>
               <TableHead className="table-heading w-[120px]">Aksi</TableHead>
             </TableRow>
           </TableHeader>
@@ -85,14 +85,14 @@ export default function AdminSchedulesPage() {
                 <TableCell className="table-cell">{s.time?.slice(0, 5)} WIB</TableCell>
                 <TableCell className="table-cell text-center">
                   {s.show_schedule !== false ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-2.5 py-1 text-xs font-semibold text-success">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-green-500/10 px-2.5 py-1 text-xs font-semibold text-green-700 dark:bg-green-900/40 dark:text-green-300">
                       <CheckCircle className="h-3 w-3" />
                       Ada
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-destructive/10 px-2.5 py-1 text-xs font-semibold text-destructive">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/10 px-2.5 py-1 text-xs font-semibold text-red-700 dark:bg-red-900/40 dark:text-red-300">
                       <XCircle className="h-3 w-3" />
-                      Tidak
+                      Tidak ada
                     </span>
                   )}
                 </TableCell>

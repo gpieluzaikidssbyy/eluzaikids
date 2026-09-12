@@ -100,6 +100,32 @@ export default function CreateEventPage() {
             </CardContent>
           </Card>
 
+          {/* ─── Tampilkan di Website ─── */}
+          <Card className="rounded-lg border border-border/60 bg-card shadow-sm">
+            <CardHeader className="flex flex-row items-start gap-4 space-y-0 border-b border-border/40 px-6 py-5">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#ECF3FF] text-[#465FFF]">
+                <Info className="h-5 w-5" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Visibilitas</CardTitle>
+                <CardDescription>Tampilkan atau sembunyikan event di website.</CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent className="px-6 py-6">
+              <div className="space-y-3">
+                <Label className="flex items-center gap-3 cursor-pointer">
+                  <input type="radio" name="show_event" value="true" defaultChecked className="h-4 w-4 border-slate-300 text-primary focus:ring-primary" />
+                  <span className="text-sm font-medium">Tampilkan (show)</span>
+                </Label>
+                <Label className="flex items-center gap-3 cursor-pointer">
+                  <input type="radio" name="show_event" value="false" className="h-4 w-4 border-slate-300 text-primary focus:ring-primary" />
+                  <span className="text-sm font-medium">Sembunyikan (hide)</span>
+                </Label>
+                <p className="text-xs text-muted-foreground">Event akan ditampilkan di website kecuali disembunyikan.</p>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* ─── Jadwal & lokasi ─── */}
           <Card className="rounded-lg border border-border/60 bg-card shadow-sm">
             <CardHeader className="flex flex-row items-start gap-4 space-y-0 border-b border-border/40 px-6 py-5">

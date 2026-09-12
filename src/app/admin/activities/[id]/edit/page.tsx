@@ -43,6 +43,7 @@ export default function EditActivityPage() {
           map_embed_url: form.get('map_embed_url') || null,
           drive_link: form.get('drive_link') || null,
           email_enabled: form.get('email_enabled') === 'on',
+          show_activity: form.get('show_activity') === 'true',
         }),
       });
       if (!response.ok) { const d = await response.json(); const msg = d.message || 'Gagal menyimpan.'; setError(msg); toast.error(msg); return; }
@@ -98,6 +99,48 @@ export default function EditActivityPage() {
               <div className="space-y-2">
                 <Label htmlFor="description" className="field-label">Deskripsi <span className="text-destructive">*</span></Label>
                 <Textarea id="description" name="description" rows={4} required defaultValue={activity.description || ''} className="rounded-lg" />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* ─── Tampilkan di Website ─── */}
+          <Card className="rounded-lg border border-border/60 bg-card shadow-sm">
+            <CardHeader className="flex flex-row items-start gap-4 space-y-0 border-b border-border/40 px-6 py-5">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#ECF3FF] text-[#465FFF]">
+                <Info className="h-5 w-5" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Visibilitas</CardTitle>
+                <CardDescription>Tampilkan atau sembunyikan kegiatan di website.</CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent className="px-6 py-6">
+              <div className="space-y-3">
+                <Label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="show_activity"
+                    value="true"
+                    defaultChecked={activity.show_activity !== false}
+                    className="h-4 w-4 border-slate-300 text-primary focus:ring-primary"
+                  />
+                  <span className="text-sm font-medium">Tampilkan (show)</span>
+                </Label>
+                <Label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="show_activity"
+                    value="false"
+                    defaultChecked={activity.show_activity === false}
+                    className="h-4 w-4 border-slate-300 text-primary focus:ring-primary"
+                  />
+                  <span className="text-sm font-medium">Sembunyikan (hide)</span>
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  {activity.show_activity !== false
+                    ? 'Kegiatan ini ditampilkan di website.' 
+                    : 'Kegiatan ini disembunyikan dari website.'}
+                </p>
               </div>
             </CardContent>
           </Card>

@@ -262,8 +262,16 @@ export function CalendarGrid({ events, loading, viewDate, onViewDateChange, onSe
                       title={e.type === 'internal' ? `${e.title} (Agenda)` : e.title}
                       onClick={(ev) => {
                         ev.stopPropagation();
-                        if (e.type === 'internal') onInternalClick?.(e);
-                        else window.location.href = e.href;
+                        // Do not navigate directly from the grid: pressing a date
+                        // (or its chip) opens the day-list popup instead. Direct
+                        // links stay only where no day popup exists (dashboard).
+                        if (onSelectDay) {
+                          onSelectDay(cell.year, cell.month, cell.day);
+                        } else if (e.type === 'internal') {
+                          onInternalClick?.(e);
+                        } else {
+                          window.location.href = e.href;
+                        }
                       }}
                       className={cn(
                         'block w-full truncate rounded px-1 py-px text-[8px] font-medium transition-opacity hover:opacity-80 sm:px-1.5 sm:py-0.5 sm:text-[10px] md:text-[11px]',

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTheme } from './ThemeToggle';
 
 const navLinks = [
@@ -18,6 +18,30 @@ export function Navbar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const navRef = useRef<HTMLElement>(null);
+
+  // Tutup menu saat klik/tap di luar navbar, atau saat tekan Escape.
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handlePointerDown = (e: PointerEvent) => {
+      if (navRef.current && !navRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen]);
 
   if (pathname.startsWith('/admin') || pathname.startsWith('/scan-qr')) {
     return null;
@@ -36,7 +60,7 @@ export function Navbar() {
   );
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 dark:border-slate-700 dark:bg-slate-900/95">
+    <nav ref={navRef} className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 dark:border-slate-700 dark:bg-slate-900/95">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
@@ -48,7 +72,7 @@ export function Navbar() {
             className="h-10 w-10 object-contain"
           />
           <span className="font-display text-lg font-bold text-slate-900 dark:text-white">
-            Eluzai Kids
+            GPI Eluzai Kids
           </span>
         </Link>
 
@@ -98,9 +122,9 @@ export function Navbar() {
         </div>
       </div>
 
-      {/* Mobile menu */}
+      {/* Mobile menu (overlay, tidak mendorong konten halaman) */}
       {isOpen && (
-        <div className="border-t border-slate-200 bg-white px-4 pb-4 dark:border-slate-700 dark:bg-slate-900 md:hidden">
+        <div className="eluzai-menu-reveal absolute left-0 right-0 top-full z-50 border-t border-slate-200 bg-white px-4 pb-4 pt-2 shadow-lg dark:border-slate-700 dark:bg-slate-900 md:hidden">
           {navLinks.map((link) => (
             <Link
               key={link.href}

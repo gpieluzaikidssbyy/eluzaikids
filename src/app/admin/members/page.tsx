@@ -3,17 +3,20 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Users, UserPlus, Pencil, Trash2, Loader2 } from 'lucide-react';
-import type { Member } from '@/lib/types';
-import { MEMBER_CLASSES, CLASS_STYLES, getInitials } from '@/lib/helpers';
+import { Plus, Pencil, Trash2, Eye, Loader2, Users } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
+import type { Member } from '@/lib/types';
+import { MEMBER_CLASSES, CLASS_STYLES } from '@/lib/helpers';
 import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/admin/page-header';
 import { Loading } from '@/components/admin/loading';
 import { ConfirmDialog } from '@/components/admin/confirm-dialog';
+import { EmptyState } from '@/components/admin/empty-state';
+import { ClassAvatar } from '@/components/ClassAvatar';
 
 export default function AdminChildsPage() {
   const [members, setMembers] = useState<Member[]>([]);
@@ -21,6 +24,7 @@ export default function AdminChildsPage() {
   const [selectedClass, setSelectedClass] = useState<string>(MEMBER_CLASSES[0]);
   const [name, setName] = useState('');
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
   const fetchData = () => {
     fetch('/api/admin/members').then((r) => r.json()).then((d) => { setMembers(d); setLoading(false); });
@@ -36,14 +40,25 @@ export default function AdminChildsPage() {
     event.preventDefault();
     if (!name.trim()) return;
     setSaving(true);
-    await fetch('/api/admin/members', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: name.trim(), class: selectedClass }),
-    });
-    setName('');
-    setSaving(false);
-    fetchData();
+    setError('');
+    try {
+      const response = await fetch('/api/admin/members', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name.trim(), class: selectedClass }),
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Gagal menambahkan anak.');
+      }
+      setName('');
+      fetchData();
+    } catch (addError) {
+      const msg = addError instanceof Error ? addError.message : 'Gagal menambahkan nama anak.';
+      setError(msg);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const classMembers = members.filter((member) => member.class === selectedClass);
@@ -59,11 +74,12 @@ export default function AdminChildsPage() {
     >
       <PageHeader
         icon={<Users className="h-6 w-6" />}
+        iconClassName="bg-gradient-to-br from-blue-500 to-pink-500 text-white"
         title="Manage Childs"
         description="Kelola anak-anak yang terdaftar per kelas."
         actions={
-          <Button size="sm" onClick={() => document.getElementById('quick-add-name')?.focus()}>
-            <UserPlus className="mr-2 h-4 w-4" />
+          <Button onClick={() => document.getElementById('quick-add-name')?.focus()} className="bg-blue-600 text-white hover:bg-blue-700">
+            <Plus className="mr-2 h-4 w-4" />
             Tambah Anggota
           </Button>
         }
@@ -73,7 +89,7 @@ export default function AdminChildsPage() {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, delay: 0.08 }}
-        className="grid grid-cols-2 gap-4 sm:grid-cols-4"
+        className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4"
       >
         {MEMBER_CLASSES.map((memberClass) => {
           const count = members.filter((member) => member.class === memberClass).length;
@@ -85,16 +101,19 @@ export default function AdminChildsPage() {
               type="button"
               onClick={() => setSelectedClass(memberClass)}
               className={cn(
-                'relative overflow-hidden rounded-xl border-2 p-4 text-left shadow-card transition-all duration-300 hover:border-primary/40 hover:shadow-md',
+                'relative overflow-hidden rounded-xl border-2 p-3 text-left shadow-card transition-all duration-300 hover:border-primary/40 hover:shadow-md sm:p-4',
                 isActive ? cn(style.active, 'shadow-md') : 'border-border bg-card hover:border-border/80'
               )}
             >
               <div className={cn('absolute inset-x-0 top-0 h-1 bg-gradient-to-r', style.bar)} />
-              <div className="flex items-center justify-between gap-2">
-                <p className="font-display text-base font-bold text-foreground">{memberClass}</p>
-                {isActive && <span className="text-[10px] font-medium text-primary">Terpilih</span>}
+              <div className="flex items-center gap-2.5">
+                <ClassAvatar memberClass={memberClass} className="h-10 w-10 rounded-lg" />
+                <div className="min-w-0">
+                  <p className="truncate font-display text-sm font-bold text-foreground sm:text-base">{memberClass}</p>
+                  <span className={cn('mt-0.5 block text-[11px] font-semibold sm:text-xs', style.badgeText)}>{count} anak</span>
+                </div>
               </div>
-              <span className={cn('mt-2 inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold', style.badge)}>{count} anak</span>
+              {isActive && <span className="absolute right-2 top-2 text-[10px] font-medium text-primary">Terpilih</span>}
             </button>
           );
         })}
@@ -103,81 +122,76 @@ export default function AdminChildsPage() {
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, delay: 0.16 }}
-        className="grid gap-4 sm:grid-cols-2"
-      >
-        <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-4 shadow-card">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-blue-700 text-primary-foreground shadow-lg shadow-primary/20">
-            <Users className="h-5 w-5" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-foreground">{members.length}</p>
-            <p className="text-xs font-medium text-muted-foreground">Total Anak</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-4 shadow-card">
-          <div className={cn('flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-lg', CLASS_STYLES[selectedClass]?.gradient ?? 'from-primary to-blue-700')}>
-            <Users className="h-5 w-5" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-foreground">{classMembers.length}</p>
-            <p className="text-xs font-medium text-muted-foreground">Anak di kelas {selectedClass}</p>
-          </div>
-        </div>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, delay: 0.24 }}
         className="grid gap-6 lg:grid-cols-[1fr_20rem]"
       >
-        <div className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-card">
-          <div className="flex items-center justify-between border-b border-border/60 px-6 py-4">
-            <h2 className="font-display text-lg font-bold text-foreground">Childs kelas {selectedClass}</h2>
+        {/* ─── Members table (horizontally scrollable like manage event/activity) ─── */}
+        <div className="overflow-x-auto rounded-xl border border-border/60 bg-card shadow-card">
+          <div className="flex items-center justify-between gap-3 border-b border-border/60 px-4 py-4 sm:px-6">
+            <h2 className="font-display text-base font-bold text-foreground sm:text-lg">Kelas {selectedClass}</h2>
             <Badge variant="secondary">{classMembers.length}</Badge>
           </div>
-          <ul className="divide-y divide-border/60">
-            {classMembers.map((member, index) => (
-              <li key={member.id} className="flex items-center gap-3 px-6 py-3.5 transition-colors hover:bg-accent/50">
-                <span className="w-6 shrink-0 text-center text-sm text-muted-foreground">{index + 1}</span>
-                <span className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white bg-gradient-to-br', CLASS_STYLES[member.class].bar)}>
-                  {getInitials(member.name)}
-                </span>
-                <span className="min-w-0 flex-1 truncate font-medium text-foreground">{member.name}</span>
-                <span className="flex shrink-0 gap-2">
-                  <Link href={`/admin/members/${member.id}/edit`} className="inline-flex items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/20">
-                    <Pencil className="h-3.5 w-3.5" />
-                    Edit
-                  </Link>
-                  <ConfirmDialog
-                    title="Hapus Anggota?"
-                    description={`Yakin ingin menghapus ${member.name}?`}
-                    confirmLabel="Hapus"
-                    onConfirm={() => handleDelete(member.id)}
-                    trigger={
-                      <button className="inline-flex items-center gap-1.5 rounded-lg bg-destructive/10 px-3 py-1.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/20">
-                        <Trash2 className="h-3.5 w-3.5" />
-                        Hapus
-                      </button>
-                    }
-                  />
-                </span>
-              </li>
-            ))}
-            {!classMembers.length && (
-              <li className="px-6 py-12 text-center text-sm text-muted-foreground">
-                Belum ada anak di kelas ini.
-              </li>
-            )}
-          </ul>
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/40">
+                <TableHead className="table-heading w-12">No</TableHead>
+                <TableHead className="table-heading">Nama</TableHead>
+                <TableHead className="table-heading">Kelas</TableHead>
+                <TableHead className="table-heading text-right">Aksi</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {classMembers.map((member, index) => (
+                <TableRow key={member.id} className="hover:bg-muted/30">
+                  <TableCell className="table-cell text-muted-foreground">{index + 1}</TableCell>
+                  <TableCell className="table-cell">
+                    <div className="flex items-center gap-3">
+                      <ClassAvatar memberClass={member.class} className="h-9 w-9 rounded-full" />
+                      <span className="font-medium text-foreground">{member.name}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="table-cell">
+                    <Badge variant="secondary" className={cn('rounded-full', CLASS_STYLES[member.class].badge)}>{member.class}</Badge>
+                  </TableCell>
+                  <TableCell className="table-cell text-right">
+                    <div className="flex justify-end gap-1.5">
+                      <Button asChild variant="ghost" size="icon" className="h-8 w-8 text-violet-600 hover:bg-violet-50 hover:text-violet-700 dark:text-violet-400 dark:hover:bg-violet-950/40">
+                        <Link href={`/admin/members/${member.id}/edit`}>
+                          <Pencil className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                      <ConfirmDialog
+                        title="Hapus Anggota?"
+                        description={`Yakin ingin menghapus ${member.name}?`}
+                        confirmLabel="Hapus"
+                        onConfirm={() => handleDelete(member.id)}
+                        trigger={
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/40">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        }
+                      />
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          {!classMembers.length && (
+            <EmptyState
+              icon={Users}
+              title="Belum ada anak di kelas ini"
+              description="Tambahkan anak lewat form di samping atau tombol Tambah Anggota."
+              className="border-t"
+            />
+          )}
         </div>
 
-        <form onSubmit={addMember} className="h-fit rounded-xl border border-border/60 bg-card p-6 shadow-card">
+        <form onSubmit={addMember} className="h-fit rounded-xl border border-border/60 bg-card p-5 shadow-card sm:p-6">
           <h2 className="font-display text-lg font-bold text-foreground">Add Child</h2>
           <p className="mt-1 text-sm text-muted-foreground">Tambahkan anak ke kelas {selectedClass}.</p>
           <div className="mt-5 space-y-2">
-            <Label htmlFor="quick-add-name">Nama lengkap <span className="text-destructive">*</span></Label>
+            <Label htmlFor="quick-add-name">Nama Lengkap <span className="text-destructive">*</span></Label>
             <Input
               id="quick-add-name"
               value={name}
@@ -186,7 +200,8 @@ export default function AdminChildsPage() {
               placeholder="Nama anak"
             />
           </div>
-          <Button type="submit" disabled={saving} className="mt-4 w-full">
+          {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
+          <Button type="submit" disabled={saving} className="mt-4 w-full bg-blue-600 text-white hover:bg-blue-700">
             {saving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -194,7 +209,7 @@ export default function AdminChildsPage() {
               </>
             ) : (
               <>
-                <UserPlus className="mr-2 h-4 w-4" />
+                <Plus className="mr-2 h-4 w-4" />
                 Save Child
               </>
             )}

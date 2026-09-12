@@ -113,11 +113,11 @@ export default function AdminCalendarPage() {
   };
 
   const handleDayItemClick = (e: CalendarEventItem) => {
+    // Event/activity items are display-only inside the day popup (no direct
+    // navigation); only internal agendas open the edit dialog.
     if (e.type === 'internal') {
       closeDay();
       openEdit(e);
-    } else if (e.href) {
-      window.location.href = e.href;
     }
   };
 
@@ -326,46 +326,67 @@ export default function AdminCalendarPage() {
               </div>
             ) : (
               dayItems.map((e) => (
-                <button
-                  key={e.id}
-                  type="button"
-                  onClick={() => handleDayItemClick(e)}
-                  className="flex w-full items-start gap-3 rounded-lg border border-border bg-background/60 p-3 text-left transition-colors hover:bg-accent/50"
-                >
-                  <span className={cn('mt-1 h-2.5 w-2.5 shrink-0 rounded-full', typeColorOf(e).dot)} />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="truncate text-sm font-semibold text-foreground">{e.title}</p>
-                      {e.type === 'internal' ? (
+                e.type === 'internal' ? (
+                  <button
+                    key={e.id}
+                    type="button"
+                    onClick={() => handleDayItemClick(e)}
+                    className="flex w-full items-start gap-3 rounded-lg border border-border bg-background/60 p-3 text-left transition-colors hover:bg-accent/50"
+                  >
+                    <span className={cn('mt-1 h-2.5 w-2.5 shrink-0 rounded-full', typeColorOf(e).dot)} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="truncate text-sm font-semibold text-foreground">{e.title}</p>
                         <Badge className="shrink-0 rounded-full bg-red-500/10 px-2 py-0 text-[10px] text-red-600 dark:text-red-400">
                           Agenda
                         </Badge>
-                      ) : (
+                      </div>
+                      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                        {e.time && (
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {e.time}
+                          </span>
+                        )}
+                        {e.location && <span className="flex items-center gap-1">{e.location}</span>}
+                      </div>
+                    </div>
+                    <Pencil className="mt-1 h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
+                  </button>
+                ) : (
+                  <div
+                    key={e.id}
+                    className="flex w-full items-start gap-3 rounded-lg border border-border bg-background/60 p-3 text-left"
+                  >
+                    <span className={cn('mt-1 h-2.5 w-2.5 shrink-0 rounded-full', typeColorOf(e).dot)} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="truncate text-sm font-semibold text-foreground">{e.title}</p>
                         <Badge variant="secondary" className="shrink-0 rounded-full px-2 py-0 text-[10px]">
                           {typeLabelOf(e)}
                         </Badge>
-                      )}
-                    </div>
-                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                      {e.time && (
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {e.time}
-                        </span>
-                      )}
-                      {e.location && <span className="flex items-center gap-1">{e.location}</span>}
+                      </div>
+                      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                        {e.time && (
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {e.time}
+                          </span>
+                        )}
+                        {e.location && <span className="flex items-center gap-1">{e.location}</span>}
+                      </div>
                     </div>
                   </div>
-                </button>
+                )
               ))
             )}
           </div>
-          <AlertDialogFooter className="flex-col gap-3 sm:flex-row sm:justify-between">
+          <AlertDialogFooter className="mt-2 flex-col gap-2 border-t border-border/60 pt-4 sm:flex-row sm:justify-end sm:gap-2 sm:space-x-2">
             <span />
-            <div className="flex w-full gap-2 sm:w-auto">
-              <AlertDialogCancel>Tutup</AlertDialogCancel>
-              <Button type="button" className="w-full justify-center rounded-lg sm:w-auto" onClick={openCreateFromDay}>
-                <NotepadText className="h-4 w-4" />
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+              <AlertDialogCancel className="mt-0 h-11 w-full sm:h-10 sm:w-auto">Tutup</AlertDialogCancel>
+              <Button type="button" className="h-11 w-full justify-center rounded-lg sm:h-10 sm:w-auto" onClick={openCreateFromDay}>
+                <NotepadText className="mr-2 h-4 w-4 shrink-0" />
                 Tambah Agenda
               </Button>
             </div>

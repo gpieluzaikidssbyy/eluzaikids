@@ -62,6 +62,7 @@ export async function PUT(
       drive_link: body.drive_link || null,
       registration_deadline: body.registration_deadline || null,
       email_enabled: body.email_enabled !== false,
+      show_event: body.show_event !== false,
     })
     .eq('id', params.id)
     .select()

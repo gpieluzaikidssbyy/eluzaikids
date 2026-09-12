@@ -33,15 +33,15 @@ export default function EventsPage() {
       <section className="gradient-hero py-12 text-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <BackToHome />
-          <h1 className="mt-4 font-display text-3xl font-bold sm:text-4xl">Event Mendatang</h1>
-          <p className="mt-2 text-white/80">Daftar event yang akan datang di GPI Eluzai Kids</p>
+          <h1 className="mt-4 font-display text-3xl font-bold sm:text-4xl">Semua Event</h1>
+          <p className="mt-2 text-white/80">Daftar seluruh event di GPI Eluzai Kids</p>
         </div>
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
         {data.events.length === 0 ? (
           <div className="rounded-2xl bg-white p-8 text-center text-slate-500 shadow-sm dark:bg-slate-800 dark:text-slate-400">
-            Belum ada event yang akan datang.
+            Belum ada event yang tersedia.
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

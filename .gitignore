@@ -34,6 +34,8 @@ Thumbs.db
 # Ai Agent
 .ai-agent/
 
-
 .vercel
 .env*
+
+# testing
+.tmp-shots/

@@ -12,16 +12,18 @@ export async function GET(request: NextRequest) {
   // this route can never expose scan_pin / scan_active or PII.
   const supabase = createPublicClient();
 
+  // Full-page list: show ALL events added by admin (past & upcoming),
+  // newest first, with next/previous pagination.
+  // Count on a granted column (anon has column-level grants, so `select('*')`
+  // would be denied and the count would silently be 0 -> no pagination).
   const { count } = await supabase
     .from('events')
-    .select('*', { count: 'exact', head: true })
-    .gte('event_date', new Date().toISOString());
+    .select('id', { count: 'exact', head: true });
 
   const { data: events } = await supabase
     .from('events')
     .select('id, title, tema, description, event_date, open_gate, start_time, location, quota, email_enabled, image, map_embed_url, drive_link, registration_deadline')
-    .gte('event_date', new Date().toISOString())
-    .order('event_date', { ascending: true })
+    .order('event_date', { ascending: false })
     .range((page - 1) * perPage, page * perPage - 1);
 
   const counts = new Map<number, number>();

@@ -84,7 +84,7 @@ export default function AdminDashboard() {
       label: 'Anggota',
       value: stats.members,
       icon: Users,
-      tone: 'bg-[#ECF3FF] text-[#465FFF]',
+      tone: 'bg-pink-50 text-pink-600',
       href: '/admin/members',
     },
   ];
@@ -107,9 +107,6 @@ export default function AdminDashboard() {
           <h1 className="mt-1 font-display text-2xl font-bold tracking-tight text-foreground">
             Selamat datang, {username} 👋
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Pantau pendaftaran, kegiatan, dan kehadiran dari satu tempat.
-          </p>
         </div>
       </motion.div>
 
@@ -124,7 +121,9 @@ export default function AdminDashboard() {
           >
             <Link
               href={href}
-              className="group relative block overflow-hidden rounded-xl border border-border bg-card p-6 shadow-sm transition-all hover:border-[#465FFF]/30 hover:shadow-md"
+              className={`group relative block overflow-hidden rounded-xl border border-border bg-card p-6 shadow-sm transition-all duration-300 hover:shadow-md ${
+                href === '/admin/members' ? 'hover:border-pink-500/30' : 'hover:border-[#465FFF]/30'
+              }`}
             >
               <div className="flex items-start justify-between">
                 <span className={`flex h-12 w-12 items-center justify-center rounded-xl ${tone}`}>

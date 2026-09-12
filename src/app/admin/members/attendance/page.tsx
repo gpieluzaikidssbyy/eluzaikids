@@ -3,13 +3,14 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Users, CalendarCheck, ChevronRight } from 'lucide-react';
+import { CalendarCheck, ChevronRight } from 'lucide-react';
 import { MEMBER_CLASSES, CLASS_STYLES } from '@/lib/helpers';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/admin/page-header';
+import { ClassAvatar } from '@/components/ClassAvatar';
 
 export default function ChildsAttendancePage() {
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
@@ -72,13 +73,11 @@ export default function ChildsAttendancePage() {
                   )}
                 >
                   <div className="flex items-start justify-between">
-                    <div className={cn('flex h-11 w-11 items-center justify-center rounded-xl', style.icon)}>
-                      <Users className="h-5 w-5" />
-                    </div>
+                    <ClassAvatar memberClass={memberClass} className="h-11 w-11" />
                     <ChevronRight className="h-5 w-5 text-muted-foreground/40 transition group-hover:translate-x-1 group-hover:text-muted-foreground" />
                   </div>
                   <p className="mt-4 font-display text-lg font-bold text-foreground">{memberClass}</p>
-                  <span className={cn('mt-2 inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold', style.badge)}>Buka form presensi</span>
+                  <span className={cn('mt-2 block text-xs font-semibold', style.badgeText)}>Buka form presensi</span>
                 </Link>
               </motion.div>
             );

@@ -48,7 +48,7 @@ export default function EditMemberPage() {
     >
       <PageHeader
         icon={<UserCog className="h-6 w-6" />}
-        title="Edit Anak"
+        title="Edit NamaAnak"
         description={`Mengedit data ${member.name}.`}
         backHref="/admin/members"
       />

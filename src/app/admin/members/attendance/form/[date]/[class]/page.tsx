@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/admin/page-header';
+import { ClassAvatar } from '@/components/ClassAvatar';
 
 interface AttendanceRow extends Member {
   is_present: boolean;
@@ -178,6 +179,7 @@ export default function ChildsAttendanceFormPage() {
                 )}
               >
                 <span className="w-6 shrink-0 text-center text-sm text-muted-foreground">{index + 1}</span>
+                <ClassAvatar memberClass={member.class} className="h-9 w-9 shrink-0" />
                 <span
                   className={cn(
                     'min-w-0 flex-1 rounded-lg px-2 py-1 font-medium text-foreground',

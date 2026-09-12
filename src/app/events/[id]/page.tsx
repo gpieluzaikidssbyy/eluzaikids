@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import type { Event } from '@/lib/types';
-import { formatDateIndo, remainingQuota } from '@/lib/helpers';
+import { formatDateIndo, isDatePassed, remainingQuota } from '@/lib/helpers';
 import { RegistrationForm } from '@/components/RegistrationForm';
+import Link from 'next/link';
 import { BackToHome } from '@/components/BackToHome';
 import { EventDetailSkeleton } from '@/components/skeletons';
 
@@ -31,6 +32,7 @@ export default function EventDetailPage() {
 
   const remaining = remainingQuota(event.quota, event.registrations_count);
   const isFull = remaining !== null && remaining <= 0;
+  const isOver = isDatePassed(event.event_date);
 
   return (
     <>
@@ -157,21 +159,33 @@ export default function EventDetailPage() {
                   </div>
                 )}
 
-                {event.quota && isFull && (
-                  <div className="flex items-start gap-3">
-                    <svg className="mt-0.5 h-5 w-5 shrink-0 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M17 20h5v-2a3 3 0 0 0-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 0 1 5.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 0 1 9.288 0M15 7a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />
-                    </svg>
-                    <div>
-                      <p className="font-semibold text-slate-900 dark:text-slate-100">Kuota</p>
-                      <p className="font-medium text-red-600 dark:text-red-400">Kuota penuh</p>
-                    </div>
+                {isFull && (
+                  <div className="flex items-center gap-2 rounded-full bg-red-500/10 px-3 py-1.5 text-sm font-semibold text-red-700 dark:bg-red-900/40 dark:text-red-300">
+                    <span className="h-2 w-2 rounded-full bg-red-500" />
+                    Penuh
                   </div>
                 )}
               </div>
 
               <div className="mt-6 space-y-3">
-                {!isFull ? (
+                {isOver ? (
+                  // Event sudah selesai: tombol berubah fungsi jadi link Google Drive foto.
+                  event.drive_link ? (
+                    <a
+                      href={event.drive_link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex w-full items-center justify-center rounded-lg bg-green-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-green-700"
+                    >
+                      Foto
+                    </a>
+                  ) : (
+                    <button type="button" disabled className="w-full cursor-not-allowed rounded-lg bg-slate-400 px-4 py-3 text-sm font-semibold text-white">
+                      Foto
+                    </button>
+                  )
+                ) : !isFull ? (
+                  // Event belum mulai & kuota tersisa: pendaftaran dibuka.
                   <RegistrationForm
                     registrableType="event"
                     registrableId={event.id}
@@ -179,21 +193,19 @@ export default function EventDetailPage() {
                     emailEnabled={event.email_enabled !== false}
                     buttonClass="w-full"
                   />
-                ) : event.drive_link ? (
-                  <a
-                    href={event.drive_link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex w-full items-center justify-center rounded-lg bg-green-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-green-700"
-                  >
-                    Foto
-                  </a>
                 ) : (
-                  <button type="button" disabled className="w-full cursor-not-allowed rounded-lg bg-slate-400 px-4 py-3 text-sm font-semibold text-white">
-                    Foto
-                  </button>
+                  // Event belum lewat tapi kuota penuh: daftar ditutup.
+                  <div className="flex items-center gap-2 rounded-full bg-red-500/10 px-3 py-1.5 text-sm font-semibold text-red-700 dark:bg-red-900/40 dark:text-red-300">
+                    <span className="h-2 w-2 rounded-full bg-red-500" />
+                    Penuh
+                  </div>
                 )}
-                <BackToHome variant="secondary" />
+                <Link href="/events" className="inline-flex items-center gap-2 rounded-lg bg-slate-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                  </svg>
+                  Kembali ke Semua Event
+                </Link>
               </div>
             </div>
           </div>

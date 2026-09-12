@@ -29,7 +29,6 @@ export default function AdminChurchInfoPage() {
       body: JSON.stringify({
         address: form.get('address'),
         map_embed_url: form.get('map_embed_url') || null,
-        phone: form.get('phone') || null,
         whatsapp: form.get('whatsapp') || null,
         email: form.get('email') || null,
         instagram_url: form.get('instagram_url') || null,
@@ -99,18 +98,9 @@ export default function AdminChurchInfoPage() {
                 </div>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="phone" className="field-label">Telepon</Label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input type="text" id="phone" name="phone" defaultValue={info.phone || ''} className="rounded-lg pl-9" />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="whatsapp" className="field-label">WhatsApp</Label>
-                  <Input type="text" id="whatsapp" name="whatsapp" defaultValue={info.whatsapp || ''} placeholder="628xxxxxxxxxx" className="rounded-lg" />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="whatsapp" className="field-label">WhatsApp</Label>
+                <Input type="text" id="whatsapp" name="whatsapp" defaultValue={info.whatsapp || ''} placeholder="628xxxxxxxxxx" className="rounded-lg" />
               </div>
 
               <div className="space-y-2">

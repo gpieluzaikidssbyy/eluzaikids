@@ -58,6 +58,8 @@ export const scheduleSchema = z.object({
   time: z.string().min(1, 'Jam wajib diisi.'),
   type: z.string().min(1, 'Tipe wajib diisi.'),
   description: z.string().optional().nullable(),
+  // Default TRUE saat field tidak dikirim — z.coerce.boolean() mengubah
+  // undefined menjadi false sehingga jadwal baru tiba-tiba tersembunyi.
   show_schedule: z.coerce.boolean(),
 });
 

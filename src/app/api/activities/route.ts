@@ -11,9 +11,11 @@ export async function GET(request: NextRequest) {
   // Public client + RLS: only granted columns are readable.
   const supabase = createPublicClient();
 
+  // Count on a granted column (anon has column-level grants, so `select('*')`
+  // would be denied and the count would silently be 0 -> no pagination).
   const { count } = await supabase
     .from('activities')
-    .select('*', { count: 'exact', head: true });
+    .select('id', { count: 'exact', head: true });
 
   const { data: activities } = await supabase
     .from('activities')

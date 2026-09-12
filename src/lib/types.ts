@@ -29,6 +29,7 @@ export interface Event {
   map_embed_url: string | null;
   drive_link: string | null;
   registration_deadline: string | null;
+  show_event: boolean;
   scan_pin?: string | null;
   scan_active?: boolean;
   created_at?: string;
@@ -39,6 +40,7 @@ export interface Event {
 export interface Activity {
   id: number;
   title: string;
+  tema: string | null;
   description: string | null;
   image: string | null;
   drive_link: string | null;
@@ -48,6 +50,7 @@ export interface Activity {
   map_embed_url: string | null;
   quota: number | null;
   email_enabled: boolean;
+  show_activity: boolean;
   scan_pin?: string | null;
   scan_active?: boolean;
   created_at?: string;

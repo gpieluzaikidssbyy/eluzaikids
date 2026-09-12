@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import type { Activity } from '@/lib/types';
-import { formatDateIndo, remainingQuota } from '@/lib/helpers';
+import { formatDateIndo, isDatePassed, remainingQuota } from '@/lib/helpers';
 import { RegistrationForm } from '@/components/RegistrationForm';
+import Link from 'next/link';
 import { BackToHome } from '@/components/BackToHome';
 import { ActivityDetailSkeleton } from '@/components/skeletons';
 
@@ -31,6 +32,7 @@ export default function ActivityDetailPage() {
 
   const remaining = remainingQuota(activity.quota, activity.registrations_count);
   const isFull = remaining !== null && remaining <= 0;
+  const isOver = isDatePassed(activity.activity_date);
 
   return (
     <>
@@ -38,9 +40,14 @@ export default function ActivityDetailPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <BackToHome />
           <div className="mt-4">
-            <h1 className="mt-3 font-display text-3xl font-bold sm:text-4xl">{activity.title}</h1>
-            {activity.activity_date && (
-              <p className="mt-2 text-lg text-white/85">{formatDateIndo(activity.activity_date)}</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-white/80">
+              {activity.activity_date ? formatDateIndo(activity.activity_date) : ''}
+            </p>
+            <h1 className="mt-1 font-display text-3xl font-bold sm:text-4xl">{activity.title}</h1>
+            {activity.tema && (
+              <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-sm font-semibold text-white">
+                Tema: {activity.tema}
+              </p>
             )}
           </div>
         </div>
@@ -89,6 +96,18 @@ export default function ActivityDetailPage() {
             <div className="card lg:sticky lg:top-24">
               <h3 className="font-display text-lg font-bold text-slate-900 dark:text-slate-100">Informasi</h3>
               <div className="mt-4 space-y-4 text-sm text-slate-600 dark:text-slate-400">
+                {activity.tema && (
+                  <div className="flex items-start gap-3">
+                    <svg className="mt-0.5 h-5 w-5 shrink-0 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                    </svg>
+                    <div>
+                      <p className="font-semibold text-slate-900 dark:text-slate-100">Tema</p>
+                      <p>{activity.tema}</p>
+                    </div>
+                  </div>
+                )}
+
                 {activity.activity_date && (
                   <div className="flex items-start gap-3">
                     <svg className="mt-0.5 h-5 w-5 shrink-0 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -128,7 +147,24 @@ export default function ActivityDetailPage() {
               </div>
 
               <div className="mt-6 space-y-3">
-                {!isFull ? (
+                {isOver ? (
+                  // Kegiatan sudah selesai: tombol berubah fungsi jadi link Google Drive foto.
+                  activity.drive_link ? (
+                    <a
+                      href={activity.drive_link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex w-full items-center justify-center rounded-lg bg-green-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-green-700"
+                    >
+                      Foto
+                    </a>
+                  ) : (
+                    <button type="button" disabled className="w-full cursor-not-allowed rounded-lg bg-slate-400 px-4 py-3 text-sm font-semibold text-white">
+                      Foto
+                    </button>
+                  )
+                ) : !isFull ? (
+                  // Kegiatan belum mulai & kuota tersisa: pendaftaran dibuka.
                   <RegistrationForm
                     registrableType="activity"
                     registrableId={activity.id}
@@ -136,21 +172,19 @@ export default function ActivityDetailPage() {
                     emailEnabled={activity.email_enabled !== false}
                     buttonClass="w-full"
                   />
-                ) : activity.drive_link ? (
-                  <a
-                    href={activity.drive_link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex w-full items-center justify-center rounded-lg bg-green-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-green-700"
-                  >
-                    Foto
-                  </a>
                 ) : (
-                  <button type="button" disabled className="w-full cursor-not-allowed rounded-lg bg-slate-400 px-4 py-3 text-sm font-semibold text-white">
-                    Foto
-                  </button>
+                  // Kegiatan belum lewat tapi kuota penuh: daftar ditutup.
+                  <div className="flex items-center gap-2 rounded-full bg-red-500/10 px-3 py-1.5 text-sm font-semibold text-red-700 dark:bg-red-900/40 dark:text-red-300">
+                    <span className="h-2 w-2 rounded-full bg-red-500" />
+                    Penuh
+                  </div>
                 )}
-                <BackToHome variant="secondary" />
+                <Link href="/activities" className="inline-flex items-center gap-2 rounded-lg bg-slate-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                  </svg>
+                  Kembali ke Semua Kegiatan
+                </Link>
               </div>
             </div>
           </div>

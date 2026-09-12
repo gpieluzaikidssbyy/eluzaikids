@@ -5,10 +5,11 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { ArrowLeft, Pencil, Trash2, Clock, MapPin, Users, Loader2 } from 'lucide-react';
+import { ArrowLeft, Pencil, Trash2, Clock, MapPin, Users, Calendar, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 import type { Activity, ActivityRegistration } from '@/lib/types';
 import { formatDateIndo } from '@/lib/helpers';
 import { PageHeader } from '@/components/admin/page-header';
@@ -47,6 +48,19 @@ export default function AdminActivityDetailsPage() {
     router.push('/admin/activities');
   };
 
+  if (!activity) return (
+    <div className="flex min-h-[40vh] items-center justify-center">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    </div>
+  );
+
+  const statCards = [
+    { icon: Clock, label: 'Jam mulai', value: activity.start_time?.slice(0, 5) || '-' },
+    { icon: Calendar, label: 'Tanggal', value: activity.activity_date ? formatDateIndo(activity.activity_date) : 'Belum diatur' },
+    { icon: Users, label: 'Kuota', value: activity.quota ?? 'Tanpa batas' },
+    { icon: Users, label: 'Total pendaftar', value: registrations.length, highlight: true },
+  ];
+
   if (loading || !activity) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
@@ -62,21 +76,33 @@ export default function AdminActivityDetailsPage() {
       transition={{ duration: 0.35 }}
       className="space-y-6"
     >
-      <div className="rounded-xl bg-gradient-to-br from-primary via-blue-700 to-blue-900 p-6 sm:p-8">
+      <div className="rounded-xl bg-gradient-to-br from-amber-500 via-orange-600 to-red-700 p-6 sm:p-8">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-          <div>
-            <Link href="/admin/activities" className="mb-2 inline-flex items-center gap-1 text-xs font-medium text-white/60 transition-colors hover:text-white">
-              <ArrowLeft className="h-3.5 w-3.5" />
-              Kembali ke Manage Kegiatan
-            </Link>
-            <h1 className="mt-2 font-display text-2xl font-bold tracking-tight text-white sm:text-3xl">{activity.title}</h1>
-            <p className="mt-2 flex items-center gap-2 text-sm text-white/70">
-              <Clock className="h-4 w-4" />
-              {activity.activity_date ? formatDateIndo(activity.activity_date) : 'Tanggal belum diatur'}
-              <span className="text-white/30">·</span>
-              <MapPin className="h-4 w-4" />
-              {activity.location || 'Lokasi belum diisi'}
-            </p>
+          <div className="flex items-start gap-5">
+            {activity.tema && (
+              <div className="hidden h-20 w-20 shrink-0 items-center justify-center rounded-xl bg-white/15 sm:flex">
+                <Calendar className="h-10 w-10 text-white/80" />
+              </div>
+            )}
+            <div>
+              <Link href="/admin/activities" className="mb-2 inline-flex items-center gap-1 text-xs font-medium text-white/60 transition-colors hover:text-white">
+                <ArrowLeft className="h-3.5 w-3.5" />
+                Kembali ke Manage Kegiatan
+              </Link>
+              <h1 className="mt-2 font-display text-2xl font-bold tracking-tight text-white sm:text-3xl">{activity.title}</h1>
+              {activity.tema && <p className="mt-1 text-sm text-white/70">Tema: {activity.tema}</p>}
+              <p className="mt-2 flex items-center gap-2 text-sm text-white/70">
+                <Calendar className="h-4 w-4" />
+                {activity.activity_date ? formatDateIndo(activity.activity_date) : 'Tanggal belum diatur'}
+                {activity.location && (
+                  <>
+                    <span className="text-white/30">·</span>
+                    <MapPin className="h-4 w-4" />
+                    {activity.location}
+                  </>
+                )}
+              </p>
+            </div>
           </div>
           <div className="flex shrink-0 flex-wrap gap-2">
             <Button asChild variant="outline" className="border-white/20 bg-white/10 text-white hover:bg-white/20">
@@ -107,37 +133,22 @@ export default function AdminActivityDetailsPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="rounded-xl border bg-card p-6 shadow-card">
-          <CardContent className="p-0">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Jam Mulai</p>
-            <p className="mt-2 text-lg font-bold text-foreground">{activity.start_time?.slice(0, 5) || '-'}</p>
-          </CardContent>
-        </Card>
-        <Card className="rounded-xl border bg-card p-6 shadow-card">
-          <CardContent className="p-0">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Kuota</p>
-            <p className="mt-2 text-lg font-bold text-foreground">{activity.quota ?? 'Tanpa batas'}</p>
-          </CardContent>
-        </Card>
-        <Card className="rounded-xl border bg-card p-6 shadow-card">
-          <CardContent className="p-0">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total pendaftar</p>
-            <p className="mt-2 text-lg font-bold text-primary">{registrations.length}</p>
-          </CardContent>
-        </Card>
-        <Card className="rounded-xl border bg-card p-6 shadow-card">
-          <CardContent className="p-0">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Drive Link</p>
-            {activity.drive_link ? (
-              <a href={activity.drive_link} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 text-lg font-bold text-primary hover:underline">
-                Buka
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-              </a>
-            ) : (
-              <p className="mt-2 text-lg font-bold text-foreground">-</p>
-            )}
-          </CardContent>
-        </Card>
+        {statCards.map((stat) => (
+          <Card key={stat.label} className="rounded-xl border bg-card p-6 shadow-card">
+            <CardContent className="p-0">
+              <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                <stat.icon className="h-3.5 w-3.5" />
+                {stat.label}
+              </div>
+              <p className={cn(
+                "mt-2 text-lg font-bold",
+                stat.highlight ? "text-primary" : "text-foreground"
+              )}>
+                {stat.value}
+              </p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       <Card className="rounded-xl border bg-card p-6 shadow-card">
@@ -152,13 +163,17 @@ export default function AdminActivityDetailsPage() {
       <Card className="rounded-xl border bg-card p-6 shadow-card">
         <CardHeader className="p-0 pb-4">
           <CardTitle>Hasil form pendaftaran</CardTitle>
+          <CardDescription className="mt-1 flex items-center gap-1.5">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            Data diperbarui otomatis setiap 5 detik.
+          </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto rounded-xl border border-border/60">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="table-heading w-12">No</TableHead>
+                  <TableHead className="table-heading">No</TableHead>
                   <TableHead className="table-heading">No. registrasi</TableHead>
                   <TableHead className="table-heading">Nama lengkap</TableHead>
                   <TableHead className="table-heading">No. HP</TableHead>
@@ -193,6 +208,7 @@ export default function AdminActivityDetailsPage() {
           )}
         </CardContent>
       </Card>
+
     </motion.div>
   );
 }

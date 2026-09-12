@@ -70,16 +70,15 @@ export async function fetchHomeData(): Promise<HomeData> {
 
   const { data: events } = await supabase
     .from('events')
-    .select('id, title, tema, description, event_date, open_gate, start_time, location, quota, email_enabled, image, map_embed_url, drive_link, registration_deadline')
-    .gte('event_date', new Date().toISOString())
-    .order('event_date', { ascending: true })
-    .limit(3);
+    .select('id, title, tema, description, event_date, open_gate, start_time, location, quota, email_enabled, image, map_embed_url, drive_link, registration_deadline, show_event')
+    .eq('show_event', true)
+    .order('event_date', { ascending: true });
 
   const { data: activities } = await supabase
     .from('activities')
-    .select('id, title, description, image, drive_link, activity_date, start_time, location, map_embed_url, quota, email_enabled')
-    .order('activity_date', { ascending: false })
-    .limit(3);
+    .select('id, title, tema, description, image, drive_link, activity_date, start_time, location, map_embed_url, quota, email_enabled, show_activity')
+    .eq('show_activity', true)
+    .order('activity_date', { ascending: true });
 
   const { data: churchInfo } = await supabase
     .from('church_info')
@@ -87,13 +86,38 @@ export async function fetchHomeData(): Promise<HomeData> {
     .limit(1)
     .single();
 
+  // Sort events and activities by nearest date to today (real-time)
+  const today = new Date();
+  const eventsList = (events || []).filter((e) => e.event_date);
+  const activitiesList = (activities || []).filter((a) => a.activity_date);
+
+  // Sort by distance from today (nearest first)
+  eventsList.sort((a, b) => {
+    const dateA = new Date(a.event_date!).getTime();
+    const dateB = new Date(b.event_date!).getTime();
+    const diffA = Math.abs(dateA - today.getTime());
+    const diffB = Math.abs(dateB - today.getTime());
+    return diffA - diffB;
+  });
+  activitiesList.sort((a, b) => {
+    const dateA = new Date(a.activity_date!).getTime();
+    const dateB = new Date(b.activity_date!).getTime();
+    const diffA = Math.abs(dateA - today.getTime());
+    const diffB = Math.abs(dateB - today.getTime());
+    return diffA - diffB;
+  });
+
+  // Take top 3 nearest
+  const nearestEvents = eventsList.slice(0, 3);
+  const nearestActivities = activitiesList.slice(0, 3);
+
   const eventCounts = new Map<number, number>();
-  for (const event of events || []) {
+  for (const event of nearestEvents) {
     const { data } = await supabase.rpc('count_registrations', { registrable_type: 'event', registrable_id: event.id });
     eventCounts.set(event.id, Number(data) || 0);
   }
   const activityCounts = new Map<number, number>();
-  for (const activity of activities || []) {
+  for (const activity of nearestActivities) {
     const { data } = await supabase.rpc('count_registrations', { registrable_type: 'activity', registrable_id: activity.id });
     activityCounts.set(activity.id, Number(data) || 0);
   }
@@ -101,11 +125,11 @@ export async function fetchHomeData(): Promise<HomeData> {
   return {
     schedules,
     scheduleUpdatedAt,
-    events: (events || []).map((e) => ({
+    events: nearestEvents.map((e) => ({
       ...e,
       registrations_count: eventCounts.get(e.id) || 0,
     })),
-    activities: (activities || []).map((a) => ({
+    activities: nearestActivities.map((a) => ({
       ...a,
       registrations_count: activityCounts.get(a.id) || 0,
     })),

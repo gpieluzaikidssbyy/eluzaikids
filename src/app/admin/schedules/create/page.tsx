@@ -29,7 +29,7 @@ export default function CreateSchedulePage() {
         time: form.get('time'),
         type: form.get('type'),
         description: form.get('description') || null,
-        show_schedule: true,
+        show_schedule: form.get('show_schedule') === 'true',
       }),
     });
     router.push('/admin/schedules');
@@ -84,6 +84,20 @@ export default function CreateSchedulePage() {
                     <option value="Ibadah">Ibadah</option>
                     <option value="Latihan">Latihan</option>
                   </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="show_schedule" className="field-label">Tampilkan di Website</Label>
+                <div className="flex items-center gap-4">
+                  <Label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="show_schedule" value="true" defaultChecked className="h-4 w-4 border-slate-300 text-primary focus:ring-primary" />
+                    <span>Ada</span>
+                  </Label>
+                  <Label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="show_schedule" value="false" className="h-4 w-4 border-slate-300 text-primary focus:ring-primary" />
+                    <span>Tidak ada</span>
+                  </Label>
                 </div>
               </div>
 

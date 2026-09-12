@@ -11,7 +11,7 @@ export const strictEventSchema = z.object({
     .min(1, 'Judul wajib diisi.')
     .max(255, 'Judul maksimal 255 karakter.')
     .regex(
-      /^[^\s<>"']+$/,
+      /^[^<>"']*$/,
       'Judul tidak boleh mengandung karakter tersembunyi atau simbol berbahaya.'
     ),
   tema: z
@@ -65,25 +65,18 @@ export const strictEventSchema = z.object({
       if (isNaN(num)) return null;
       if (num < 1 || num > 500) return null;
       return num;
-    }),
-  map_embed_url: z
-    .string()
-    .trim()
-    .url('URL embed peta tidak valid.')
-    .optional()
-    .nullable(),
+    }),  map_embed_url: z
+    .preprocess((val) => (typeof val === 'string' && val.trim() === '' ? null : val), z.string().trim().url('URL embed peta tidak valid.').optional().nullable()),
   drive_link: z
-    .string()
-    .trim()
-    .url('Link Google Drive tidak valid.')
-    .optional()
-    .nullable(),
+    .preprocess((val) => (typeof val === 'string' && val.trim() === '' ? null : val), z.string().trim().url('Link Google Drive tidak valid.').optional().nullable()),
+
   registration_deadline: z
+    .preprocess((val) => (typeof val === 'string' && val.trim() === '' ? undefined : val), z
     .string()
     .trim()
     .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, 'Format batas pendaftaran tidak valid (YYYY-MM-DDTHH:MM).')
     .optional()
-    .nullable(),
+    .nullable()),
   email_enabled: z.boolean().optional().default(true),
 });
 
@@ -97,9 +90,15 @@ export const strictActivitySchema = z.object({
     .min(1, 'Judul wajib diisi.')
     .max(255, 'Judul maksimal 255 karakter.')
     .regex(
-      /^[^\s<>"']+$/,
+      /^[^<>"']*$/,
       'Judul tidak boleh mengandung karakter tersembunyi atau simbol berbahaya.'
     ),
+  tema: z
+    .string()
+    .trim()
+    .max(255, 'Tema maksimal 255 karakter.')
+    .optional()
+    .nullable(),
   description: z
     .string()
     .trim()
@@ -108,11 +107,7 @@ export const strictActivitySchema = z.object({
     .nullable(),
   image: z.string().optional().nullable(),
   drive_link: z
-    .string()
-    .trim()
-    .url('Link Google Drive tidak valid.')
-    .optional()
-    .nullable(),
+    .preprocess((val) => (typeof val === 'string' && val.trim() === '' ? null : val), z.string().trim().url('Link Google Drive tidak valid.').optional().nullable()),
   activity_date: z
     .string()
     .trim()
@@ -133,11 +128,7 @@ export const strictActivitySchema = z.object({
     .optional()
     .nullable(),
   map_embed_url: z
-    .string()
-    .trim()
-    .url('URL embed peta tidak valid.')
-    .optional()
-    .nullable(),
+    .preprocess((val) => (typeof val === 'string' && val.trim() === '' ? null : val), z.string().trim().url('URL embed peta tidak valid.').optional().nullable()),
   quota: z
     .string()
     .trim()

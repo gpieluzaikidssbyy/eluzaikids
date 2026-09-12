@@ -30,6 +30,7 @@ export default function CreateActivityPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: form.get('title'),
+          tema: form.get('tema') || null,
           description: form.get('description'),
           activity_date: form.get('activity_date') || null,
           start_time: form.get('start_time') || null,
@@ -38,6 +39,7 @@ export default function CreateActivityPage() {
           map_embed_url: form.get('map_embed_url') || null,
           drive_link: form.get('drive_link') || null,
           email_enabled: form.get('email_enabled') === 'on',
+          show_activity: form.get('show_activity') === 'true',
         }),
       });
 
@@ -95,11 +97,43 @@ export default function CreateActivityPage() {
               <div className="space-y-2">
                 <Label htmlFor="title" className="field-label">Judul Kegiatan <span className="text-destructive">*</span></Label>
                 <Input type="text" id="title" name="title" required className="rounded-lg" placeholder="Contoh: Latihan Paduan Suara" />
+                <p className="text-xs text-muted-foreground">Nama kegiatan yang ditampilkan ke pengunjung website.</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="tema" className="field-label">Tema</Label>
+                <Input type="text" id="tema" name="tema" className="rounded-lg" placeholder="Contoh: Tema Kegiatan" />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="description" className="field-label">Deskripsi <span className="text-destructive">*</span></Label>
                 <Textarea id="description" name="description" rows={4} required className="rounded-lg" placeholder="Tuliskan informasi lengkap tentang kegiatan ini." />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* ─── Tampilkan di Website ─── */}
+          <Card className="rounded-lg border border-border/60 bg-card shadow-sm">
+            <CardHeader className="flex flex-row items-start gap-4 space-y-0 border-b border-border/40 px-6 py-5">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#ECF3FF] text-[#465FFF]">
+                <Info className="h-5 w-5" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Visibilitas</CardTitle>
+                <CardDescription>Tampilkan atau sembunyikan kegiatan di website.</CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent className="px-6 py-6">
+              <div className="space-y-3">
+                <Label className="flex items-center gap-3 cursor-pointer">
+                  <input type="radio" name="show_activity" value="true" defaultChecked className="h-4 w-4 border-slate-300 text-primary focus:ring-primary" />
+                  <span className="text-sm font-medium">Tampilkan (show)</span>
+                </Label>
+                <Label className="flex items-center gap-3 cursor-pointer">
+                  <input type="radio" name="show_activity" value="false" className="h-4 w-4 border-slate-300 text-primary focus:ring-primary" />
+                  <span className="text-sm font-medium">Sembunyikan (hide)</span>
+                </Label>
+                <p className="text-xs text-muted-foreground">Kegiatan akan ditampilkan di website kecuali disembunyikan.</p>
               </div>
             </CardContent>
           </Card>
@@ -130,17 +164,55 @@ export default function CreateActivityPage() {
                   <Input type="text" id="location" name="location" required className="rounded-lg" placeholder="Nama gedung / alamat" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="quota" className="field-label">Kuota <span className="text-destructive">*</span></Label>
-                  <Input type="number" id="quota" name="quota" min="1" required className="rounded-lg" />
+                  <Label htmlFor="quota" className="field-label">Kuota</Label>
+                  <div className="flex gap-2">
+                    <Input type="number" id="quota" name="quota" min="1" max="500" className="rounded-lg" placeholder="Contoh: 100" />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="shrink-0 rounded-lg"
+                      title="Set kuota tidak terbatas"
+                      onClick={(e) => {
+                        const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+                        const wasUnlimited = input.disabled;
+                        input.disabled = !wasUnlimited;
+                        if (wasUnlimited) input.name = 'quota';
+                        else input.removeAttribute('name');
+                        e.currentTarget.classList.toggle('bg-primary/10', wasUnlimited);
+                        e.currentTarget.classList.toggle('text-primary', wasUnlimited);
+                        e.currentTarget.classList.toggle('border-primary', wasUnlimited);
+                      }}
+                    >
+                      Unlimited
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Maksimal 500 pendaftar, atau pilih Unlimited.</p>
                 </div>
               </div>
-              <label className="mt-4 flex items-center gap-3 rounded-lg border border-border/60 bg-muted/30 p-3">
-                <input type="checkbox" name="email_enabled" defaultChecked className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary" />
-                <span>
-                  <span className="block text-sm font-medium">Email konfirmasi</span>
-                  <span className="block text-xs text-muted-foreground">Kirim email konfirmasi setelah pendaftaran berhasil.</span>
-                </span>
-              </label>
+            </CardContent>
+          </Card>
+
+          {/* ─── Media & tautan ─── */}
+          <Card className="rounded-lg border border-border/60 bg-card shadow-sm">
+            <CardHeader className="flex flex-row items-start gap-4 space-y-0 border-b border-border/40 px-6 py-5">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500">
+                <Image className="h-5 w-5" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Media & Tautan</CardTitle>
+                <CardDescription>Peta dan materi pendukung kegiatan.</CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent className="px-6 py-6">
+              <div className="space-y-4">
+                <label className="flex items-center gap-3 rounded-lg border border-border/60 bg-muted/30 p-3">
+                  <input type="checkbox" name="email_enabled" defaultChecked className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary" />
+                  <span>
+                    <span className="block text-sm font-medium">Email konfirmasi</span>
+                    <span className="block text-xs text-muted-foreground">Kirim email konfirmasi setelah pendaftaran berhasil.</span>
+                  </span>
+                </label>
+              </div>
             </CardContent>
           </Card>
 

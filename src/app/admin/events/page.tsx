@@ -83,10 +83,11 @@ export default function AdminEventsPage() {
     >
       <PageHeader
         icon={<CalendarDays className="h-6 w-6" />}
+        iconClassName="bg-gradient-to-br from-blue-500 to-indigo-600 text-white"
         title="Manage Event"
         description="Buat event baru dan kelola jadwal yang siap ditampilkan kepada pengunjung."
         actions={
-          <Button onClick={() => setShowForm((open) => !open)}>
+          <Button onClick={() => setShowForm((open) => !open)} className="bg-blue-600 text-white hover:bg-blue-700">
             <Plus className="mr-2 h-4 w-4" />
             {showForm ? 'Tutup form' : 'Tambah Event'}
           </Button>
@@ -197,14 +198,14 @@ export default function AdminEventsPage() {
                             <Eye className="h-4 w-4" />
                           </Link>
                         </Button>
-                        <Button asChild variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                        <Button asChild variant="ghost" size="icon" className="h-8 w-8 text-violet-600 hover:bg-violet-50 hover:text-violet-700 dark:text-violet-400 dark:hover:bg-violet-950/40">
                           <Link href={`/admin/events/${event.id}/edit`}>
                             <Pencil className="h-4 w-4" />
                           </Link>
                         </Button>
                         <ConfirmDialog
                           trigger={
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/40">
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           }

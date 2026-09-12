@@ -74,13 +74,8 @@ export default function AdminLoginPage() {
               <Image src="/images/logo.webp" alt="GPI Eluzai Kids" width={32} height={32} className="object-contain" />
             </div>
             <h1 className="mt-4 font-display text-xl font-semibold tracking-tight text-foreground">
-              {forgotOpen ? 'Reset Password' : 'Masuk ke Panel Admin'}
+              {forgotOpen ? 'Reset Password' : 'Eluzai Kids Admin'}
             </h1>
-            <p className="mt-1.5 text-center text-sm text-muted-foreground">
-              {forgotOpen
-                ? 'Masukkan email admin untuk menerima instruksi reset password.'
-                : 'Gunakan akun admin untuk melanjutkan.'}
-            </p>
           </div>
 
           {!forgotOpen ? (
@@ -97,7 +92,7 @@ export default function AdminLoginPage() {
                   required
                   autoComplete="username"
                   autoFocus
-                  placeholder="admin@gpieluzaikids"
+                  placeholder="username"
                   className="h-10 bg-background"
                 />
               </div>
@@ -137,18 +132,6 @@ export default function AdminLoginPage() {
                     {showPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
                   </button>
                 </div>
-              </div>
-
-              <div className="flex items-center gap-2.5">
-                <input
-                  type="checkbox"
-                  name="remember"
-                  id="remember"
-                  className="h-4 w-4 rounded border-input text-primary focus:ring-primary"
-                />
-                <label htmlFor="remember" className="cursor-pointer select-none text-sm text-muted-foreground">
-                  Ingat saya di perangkat ini
-                </label>
               </div>
 
               <Button disabled={loading} className="h-10 w-full" size="lg">
@@ -198,7 +181,7 @@ export default function AdminLoginPage() {
         </div>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          © {new Date().getFullYear()} GPI Eluzai Kids · Panel Administrasi
+          © {new Date().getFullYear()} GPI Eluzai Kids
         </p>
       </div>
     </main>
